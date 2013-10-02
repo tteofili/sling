@@ -93,13 +93,7 @@ public class JcrPropertyMapCacheEntry {
         Class<? extends Object> k = value.getClass();
         if ( k.isArray() ) {
             this.isMulti = true;
-            Object[] values;
-            try {
-                values = (Object[]) value;
-            } catch (ClassCastException cce) {
-                // primitive types need explicit conversion
-                values = convertToObject(value);
-            }
+            Object[] values = convertToObject(value);
             this.values = new Value[values.length];
             for(int i=0; i<values.length; i++) {
                 this.values[i] = this.createValue(values[i], session);
@@ -146,8 +140,7 @@ public class JcrPropertyMapCacheEntry {
         values = ArrayUtils.toObject((char[])value);
       }
       else {
-        // not possible
-        throw new RuntimeException("unable to convert primitive type to object type");
+        values = (Object[]) value;
       }
       return values;
     }
