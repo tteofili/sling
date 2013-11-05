@@ -22,7 +22,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Map;
-import org.apache.commons.io.IOUtils;
 import org.apache.sling.event.jobs.Job;
 import org.apache.sling.event.jobs.JobManager;
 import org.apache.sling.event.jobs.ScheduledJobInfo;
@@ -41,7 +40,7 @@ public class JobHandlingUtils {
 
     private static final String LENGTH = "replication.package.length";
 
-    private static final String BIN = "replication.package.stream";
+//    private static final String BIN = "replication.package.stream";
 
     private static final String TYPE = "replication.package.type";
 
@@ -139,7 +138,7 @@ public class JobHandlingUtils {
         properties.put(PATHS, replicationPackage.getPaths());
         properties.put(LENGTH, replicationPackage.getLength());
         properties.put(ACTION, replicationPackage.getAction());
-        properties.put(BIN, IOUtils.toByteArray(replicationPackage.getInputStream()));
+//        properties.put(BIN, IOUtils.toByteArray(replicationPackage.getInputStream()));
         properties.put(TYPE, replicationPackage.getType());
         return properties;
     }

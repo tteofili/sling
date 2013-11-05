@@ -72,7 +72,7 @@
                   <Export-Package>
                     org.apache.sling.replication.agent,
                     org.apache.sling.replication.transport.authentication,
-                    org.apache.sling.replication.transport
+                    org.apache.sling.replication.transport,
                     org.apache.sling.replication.communication,
                     org.apache.sling.replication.event,
                     org.apache.sling.replication.queue,

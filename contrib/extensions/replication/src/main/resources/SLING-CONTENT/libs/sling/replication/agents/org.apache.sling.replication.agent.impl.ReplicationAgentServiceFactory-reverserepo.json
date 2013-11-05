@@ -7,6 +7,6 @@
     "ReplicationQueueProvider.target" : "(name=sjh)",
     "AuthenticationHandlerFactory.target" : "(name=repo-user)",
     "authentication.properties" : ["user=admin","password=admin"],
-    "ReplicationQueueDistributionStrategy.target" : "(name=simple)",
+    "ReplicationQueueDistributionStrategy.target" : "(name=single)",
     "rules" : ["trigger on path: /content"]
 }

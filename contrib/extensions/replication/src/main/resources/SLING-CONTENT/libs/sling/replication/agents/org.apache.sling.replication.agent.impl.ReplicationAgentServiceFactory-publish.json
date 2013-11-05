@@ -7,5 +7,5 @@
     "ReplicationQueueProvider.target" : "(name=sjh)",
     "AuthenticationHandlerFactory.target" : "(name=user)",
     "authentication.properties" : ["user=admin","password=admin"],
-    "ReplicationQueueDistributionStrategy.target" : "(name=failover)"
+    "ReplicationQueueDistributionStrategy.target" : "(name=single)"
 }
