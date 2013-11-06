@@ -53,7 +53,7 @@ public class FileVaultReplicationPackage implements ReplicationPackage {
         }
         this.paths = paths;
         this.id = pkg.getFile().getAbsolutePath();
-        this.action = ReplicationActionType.ACTIVATE.toString();
+        this.action = ReplicationActionType.ADD.toString();
     }
 
     public String getId() {

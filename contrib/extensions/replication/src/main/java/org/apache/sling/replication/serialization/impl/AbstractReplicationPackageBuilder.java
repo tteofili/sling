@@ -31,9 +31,9 @@ public abstract class AbstractReplicationPackageBuilder implements ReplicationPa
     public ReplicationPackage createPackage(ReplicationRequest request)
                     throws ReplicationPackageBuildingException {
         ReplicationPackage replicationPackage = null;
-        if (ReplicationActionType.ACTIVATE.equals(request.getAction())) {
+        if (ReplicationActionType.ADD.equals(request.getAction())) {
             replicationPackage = createPackageForActivation(request);
-        } else if (ReplicationActionType.DEACTIVATE.equals(request.getAction())) {
+        } else if (ReplicationActionType.DELETE.equals(request.getAction())) {
             replicationPackage = createPackageForDeactivation(request);
         } else {
             throw new ReplicationPackageBuildingException("unknown action type "
@@ -51,9 +51,9 @@ public abstract class AbstractReplicationPackageBuilder implements ReplicationPa
     public ReplicationPackage readPackage(ReplicationRequest request, InputStream stream,
                     boolean install) throws ReplicationPackageBuildingException {
         ReplicationPackage replicationPackage = null;
-        if (ReplicationActionType.ACTIVATE.equals(request.getAction())) {
+        if (ReplicationActionType.ADD.equals(request.getAction())) {
             replicationPackage = readPackageForActivation(request, stream, install);
-        } else if (ReplicationActionType.DEACTIVATE.equals(request.getAction())) {
+        } else if (ReplicationActionType.DELETE.equals(request.getAction())) {
             replicationPackage = readPackageForDeactivation(request, stream, install);
         } else {
             throw new ReplicationPackageBuildingException("unknown action type "

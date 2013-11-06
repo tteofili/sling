@@ -47,16 +47,20 @@ public class JobHandlingReplicationQueue implements ReplicationQueue {
 
     private final Logger log = LoggerFactory.getLogger(getClass());
 
-    private String name;
+    private final String name;
 
-    private String topic;
+    private final String topic;
 
-    private JobManager jobManager;
+    private final JobManager jobManager;
 
     protected JobHandlingReplicationQueue(String name, String topic, JobManager jobManager) {
         this.name = name;
         this.topic = topic;
         this.jobManager = jobManager;
+    }
+
+    public String getName() {
+        return name;
     }
 
     public boolean add(ReplicationPackage replicationPackage) {
@@ -150,7 +154,9 @@ public class JobHandlingReplicationQueue implements ReplicationQueue {
     }
 
     public boolean isEmpty() {
-        return jobManager.getQueue(name).getStatistics().getNumberOfJobs() == 0;
+        // TODO : fix this
+//        return jobManager.getQueue(name).getStatistics().getNumberOfJobs() == 0;
+        return false;
     }
 
 }

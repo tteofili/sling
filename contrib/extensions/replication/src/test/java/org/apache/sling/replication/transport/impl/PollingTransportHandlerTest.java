@@ -44,7 +44,7 @@ public class PollingTransportHandlerTest {
     public void testPollingTransport() throws Exception {
         PollingTransportHandler pollingTransportHandler = new PollingTransportHandler();
         ReplicationPackage replicationPackage = mock(ReplicationPackage.class);
-        when(replicationPackage.getAction()).thenReturn(ReplicationActionType.ACTIVATE.toString());
+        when(replicationPackage.getAction()).thenReturn(ReplicationActionType.ADD.toString());
         when(replicationPackage.getType()).thenReturn("test");
         when(replicationPackage.getPaths()).thenReturn(new String[]{"/"});
         ReplicationEndpoint replicationEndpoint = new ReplicationEndpoint(new URI("http://localhost:8080/system/replication/agent/reverse"));

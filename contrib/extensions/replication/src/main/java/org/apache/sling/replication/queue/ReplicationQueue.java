@@ -27,6 +27,12 @@ import org.apache.sling.replication.serialization.ReplicationPackage;
 public interface ReplicationQueue {
 
     /**
+     * get this queue name
+     * @return queue name as a <code>String</code>
+     */
+    String getName();
+
+    /**
      * add a replication package to this queue
      *
      * @param replicationPackage
@@ -75,7 +81,6 @@ public interface ReplicationQueue {
      * check if the queue is empty
      *
      * @return <code>true</code> if the queue is empty, <code>false</code> otherwise
-     * @throws ReplicationQueueException
      */
-    boolean isEmpty() throws ReplicationQueueException;
+    boolean isEmpty();
 }

@@ -68,13 +68,13 @@ public class SimpleReplicationAgentImplTest {
         SimpleReplicationAgentImpl agent = new SimpleReplicationAgentImpl(name, endpoint,
                         transportHandler, packageBuilder, queueProvider, authenticationHandler, distributionHandler);
         ReplicationRequest request = new ReplicationRequest(System.nanoTime(),
-                        ReplicationActionType.ACTIVATE, "/");
+                        ReplicationActionType.ADD, "/");
         ReplicationPackage replicationPackage = mock(ReplicationPackage.class);
         when(packageBuilder.createPackage(request)).thenReturn(replicationPackage);
         when(queueProvider.getOrCreateQueue(agent, replicationPackage)).thenReturn(
-                        new SimpleReplicationQueue(agent));
+                        new SimpleReplicationQueue(agent, "name"));
         when(queueProvider.getOrCreateDefaultQueue(agent)).thenReturn(
-              new SimpleReplicationQueue(agent));
+              new SimpleReplicationQueue(agent, "name"));
         ReplicationResponse response = agent.execute(request);
         assertNotNull(response);
     }
@@ -91,13 +91,13 @@ public class SimpleReplicationAgentImplTest {
         SimpleReplicationAgentImpl agent = new SimpleReplicationAgentImpl(name, endpoint,
                 transportHandler, packageBuilder, queueProvider, authenticationHandler, distributionHandler);
         ReplicationRequest request = new ReplicationRequest(System.nanoTime(),
-                ReplicationActionType.ACTIVATE, "/");
+                ReplicationActionType.ADD, "/");
         ReplicationPackage replicationPackage = mock(ReplicationPackage.class);
         when(packageBuilder.createPackage(request)).thenReturn(replicationPackage);
         when(queueProvider.getOrCreateQueue(agent, replicationPackage)).thenReturn(
-                new SimpleReplicationQueue(agent));
+                new SimpleReplicationQueue(agent, "name"));
         when(queueProvider.getOrCreateDefaultQueue(agent)).thenReturn(
-                new SimpleReplicationQueue(agent));
+                new SimpleReplicationQueue(agent, "name"));
         agent.send(request);
     }
 }

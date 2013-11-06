@@ -66,7 +66,7 @@ public class VoidReplicationPackage implements ReplicationPackage {
     }
 
     public String getAction() {
-        return ReplicationActionType.DEACTIVATE.toString();
+        return ReplicationActionType.DELETE.toString();
     }
 
 }

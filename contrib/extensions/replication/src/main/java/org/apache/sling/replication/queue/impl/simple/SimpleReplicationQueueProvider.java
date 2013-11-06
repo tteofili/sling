@@ -42,7 +42,7 @@ public class SimpleReplicationQueueProvider extends AbstractReplicationQueueProv
 
     protected ReplicationQueue createQueue(ReplicationAgent agent, String selector)
                     throws ReplicationQueueException {
-        return new SimpleReplicationQueue(agent);
+        return new SimpleReplicationQueue(agent, selector);
     }
 
     protected void deleteQueue(ReplicationQueue queue) throws ReplicationQueueException {
