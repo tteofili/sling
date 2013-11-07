@@ -32,9 +32,9 @@ public abstract class AbstractReplicationPackageBuilder implements ReplicationPa
                     throws ReplicationPackageBuildingException {
         ReplicationPackage replicationPackage = null;
         if (ReplicationActionType.ADD.equals(request.getAction())) {
-            replicationPackage = createPackageForActivation(request);
+            replicationPackage = createPackageForAdd(request);
         } else if (ReplicationActionType.DELETE.equals(request.getAction())) {
-            replicationPackage = createPackageForDeactivation(request);
+            replicationPackage = createPackageForDelete(request);
         } else {
             throw new ReplicationPackageBuildingException("unknown action type "
                             + request.getAction());
@@ -42,10 +42,10 @@ public abstract class AbstractReplicationPackageBuilder implements ReplicationPa
         return replicationPackage;
     }
 
-    protected abstract ReplicationPackage createPackageForDeactivation(
-                    final ReplicationRequest request);
+    protected abstract ReplicationPackage createPackageForDelete(
+            final ReplicationRequest request);
 
-    protected abstract ReplicationPackage createPackageForActivation(ReplicationRequest request)
+    protected abstract ReplicationPackage createPackageForAdd(ReplicationRequest request)
                     throws ReplicationPackageBuildingException;
 
     public ReplicationPackage readPackage(ReplicationRequest request, InputStream stream,

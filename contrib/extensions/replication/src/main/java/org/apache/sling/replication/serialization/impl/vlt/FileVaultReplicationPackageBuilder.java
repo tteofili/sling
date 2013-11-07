@@ -68,7 +68,7 @@ public class FileVaultReplicationPackageBuilder extends AbstractReplicationPacka
     @Reference
     private Packaging packaging;
 
-    protected ReplicationPackage createPackageForActivation(ReplicationRequest request)
+    protected ReplicationPackage createPackageForAdd(ReplicationRequest request)
                     throws ReplicationPackageBuildingException {
         Session session = null;
         try {
@@ -190,7 +190,7 @@ public class FileVaultReplicationPackageBuilder extends AbstractReplicationPacka
     }
 
     @Override
-    protected ReplicationPackage createPackageForDeactivation(ReplicationRequest request) {
+    protected ReplicationPackage createPackageForDelete(ReplicationRequest request) {
         return new VoidReplicationPackage(request, NAME);
     }
 
