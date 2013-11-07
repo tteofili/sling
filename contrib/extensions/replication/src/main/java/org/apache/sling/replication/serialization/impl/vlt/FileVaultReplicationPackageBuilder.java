@@ -113,8 +113,8 @@ public class FileVaultReplicationPackageBuilder extends AbstractReplicationPacka
     }
 
     @Override
-    protected ReplicationPackage readPackageForActivation(ReplicationRequest request,
-                    final InputStream stream, boolean install)
+    protected ReplicationPackage readPackageForAdd(ReplicationRequest request,
+                                                   final InputStream stream, boolean install)
                     throws ReplicationPackageBuildingException {
         if (log.isInfoEnabled()) {
             log.info("reading a stream {}", stream);
@@ -156,8 +156,8 @@ public class FileVaultReplicationPackageBuilder extends AbstractReplicationPacka
     }
 
     @Override
-    protected ReplicationPackage readPackageForDeactivation(ReplicationRequest request,
-                    InputStream stream, boolean install) throws ReplicationPackageBuildingException {
+    protected ReplicationPackage readPackageForDelete(ReplicationRequest request,
+                                                      InputStream stream, boolean install) throws ReplicationPackageBuildingException {
         Session session = null;
         ReplicationPackage pkg = new VoidReplicationPackage(request, NAME);
         try {
