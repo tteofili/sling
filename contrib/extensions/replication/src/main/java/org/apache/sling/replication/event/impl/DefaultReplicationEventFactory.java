@@ -41,7 +41,7 @@ public class DefaultReplicationEventFactory implements ReplicationEventFactory {
         eventAdmin.postEvent(event);
     }
 
-    public void generateEvent(ReplicationEventType replicationEventType, Dictionary properties) {
+    public void generateEvent(ReplicationEventType replicationEventType, Dictionary<?, ?> properties) {
         postEvent(new ReplicationEvent(replicationEventType, properties));
     }
 

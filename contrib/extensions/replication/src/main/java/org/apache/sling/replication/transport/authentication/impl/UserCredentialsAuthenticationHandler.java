@@ -47,7 +47,7 @@ public class UserCredentialsAuthenticationHandler implements
             ReplicationEndpoint endpoint = context.getAttribute("endpoint",
                             ReplicationEndpoint.class);
             if (endpoint != null) {
-                Executor authenticated = ((Executor) authenticable).auth(new HttpHost(endpoint
+                Executor authenticated = authenticable.auth(new HttpHost(endpoint
                                 .getUri().getHost()), username, password);
                 if (log.isInfoEnabled()) {
                     log.info("authenticated executor {} with user and password", authenticated);

@@ -22,7 +22,6 @@ import javax.jcr.Credentials;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.SimpleCredentials;
-
 import org.apache.sling.jcr.api.SlingRepository;
 import org.apache.sling.replication.transport.authentication.AuthenticationContext;
 import org.apache.sling.replication.transport.authentication.AuthenticationException;
@@ -45,29 +44,25 @@ public class RepositoryAuthenticationHandler implements AuthenticationHandler<Sl
     }
 
     public Session authenticate(SlingRepository authenticable, AuthenticationContext context)
-                    throws AuthenticationException {
-        if (authenticable instanceof SlingRepository) {
-            String path = context.getAttribute("path", String.class);
-            if (path != null) {
-                try {
-                    Session session = authenticable.login(credentials);
-                    if (!session.nodeExists(path)) {
-                        throw new AuthenticationException("failed to read path " + path);
-                    } else {
-                        if (log.isInfoEnabled()) {
-                            log.info("authenticated path {} ", path);
-                        }
-                        return session;
+            throws AuthenticationException {
+        String path = context.getAttribute("path", String.class);
+        if (path != null) {
+            try {
+                Session session = authenticable.login(credentials);
+                if (!session.nodeExists(path)) {
+                    throw new AuthenticationException("failed to read path " + path);
+                } else {
+                    if (log.isInfoEnabled()) {
+                        log.info("authenticated path {} ", path);
                     }
-                } catch (RepositoryException re) {
-                    throw new AuthenticationException(re);
+                    return session;
                 }
-            } else {
-                throw new AuthenticationException(
-                                "the path to authenticate is missing from the context");
+            } catch (RepositoryException re) {
+                throw new AuthenticationException(re);
             }
         } else {
-            throw new AuthenticationException("could not authenticate a " + authenticable);
+            throw new AuthenticationException(
+                    "the path to authenticate is missing from the context");
         }
     }
 

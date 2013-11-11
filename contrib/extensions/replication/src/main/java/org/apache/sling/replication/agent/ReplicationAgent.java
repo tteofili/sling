@@ -25,19 +25,38 @@ import org.apache.sling.replication.queue.ReplicationQueueException;
 import org.apache.sling.replication.serialization.ReplicationPackage;
 
 /**
- * A replication agent
+ * A replication agent is responsible for delivering content to another instance
  */
 public interface ReplicationAgent {
 
+    /**
+     * get agent name
+     *
+     * @return the agent name as a <code>String</code>
+     */
     String getName();
 
+    /**
+     * get the agent queue with the given name
+     *
+     * @param name a queue name as a <code>String</code>
+     * @return a {@link ReplicationQueue} with the given name bound to this agent, if it exists, <code>null</code> otherwise
+     * @throws ReplicationQueueException
+     */
     ReplicationQueue getQueue(String name) throws ReplicationQueueException;
 
     ReplicationResponse execute(ReplicationRequest replicationRequest)
-                    throws AgentReplicationException;
+            throws AgentReplicationException;
 
     void send(ReplicationRequest replicationRequest) throws AgentReplicationException;
 
+    /**
+     * process the replication of a certain item
+     *
+     * @param item a {@link ReplicationPackage} to process
+     * @return <code>true</code> if process was successful, <code>false</code> otherwise
+     * @throws AgentReplicationException
+     */
     boolean process(ReplicationPackage item) throws AgentReplicationException;
 
 }

@@ -19,7 +19,6 @@
 package org.apache.sling.replication.agent;
 
 import java.util.SortedSet;
-
 import org.apache.sling.replication.communication.ReplicationActionType;
 
 /**
@@ -27,6 +26,13 @@ import org.apache.sling.replication.communication.ReplicationActionType;
  */
 public interface ReplicationAgentsManager {
 
+    /**
+     * get agents which can handle the given action on the given paths
+     *
+     * @param action a {@link ReplicationActionType}
+     * @param paths  the paths such agents should be able to handle
+     * @return a {@link SortedSet} of {@link ReplicationAgent}s
+     */
     SortedSet<ReplicationAgent> getAgentsFor(ReplicationActionType action, String... paths);
 
 }
