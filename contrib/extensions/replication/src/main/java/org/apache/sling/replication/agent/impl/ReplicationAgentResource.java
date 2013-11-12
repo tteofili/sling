@@ -39,6 +39,9 @@ public class ReplicationAgentResource extends AbstractResource {
 
     public ReplicationAgentResource(ReplicationAgent replicationAgent,
                     ResourceResolver resourceResolver) {
+        if (replicationAgent == null) {
+            throw new RuntimeException("cannot create an agent resource with a null agent");
+        }
         this.replicationAgent = replicationAgent;
         this.resourceResolver = resourceResolver;
     }

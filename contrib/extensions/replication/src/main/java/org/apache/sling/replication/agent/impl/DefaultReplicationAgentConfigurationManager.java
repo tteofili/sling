@@ -50,10 +50,13 @@ public class DefaultReplicationAgentConfigurationManager implements
     public ReplicationAgentConfiguration getConfiguration(ReplicationAgent replicationAgent)
                     throws AgentConfigurationException {
         if (log.isInfoEnabled()) {
-            log.info("retrieving configuration for agent ", replicationAgent);
+            log.info("retrieving configuration for agent {}", replicationAgent);
         }
         try {
             Configuration configuration = getOsgiConfiguration(replicationAgent);
+            if (log.isInfoEnabled()) {
+                log.info("configuration for agent {} found {}", replicationAgent, configuration);
+            }
             return new ReplicationAgentConfiguration(configuration.getProperties());
 
         } catch (Exception e) {

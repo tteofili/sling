@@ -73,7 +73,7 @@ public class SimpleReplicationAgent implements ReplicationAgent {
     }
 
     public ReplicationResponse execute(ReplicationRequest replicationRequest)
-                    throws AgentReplicationException {
+            throws AgentReplicationException {
 
         // create package from request
         ReplicationPackage replicationPackage;
@@ -88,9 +88,13 @@ public class SimpleReplicationAgent implements ReplicationAgent {
         // send the replication package to the queue distribution handler
         try {
             ReplicationQueueItemState state = queueDistributionStrategy.add(replicationPackage,
-                            this, queueProvider);
-            replicationResponse.setStatus(state.getItemState().toString());
-            replicationResponse.setSuccessfull(state.isSuccessfull());
+                    this, queueProvider);
+            if (state != null) {
+                replicationResponse.setStatus(state.getItemState().toString());
+                replicationResponse.setSuccessfull(state.isSuccessfull());
+            } else {
+                replicationResponse.setStatus(ReplicationQueueItemState.ItemState.ERROR.toString());
+            }
         } catch (Exception e) {
             if (log.isErrorEnabled()) {
                 log.error("an error happened during queue processing", e);
@@ -125,7 +129,7 @@ public class SimpleReplicationAgent implements ReplicationAgent {
             } else {
                 if (log.isWarnEnabled()) {
                     log.warn("could not process an item as a transport handler is not bound to agent {}",
-                                    name);
+                            name);
                 }
                 return false;
             }

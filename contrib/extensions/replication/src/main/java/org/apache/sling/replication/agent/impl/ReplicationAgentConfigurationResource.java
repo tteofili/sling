@@ -31,13 +31,16 @@ public class ReplicationAgentConfigurationResource extends AbstractResource {
 
     public static final String RESOURCE_TYPE = "sling/replication/agent/configuration";
 
-    private ReplicationAgentConfiguration replicationAgentConfiguration;
+    private final ReplicationAgentConfiguration replicationAgentConfiguration;
 
-    private ResourceResolver resourceResolver;
+    private final ResourceResolver resourceResolver;
 
     public ReplicationAgentConfigurationResource(
                     ReplicationAgentConfiguration replicationAgentConfiguration,
                     ResourceResolver resourceResolver) {
+        if (replicationAgentConfiguration == null) {
+            throw new RuntimeException("cannot create a configuration resource with a null configuration");
+        }
         this.replicationAgentConfiguration = replicationAgentConfiguration;
         this.resourceResolver = resourceResolver;
     }

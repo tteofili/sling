@@ -21,7 +21,7 @@ package org.apache.sling.replication.agent;
 import java.util.Map;
 
 /**
- * Facade class for dealing with {@link ReplicationAgent}'s {@link ReplicationAgentConfiguration}s
+ * Facade class for dealing with {@link ReplicationAgent}s' {@link ReplicationAgentConfiguration}s
  */
 public interface ReplicationAgentConfigurationManager {
 

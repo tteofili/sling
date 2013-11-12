@@ -16,19 +16,29 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package org.apache.sling.replication.agent;
+package org.apache.sling.replication.agent.impl;
+
+import org.apache.sling.api.resource.ResourceResolver;
+import org.apache.sling.replication.agent.ReplicationAgent;
+import org.junit.Test;
+
+import static org.junit.Assert.fail;
+import static org.mockito.Mockito.mock;
 
 /**
- * Represents errors happened during {@link ReplicationAgent} configuration
+ * Testcase for {@link ReplicationAgentResource}
  */
-@SuppressWarnings("serial")
-public class AgentConfigurationException extends Exception {
+public class ReplicationAgentResourceTest {
 
-    public AgentConfigurationException(Exception e) {
-        super(e);
-    }
-
-    public AgentConfigurationException(String string) {
-        super(string);
+    @Test
+    public void testResourceCreationWithNullAgent() throws Exception {
+        try {
+            ReplicationAgent agent = null;
+            ResourceResolver resourceResolver = mock(ResourceResolver.class);
+            new ReplicationAgentResource(agent, resourceResolver);
+            fail("it should not be possible to create an agent resource out of a null agent");
+        } catch (Throwable t) {
+            // expected
+        }
     }
 }

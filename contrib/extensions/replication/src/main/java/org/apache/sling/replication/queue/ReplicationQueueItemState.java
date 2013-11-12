@@ -26,8 +26,6 @@ public class ReplicationQueueItemState {
 
     private int attempts;
 
-    private boolean successfull;
-
     private ItemState state;
 
     public boolean isSuccessfull() {
@@ -57,7 +55,7 @@ public class ReplicationQueueItemState {
     @Override
     public String toString() {
         return new StringBuilder("{\"attempts\":\"").append(attempts).append("\",\"")
-                        .append("successfull\":\"").append(successfull).append("\",\"")
+                        .append("successfull\":\"").append(isSuccessfull()).append("\",\"")
                         .append("state\":\"").append(state).append("\"}").toString();
     }
 
