@@ -90,7 +90,7 @@ public class RepositoryTransportHandler implements TransportHandler {
         return REPO_SCHEME.equals(uri.getScheme()) && uri.getHost() != null;
     }
 
-    public boolean supportsAuthenticationHandler(TransportAuthenticationProvider<?, ?> transportAuthenticationProvider) {
+    public boolean supportsAuthenticationProvider(TransportAuthenticationProvider<?, ?> transportAuthenticationProvider) {
         return transportAuthenticationProvider.canAuthenticate(SlingRepository.class);
     }
 }

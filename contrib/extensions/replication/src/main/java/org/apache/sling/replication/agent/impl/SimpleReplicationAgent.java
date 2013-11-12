@@ -40,7 +40,7 @@ import org.slf4j.LoggerFactory;
 /**
  * Basic implementation of a {@link ReplicationAgent}
  */
-public class SimpleReplicationAgentImpl implements ReplicationAgent {
+public class SimpleReplicationAgent implements ReplicationAgent {
 
     private final Logger log = LoggerFactory.getLogger(getClass());
 
@@ -58,11 +58,11 @@ public class SimpleReplicationAgentImpl implements ReplicationAgent {
 
     private String endpoint;
 
-    public SimpleReplicationAgentImpl(String name, String endpoint,
-                    TransportHandler transportHandler, ReplicationPackageBuilder packageBuilder,
-                    ReplicationQueueProvider queueProvider,
-                    TransportAuthenticationProvider<?, ?> transportAuthenticationProvider,
-                    ReplicationQueueDistributionStrategy queueDistributionHandler) {
+    public SimpleReplicationAgent(String name, String endpoint,
+                                  TransportHandler transportHandler, ReplicationPackageBuilder packageBuilder,
+                                  ReplicationQueueProvider queueProvider,
+                                  TransportAuthenticationProvider<?, ?> transportAuthenticationProvider,
+                                  ReplicationQueueDistributionStrategy queueDistributionHandler) {
         this.name = name;
         this.endpoint = endpoint;
         this.transportHandler = transportHandler;

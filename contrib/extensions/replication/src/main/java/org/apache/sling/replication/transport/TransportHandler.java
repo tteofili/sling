@@ -32,6 +32,6 @@ public interface TransportHandler {
                     TransportAuthenticationProvider<?, ?> transportAuthenticationProvider)
                     throws ReplicationTransportException;
 
-    boolean supportsAuthenticationHandler(TransportAuthenticationProvider<?, ?> transportAuthenticationProvider);
+    boolean supportsAuthenticationProvider(TransportAuthenticationProvider<?, ?> transportAuthenticationProvider);
 
 }

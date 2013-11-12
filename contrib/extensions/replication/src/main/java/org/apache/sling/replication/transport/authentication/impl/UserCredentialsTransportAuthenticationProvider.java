@@ -42,23 +42,19 @@ public class UserCredentialsTransportAuthenticationProvider implements
     }
 
     public Executor authenticate(Executor authenticable, TransportAuthenticationContext context)
-                    throws TransportAuthenticationException {
-        if (authenticable instanceof Executor) {
-            ReplicationEndpoint endpoint = context.getAttribute("endpoint",
-                            ReplicationEndpoint.class);
-            if (endpoint != null) {
-                Executor authenticated = authenticable.auth(new HttpHost(endpoint
-                                .getUri().getHost()), username, password);
-                if (log.isInfoEnabled()) {
-                    log.info("authenticated executor {} with user and password", authenticated);
-                }
-                return authenticated;
-            } else {
-                throw new TransportAuthenticationException(
-                                "the endpoint to authenticate is missing from the context");
+            throws TransportAuthenticationException {
+        ReplicationEndpoint endpoint = context.getAttribute("endpoint",
+                ReplicationEndpoint.class);
+        if (endpoint != null) {
+            Executor authenticated = authenticable.auth(new HttpHost(endpoint
+                    .getUri().getHost()), username, password);
+            if (log.isInfoEnabled()) {
+                log.info("authenticated executor {} with user and password", authenticated);
             }
+            return authenticated;
         } else {
-            throw new TransportAuthenticationException("could not authenticate a " + authenticable);
+            throw new TransportAuthenticationException(
+                    "the endpoint to authenticate is missing from the context");
         }
     }
 

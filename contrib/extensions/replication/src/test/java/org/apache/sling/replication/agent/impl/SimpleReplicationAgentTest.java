@@ -37,9 +37,9 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 /**
- * Testcase for {@link SimpleReplicationAgentImpl}
+ * Testcase for {@link SimpleReplicationAgent}
  */
-public class SimpleReplicationAgentImplTest {
+public class SimpleReplicationAgentTest {
 
     @Test
     public void testProcess() throws Exception {
@@ -50,7 +50,7 @@ public class SimpleReplicationAgentImplTest {
         ReplicationQueueProvider queueProvider = mock(ReplicationQueueProvider.class);
         TransportAuthenticationProvider transportAuthenticationProvider = mock(TransportAuthenticationProvider.class);
         ReplicationQueueDistributionStrategy distributionHandler = new SingleQueueDistributionStrategy();
-        SimpleReplicationAgentImpl agent = new SimpleReplicationAgentImpl(name, endpoint,
+        SimpleReplicationAgent agent = new SimpleReplicationAgent(name, endpoint,
                         transportHandler, packageBuilder, queueProvider, transportAuthenticationProvider, distributionHandler);
         ReplicationPackage item = mock(ReplicationPackage.class);
         assertTrue(agent.process(item));
@@ -65,7 +65,7 @@ public class SimpleReplicationAgentImplTest {
         ReplicationQueueProvider queueProvider = mock(ReplicationQueueProvider.class);
         TransportAuthenticationProvider transportAuthenticationProvider = mock(TransportAuthenticationProvider.class);
         ReplicationQueueDistributionStrategy distributionHandler = new SingleQueueDistributionStrategy();
-        SimpleReplicationAgentImpl agent = new SimpleReplicationAgentImpl(name, endpoint,
+        SimpleReplicationAgent agent = new SimpleReplicationAgent(name, endpoint,
                         transportHandler, packageBuilder, queueProvider, transportAuthenticationProvider, distributionHandler);
         ReplicationRequest request = new ReplicationRequest(System.nanoTime(),
                         ReplicationActionType.ADD, "/");
@@ -88,7 +88,7 @@ public class SimpleReplicationAgentImplTest {
         ReplicationQueueProvider queueProvider = mock(ReplicationQueueProvider.class);
         TransportAuthenticationProvider transportAuthenticationProvider = mock(TransportAuthenticationProvider.class);
         ReplicationQueueDistributionStrategy distributionHandler = new SingleQueueDistributionStrategy();
-        SimpleReplicationAgentImpl agent = new SimpleReplicationAgentImpl(name, endpoint,
+        SimpleReplicationAgent agent = new SimpleReplicationAgent(name, endpoint,
                 transportHandler, packageBuilder, queueProvider, transportAuthenticationProvider, distributionHandler);
         ReplicationRequest request = new ReplicationRequest(System.nanoTime(),
                 ReplicationActionType.ADD, "/");

@@ -22,7 +22,6 @@ import java.util.Dictionary;
 import java.util.Hashtable;
 import java.util.Map;
 import java.util.Random;
-
 import org.apache.felix.scr.annotations.Activate;
 import org.apache.felix.scr.annotations.Component;
 import org.apache.felix.scr.annotations.ConfigurationPolicy;
@@ -158,18 +157,17 @@ public class ReplicationAgentServiceFactory {
 
         TransportAuthenticationProvider<?, ?> transportAuthenticationProvider = transportAuthenticationProviderFactory.createAuthenticationProvider(authenticationProperties);
         
-        if (!transportHandler.supportsAuthenticationHandler(transportAuthenticationProvider)) {
+        if (!transportHandler.supportsAuthenticationProvider(transportAuthenticationProvider)) {
             throw new Exception("authentication handler " + transportAuthenticationProvider
                             + " not supported by transport handler " + transportHandler);
         }
-        
 
         if (log.isInfoEnabled()) {
             log.info("bound services for {} :  {} - {} - {} - {} - {}", new Object[] { name,
                     transportHandler, endpoint, packageBuilder, queueProvider, transportAuthenticationProvider});
         }
 
-        ReplicationAgent agent = new SimpleReplicationAgentImpl(name, endpoint, transportHandler, packageBuilder, queueProvider, transportAuthenticationProvider, queueDistributionStrategy);
+        ReplicationAgent agent = new SimpleReplicationAgent(name, endpoint, transportHandler, packageBuilder, queueProvider, transportAuthenticationProvider, queueDistributionStrategy);
 
         // register agent service
         agentReg = context.registerService(ReplicationAgent.class.getName(), agent, props);

@@ -108,7 +108,7 @@ public class PollingTransportHandler implements TransportHandler {
 
     }
 
-    public boolean supportsAuthenticationHandler(TransportAuthenticationProvider<?, ?> transportAuthenticationProvider) {
+    public boolean supportsAuthenticationProvider(TransportAuthenticationProvider<?, ?> transportAuthenticationProvider) {
         return transportAuthenticationProvider.canAuthenticate(Executor.class);
     }
 }
