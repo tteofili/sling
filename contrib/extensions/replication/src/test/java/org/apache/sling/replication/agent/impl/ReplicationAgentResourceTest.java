@@ -22,6 +22,9 @@ import org.apache.sling.api.resource.ResourceResolver;
 import org.apache.sling.replication.agent.ReplicationAgent;
 import org.junit.Test;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.fail;
 import static org.mockito.Mockito.mock;
 
@@ -40,5 +43,21 @@ public class ReplicationAgentResourceTest {
         } catch (Throwable t) {
             // expected
         }
+    }
+
+    @Test
+    public void testResourceCreationWithAgent() throws Exception {
+        ReplicationAgent agent = mock(ReplicationAgent.class);
+        ResourceResolver resourceResolver = mock(ResourceResolver.class);
+        ReplicationAgentResource replicationAgentResource = new ReplicationAgentResource(agent, resourceResolver);
+        assertNotNull(replicationAgentResource.getPath());
+        assertEquals(ReplicationAgentResource.BASE_PATH +"/null", replicationAgentResource.getPath());
+        assertNotNull(replicationAgentResource.getResourceResolver());
+        assertEquals(resourceResolver, replicationAgentResource.getResourceResolver());
+        assertNotNull(replicationAgentResource.getResourceType());
+        assertEquals(ReplicationAgentResource.RESOURCE_TYPE, replicationAgentResource.getResourceType());
+        assertNotNull(replicationAgentResource.getResourceMetadata());
+        assertEquals(ReplicationAgentResource.BASE_PATH, replicationAgentResource.getResourceMetadata().getResolutionPath());
+        assertNull(replicationAgentResource.getResourceSuperType());
     }
 }

@@ -51,7 +51,7 @@ import org.apache.sling.replication.communication.ReplicationActionType;
                unbind = "unbindReplicationAgent")
     })
 @Service(value = ReplicationAgentsManager.class)
-public class ReplicationAgentsManagerImpl implements ReplicationAgentsManager {
+public class DefaultReplicationAgentsManager implements ReplicationAgentsManager {
 
     private final Logger log = LoggerFactory.getLogger(getClass());
 

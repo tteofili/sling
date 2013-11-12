@@ -18,23 +18,22 @@
  */
 package org.apache.sling.replication.agent.impl;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
-
 import org.apache.sling.api.resource.Resource;
 import org.apache.sling.api.resource.ResourceResolver;
+import org.apache.sling.replication.agent.AgentConfigurationException;
+import org.apache.sling.replication.agent.ReplicationAgent;
+import org.apache.sling.replication.agent.ReplicationAgentConfiguration;
+import org.apache.sling.replication.agent.ReplicationAgentConfigurationManager;
 import org.junit.Test;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.InvalidSyntaxException;
 import org.osgi.framework.ServiceReference;
 
-import org.apache.sling.replication.agent.AgentConfigurationException;
-import org.apache.sling.replication.agent.ReplicationAgent;
-import org.apache.sling.replication.agent.ReplicationAgentConfiguration;
-import org.apache.sling.replication.agent.ReplicationAgentConfigurationManager;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 /**
  * Testcase for {@link ReplicationAgentResourceProvider}
