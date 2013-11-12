@@ -42,9 +42,9 @@ import org.apache.sling.replication.queue.impl.jobhandling.JobHandlingReplicatio
 import org.apache.sling.replication.serialization.ReplicationPackageBuilder;
 import org.apache.sling.replication.serialization.impl.vlt.FileVaultReplicationPackageBuilder;
 import org.apache.sling.replication.transport.TransportHandler;
-import org.apache.sling.replication.transport.authentication.AuthenticationHandler;
-import org.apache.sling.replication.transport.authentication.AuthenticationHandlerFactory;
-import org.apache.sling.replication.transport.authentication.impl.UserCredentialsAuthenticationHandlerFactory;
+import org.apache.sling.replication.transport.authentication.TransportAuthenticationProvider;
+import org.apache.sling.replication.transport.authentication.TransportAuthenticationProviderFactory;
+import org.apache.sling.replication.transport.authentication.impl.UserCredentialsTransportAuthenticationProviderFactory;
 import org.apache.sling.replication.transport.impl.HttpTransportHandler;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.ServiceRegistration;
@@ -80,7 +80,7 @@ public class ReplicationAgentServiceFactory {
 
     private static final String DEFAULT_TRANSPORT = "(name=" + HttpTransportHandler.NAME + ")";
 
-    private static final String DEFAULT_AUTHENTICATION_FACTORY = "(name=" + UserCredentialsAuthenticationHandlerFactory.TYPE + ")";
+    private static final String DEFAULT_AUTHENTICATION_FACTORY = "(name=" + UserCredentialsTransportAuthenticationProviderFactory.TYPE + ")";
 
     private static final String DEFAULT_ENDPOINT = "http://localhost:4503/system/replication/receive";
 
@@ -116,7 +116,7 @@ public class ReplicationAgentServiceFactory {
 
     @Property(name = AUTHENTICATION_FACTORY, value = DEFAULT_AUTHENTICATION_FACTORY)
     @Reference(name = "AuthenticationHandlerFactory", target = DEFAULT_AUTHENTICATION_FACTORY, policy = ReferencePolicy.DYNAMIC)
-    private AuthenticationHandlerFactory authenticationHandlerFactory;
+    private TransportAuthenticationProviderFactory transportAuthenticationProviderFactory;
 
     @Property(name = DISTRIBUTION, value = DEFAULT_DISTRIBUTION)
     @Reference(name = "ReplicationQueueDistributionStrategy", target = DEFAULT_DISTRIBUTION, policy = ReferencePolicy.DYNAMIC)
@@ -156,20 +156,20 @@ public class ReplicationAgentServiceFactory {
         String af = PropertiesUtil.toString(config.get(AUTHENTICATION_FACTORY), DEFAULT_AUTHENTICATION_FACTORY);
         props.put(AUTHENTICATION_FACTORY, af);
 
-        AuthenticationHandler<?, ?> authenticationHandler = authenticationHandlerFactory.createAuthenticationHandler(authenticationProperties);
+        TransportAuthenticationProvider<?, ?> transportAuthenticationProvider = transportAuthenticationProviderFactory.createAuthenticationHandler(authenticationProperties);
         
-        if (!transportHandler.supportsAuthenticationHandler(authenticationHandler)) {
-            throw new Exception("authentication handler " + authenticationHandler
+        if (!transportHandler.supportsAuthenticationHandler(transportAuthenticationProvider)) {
+            throw new Exception("authentication handler " + transportAuthenticationProvider
                             + " not supported by transport handler " + transportHandler);
         }
         
 
         if (log.isInfoEnabled()) {
             log.info("bound services for {} :  {} - {} - {} - {} - {}", new Object[] { name,
-                    transportHandler, endpoint, packageBuilder, queueProvider, authenticationHandler });
+                    transportHandler, endpoint, packageBuilder, queueProvider, transportAuthenticationProvider});
         }
 
-        ReplicationAgent agent = new SimpleReplicationAgentImpl(name, endpoint, transportHandler, packageBuilder, queueProvider, authenticationHandler, queueDistributionStrategy);
+        ReplicationAgent agent = new SimpleReplicationAgentImpl(name, endpoint, transportHandler, packageBuilder, queueProvider, transportAuthenticationProvider, queueDistributionStrategy);
 
         // register agent service
         agentReg = context.registerService(ReplicationAgent.class.getName(), agent, props);

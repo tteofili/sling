@@ -48,7 +48,7 @@ import org.apache.sling.replication.serialization.ReplicationPackageBuilderProvi
                unbind = "unbindReplicationPackageBuilder")
     })
 @Service(value = ReplicationPackageBuilderProvider.class)
-public class ReplicationPackageBuilderProviderImpl implements ReplicationPackageBuilderProvider {
+public class DefaultReplicationPackageBuilderProvider implements ReplicationPackageBuilderProvider {
 
     private final Logger log = LoggerFactory.getLogger(getClass());
 

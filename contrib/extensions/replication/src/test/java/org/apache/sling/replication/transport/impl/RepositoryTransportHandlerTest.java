@@ -26,8 +26,8 @@ import org.apache.sling.jcr.api.SlingRepository;
 import org.apache.sling.replication.communication.ReplicationEndpoint;
 import org.apache.sling.replication.serialization.ReplicationPackage;
 import org.apache.sling.replication.transport.ReplicationTransportException;
-import org.apache.sling.replication.transport.authentication.AuthenticationHandler;
-import org.apache.sling.replication.transport.authentication.impl.RepositoryAuthenticationHandler;
+import org.apache.sling.replication.transport.authentication.TransportAuthenticationProvider;
+import org.apache.sling.replication.transport.authentication.impl.RepositoryTransportAuthenticationProvider;
 import org.junit.Test;
 
 import static org.junit.Assert.fail;
@@ -44,10 +44,10 @@ public class RepositoryTransportHandlerTest {
     public void testDeliveryWithoutAuthenticatedSession() throws Exception {
         RepositoryTransportHandler handler = new RepositoryTransportHandler();
         @SuppressWarnings("unchecked")
-        AuthenticationHandler<SlingRepository, Session> authenticationHandler = mock(AuthenticationHandler.class);
+        TransportAuthenticationProvider<SlingRepository, Session> transportAuthenticationProvider = mock(TransportAuthenticationProvider.class);
         try {
             handler.transport(null, new ReplicationEndpoint("repo://var/outbox/replication/rev1"),
-                    authenticationHandler);
+                    transportAuthenticationProvider);
             fail("cannot deliver without a proper session");
         } catch (ReplicationTransportException re) {
             // failure expected
@@ -75,10 +75,10 @@ public class RepositoryTransportHandlerTest {
         Field field = handler.getClass().getDeclaredField("repository");
         field.setAccessible(true);
         field.set(handler, repo);
-        AuthenticationHandler<SlingRepository, Session> authenticationHandler = new RepositoryAuthenticationHandler("user-123", "p455w0rd");
+        TransportAuthenticationProvider<SlingRepository, Session> transportAuthenticationProvider = new RepositoryTransportAuthenticationProvider("user-123", "p455w0rd");
         ReplicationPackage replicationPackage = mock(ReplicationPackage.class);
         when(replicationPackage.getId()).thenReturn("some-id");
         handler.transport(replicationPackage, new ReplicationEndpoint("repo://" + repoPath),
-                authenticationHandler);
+                transportAuthenticationProvider);
     }
 }

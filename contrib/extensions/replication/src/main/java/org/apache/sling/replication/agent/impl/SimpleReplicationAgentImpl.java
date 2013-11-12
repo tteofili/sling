@@ -33,7 +33,7 @@ import org.apache.sling.replication.serialization.ReplicationPackageBuilder;
 import org.apache.sling.replication.serialization.ReplicationPackageBuildingException;
 import org.apache.sling.replication.transport.ReplicationTransportException;
 import org.apache.sling.replication.transport.TransportHandler;
-import org.apache.sling.replication.transport.authentication.AuthenticationHandler;
+import org.apache.sling.replication.transport.authentication.TransportAuthenticationProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -50,7 +50,7 @@ public class SimpleReplicationAgentImpl implements ReplicationAgent {
 
     private TransportHandler transportHandler;
 
-    private AuthenticationHandler<?, ?> authenticationHandler;
+    private TransportAuthenticationProvider<?, ?> transportAuthenticationProvider;
 
     private ReplicationQueueDistributionStrategy queueDistributionStrategy;
 
@@ -61,14 +61,14 @@ public class SimpleReplicationAgentImpl implements ReplicationAgent {
     public SimpleReplicationAgentImpl(String name, String endpoint,
                     TransportHandler transportHandler, ReplicationPackageBuilder packageBuilder,
                     ReplicationQueueProvider queueProvider,
-                    AuthenticationHandler<?, ?> authenticationHandler,
+                    TransportAuthenticationProvider<?, ?> transportAuthenticationProvider,
                     ReplicationQueueDistributionStrategy queueDistributionHandler) {
         this.name = name;
         this.endpoint = endpoint;
         this.transportHandler = transportHandler;
         this.packageBuilder = packageBuilder;
         this.queueProvider = queueProvider;
-        this.authenticationHandler = authenticationHandler;
+        this.transportAuthenticationProvider = transportAuthenticationProvider;
         this.queueDistributionStrategy = queueDistributionHandler;
     }
 
@@ -120,7 +120,7 @@ public class SimpleReplicationAgentImpl implements ReplicationAgent {
         try {
             if (transportHandler != null) {
                 transportHandler.transport(item, new ReplicationEndpoint(endpoint),
-                                authenticationHandler);
+                        transportAuthenticationProvider);
                 return true;
             } else {
                 if (log.isWarnEnabled()) {

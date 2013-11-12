@@ -21,14 +21,14 @@ package org.apache.sling.replication.transport.authentication.impl;
 import org.apache.http.HttpHost;
 import org.apache.http.client.fluent.Executor;
 import org.apache.sling.replication.communication.ReplicationEndpoint;
-import org.apache.sling.replication.transport.authentication.AuthenticationContext;
-import org.apache.sling.replication.transport.authentication.AuthenticationException;
-import org.apache.sling.replication.transport.authentication.AuthenticationHandler;
+import org.apache.sling.replication.transport.authentication.TransportAuthenticationContext;
+import org.apache.sling.replication.transport.authentication.TransportAuthenticationException;
+import org.apache.sling.replication.transport.authentication.TransportAuthenticationProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class UserCredentialsAuthenticationHandler implements
-        AuthenticationHandler<Executor, Executor> {
+public class UserCredentialsTransportAuthenticationProvider implements
+        TransportAuthenticationProvider<Executor, Executor> {
 
     private Logger log = LoggerFactory.getLogger(getClass());
 
@@ -36,13 +36,13 @@ public class UserCredentialsAuthenticationHandler implements
 
     private String password;
 
-    public UserCredentialsAuthenticationHandler(String username, String password) {
+    public UserCredentialsTransportAuthenticationProvider(String username, String password) {
         this.username = username;
         this.password = password;
     }
 
-    public Executor authenticate(Executor authenticable, AuthenticationContext context)
-                    throws AuthenticationException {
+    public Executor authenticate(Executor authenticable, TransportAuthenticationContext context)
+                    throws TransportAuthenticationException {
         if (authenticable instanceof Executor) {
             ReplicationEndpoint endpoint = context.getAttribute("endpoint",
                             ReplicationEndpoint.class);
@@ -54,11 +54,11 @@ public class UserCredentialsAuthenticationHandler implements
                 }
                 return authenticated;
             } else {
-                throw new AuthenticationException(
+                throw new TransportAuthenticationException(
                                 "the endpoint to authenticate is missing from the context");
             }
         } else {
-            throw new AuthenticationException("could not authenticate a " + authenticable);
+            throw new TransportAuthenticationException("could not authenticate a " + authenticable);
         }
     }
 

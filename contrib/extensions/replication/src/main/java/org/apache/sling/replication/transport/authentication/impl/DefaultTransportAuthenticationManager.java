@@ -27,62 +27,62 @@ import org.apache.felix.scr.annotations.Reference;
 import org.apache.felix.scr.annotations.ReferenceCardinality;
 import org.apache.felix.scr.annotations.ReferencePolicy;
 import org.apache.felix.scr.annotations.References;
-import org.apache.sling.replication.transport.authentication.AuthenticationHandler;
-import org.apache.sling.replication.transport.authentication.AuthenticationHandlerFactory;
-import org.apache.sling.replication.transport.authentication.AuthenticationHandlerProvider;
+import org.apache.sling.replication.transport.authentication.TransportAuthenticationManager;
+import org.apache.sling.replication.transport.authentication.TransportAuthenticationProvider;
+import org.apache.sling.replication.transport.authentication.TransportAuthenticationProviderFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 @Component
 @References({ 
     @Reference(name = "authenticationHandlerFactory", 
-                    referenceInterface = AuthenticationHandlerFactory.class,
+                    referenceInterface = TransportAuthenticationProviderFactory.class,
                     cardinality = ReferenceCardinality.OPTIONAL_MULTIPLE, 
                     policy = ReferencePolicy.DYNAMIC, 
                     bind = "bindAuthenticationHandlerFactory", 
                     unbind = "unbindAuthenticationHandlerFactory")
     })
-public class DefaultAuthenticationHandlerManager implements AuthenticationHandlerProvider {
+public class DefaultTransportAuthenticationManager implements TransportAuthenticationManager {
 
     private final Logger log = LoggerFactory.getLogger(getClass());
 
-    private Map<String, AuthenticationHandlerFactory> authenticationHandlerFactories = new HashMap<String, AuthenticationHandlerFactory>();
+    private Map<String, TransportAuthenticationProviderFactory> authenticationHandlerFactories = new HashMap<String, TransportAuthenticationProviderFactory>();
 
     @Deactivate
     protected void deactivate() {
         authenticationHandlerFactories.clear();
     }
 
-    public AuthenticationHandler<?, ?> getAuthenticationHandler(String type,
+    public TransportAuthenticationProvider<?, ?> getAuthenticationHandler(String type,
                     Map<String, String> properties) {
-        AuthenticationHandler<?, ?> authenticationHandler = null;
-        AuthenticationHandlerFactory authenticationHandlerFactory = authenticationHandlerFactories
+        TransportAuthenticationProvider<?, ?> transportAuthenticationProvider = null;
+        TransportAuthenticationProviderFactory transportAuthenticationProviderFactory = authenticationHandlerFactories
                         .get(type);
-        if (authenticationHandlerFactory != null) {
-            authenticationHandler = authenticationHandlerFactory
+        if (transportAuthenticationProviderFactory != null) {
+            transportAuthenticationProvider = transportAuthenticationProviderFactory
                             .createAuthenticationHandler(properties);
         }
-        return authenticationHandler;
+        return transportAuthenticationProvider;
     }
 
     public void bindAuthenticationHandlerFactory(
-                    AuthenticationHandlerFactory authenticationHandlerFactory) {
+                    TransportAuthenticationProviderFactory transportAuthenticationProviderFactory) {
         synchronized (authenticationHandlerFactories) {
-            authenticationHandlerFactories.put(authenticationHandlerFactory.getType(),
-                            authenticationHandlerFactory);
+            authenticationHandlerFactories.put(transportAuthenticationProviderFactory.getType(),
+                    transportAuthenticationProviderFactory);
         }
         if (log.isInfoEnabled()) {
-            log.info("Registered AuthenticationHandlerFactory {}", authenticationHandlerFactory);
+            log.info("Registered AuthenticationHandlerFactory {}", transportAuthenticationProviderFactory);
         }
     }
 
     public void unbindAuthenticationHandlerFactory(
-                    AuthenticationHandlerFactory authenticationHandlerFactory) {
+                    TransportAuthenticationProviderFactory transportAuthenticationProviderFactory) {
         synchronized (authenticationHandlerFactories) {
-            authenticationHandlerFactories.remove(authenticationHandlerFactory.getType());
+            authenticationHandlerFactories.remove(transportAuthenticationProviderFactory.getType());
         }
         if (log.isInfoEnabled()) {
-            log.info("Unregistered AuthenticationHandlerFactory {}", authenticationHandlerFactory);
+            log.info("Unregistered AuthenticationHandlerFactory {}", transportAuthenticationProviderFactory);
         }
     }
 

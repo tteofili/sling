@@ -32,8 +32,8 @@ import org.apache.sling.replication.communication.ReplicationEndpoint;
 import org.apache.sling.replication.serialization.ReplicationPackage;
 import org.apache.sling.replication.transport.ReplicationTransportException;
 import org.apache.sling.replication.transport.TransportHandler;
-import org.apache.sling.replication.transport.authentication.AuthenticationContext;
-import org.apache.sling.replication.transport.authentication.AuthenticationHandler;
+import org.apache.sling.replication.transport.authentication.TransportAuthenticationContext;
+import org.apache.sling.replication.transport.authentication.TransportAuthenticationProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -53,17 +53,17 @@ public class RepositoryTransportHandler implements TransportHandler {
 
     public void transport(ReplicationPackage replicationPackage,
                     ReplicationEndpoint replicationEndpoint,
-                    AuthenticationHandler<?, ?> authenticationHandler)
+                    TransportAuthenticationProvider<?, ?> transportAuthenticationProvider)
                     throws ReplicationTransportException {
         if (validateEndpoint(replicationEndpoint)) {
             try {
-                AuthenticationContext authenticationContext = new AuthenticationContext();
+                TransportAuthenticationContext transportAuthenticationContext = new TransportAuthenticationContext();
                 String path = new StringBuilder(replicationEndpoint.getUri().getHost()).append(
                                 replicationEndpoint.getUri().getPath()).toString();
-                authenticationContext.addAttribute("path", path);
+                transportAuthenticationContext.addAttribute("path", path);
                 @SuppressWarnings("unchecked")
-                Session session = ((AuthenticationHandler<SlingRepository, Session>) authenticationHandler)
-                                .authenticate(repository, authenticationContext);
+                Session session = ((TransportAuthenticationProvider<SlingRepository, Session>) transportAuthenticationProvider)
+                                .authenticate(repository, transportAuthenticationContext);
                 if (session != null) {
                     Node addedNode = session.getNode(path).addNode(replicationPackage.getId(),
                                     NodeType.NT_FILE);
@@ -90,7 +90,7 @@ public class RepositoryTransportHandler implements TransportHandler {
         return REPO_SCHEME.equals(uri.getScheme()) && uri.getHost() != null;
     }
 
-    public boolean supportsAuthenticationHandler(AuthenticationHandler<?, ?> authenticationHandler) {
-        return authenticationHandler.canAuthenticate(SlingRepository.class);
+    public boolean supportsAuthenticationHandler(TransportAuthenticationProvider<?, ?> transportAuthenticationProvider) {
+        return transportAuthenticationProvider.canAuthenticate(SlingRepository.class);
     }
 }

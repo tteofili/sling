@@ -27,8 +27,8 @@ import org.apache.http.client.fluent.Response;
 import org.apache.sling.replication.communication.ReplicationActionType;
 import org.apache.sling.replication.communication.ReplicationEndpoint;
 import org.apache.sling.replication.serialization.ReplicationPackage;
-import org.apache.sling.replication.transport.authentication.AuthenticationContext;
-import org.apache.sling.replication.transport.authentication.AuthenticationHandler;
+import org.apache.sling.replication.transport.authentication.TransportAuthenticationContext;
+import org.apache.sling.replication.transport.authentication.TransportAuthenticationProvider;
 import org.junit.Test;
 
 import static org.mockito.Matchers.any;
@@ -48,7 +48,7 @@ public class PollingTransportHandlerTest {
         when(replicationPackage.getType()).thenReturn("test");
         when(replicationPackage.getPaths()).thenReturn(new String[]{"/"});
         ReplicationEndpoint replicationEndpoint = new ReplicationEndpoint(new URI("http://localhost:8080/system/replication/agent/reverse"));
-        AuthenticationHandler<Executor, Executor> authenticationHandler = mock(AuthenticationHandler.class);
+        TransportAuthenticationProvider<Executor, Executor> transportAuthenticationProvider = mock(TransportAuthenticationProvider.class);
         Executor executor = mock(Executor.class);
         Response response = mock(Response.class);
         HttpEntity entity = mock(HttpEntity.class);
@@ -56,7 +56,7 @@ public class PollingTransportHandlerTest {
         when(response.returnResponse()).thenReturn(httpResponse);
         when(httpResponse.getEntity()).thenReturn(entity);
         when(executor.execute(any(Request.class))).thenReturn(response);
-        when(authenticationHandler.authenticate(any(Executor.class), any(AuthenticationContext.class))).thenReturn(executor);
-        pollingTransportHandler.transport(replicationPackage, replicationEndpoint, authenticationHandler);
+        when(transportAuthenticationProvider.authenticate(any(Executor.class), any(TransportAuthenticationContext.class))).thenReturn(executor);
+        pollingTransportHandler.transport(replicationPackage, replicationEndpoint, transportAuthenticationProvider);
     }
 }

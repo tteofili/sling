@@ -23,19 +23,19 @@ import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.SimpleCredentials;
 import org.apache.sling.jcr.api.SlingRepository;
-import org.apache.sling.replication.transport.authentication.AuthenticationContext;
-import org.apache.sling.replication.transport.authentication.AuthenticationException;
-import org.apache.sling.replication.transport.authentication.AuthenticationHandler;
+import org.apache.sling.replication.transport.authentication.TransportAuthenticationContext;
+import org.apache.sling.replication.transport.authentication.TransportAuthenticationException;
+import org.apache.sling.replication.transport.authentication.TransportAuthenticationProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class RepositoryAuthenticationHandler implements AuthenticationHandler<SlingRepository, Session> {
+public class RepositoryTransportAuthenticationProvider implements TransportAuthenticationProvider<SlingRepository, Session> {
 
     private final Logger log = LoggerFactory.getLogger(getClass());
 
     private final Credentials credentials;
 
-    public RepositoryAuthenticationHandler(String user, String password) {
+    public RepositoryTransportAuthenticationProvider(String user, String password) {
         this.credentials = new SimpleCredentials(user, password.toCharArray());
     }
 
@@ -43,14 +43,14 @@ public class RepositoryAuthenticationHandler implements AuthenticationHandler<Sl
         return SlingRepository.class.isAssignableFrom(authenticable);
     }
 
-    public Session authenticate(SlingRepository authenticable, AuthenticationContext context)
-            throws AuthenticationException {
+    public Session authenticate(SlingRepository authenticable, TransportAuthenticationContext context)
+            throws TransportAuthenticationException {
         String path = context.getAttribute("path", String.class);
         if (path != null) {
             try {
                 Session session = authenticable.login(credentials);
                 if (!session.nodeExists(path)) {
-                    throw new AuthenticationException("failed to read path " + path);
+                    throw new TransportAuthenticationException("failed to read path " + path);
                 } else {
                     if (log.isInfoEnabled()) {
                         log.info("authenticated path {} ", path);
@@ -58,10 +58,10 @@ public class RepositoryAuthenticationHandler implements AuthenticationHandler<Sl
                     return session;
                 }
             } catch (RepositoryException re) {
-                throw new AuthenticationException(re);
+                throw new TransportAuthenticationException(re);
             }
         } else {
-            throw new AuthenticationException(
+            throw new TransportAuthenticationException(
                     "the path to authenticate is missing from the context");
         }
     }

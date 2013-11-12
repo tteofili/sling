@@ -18,16 +18,13 @@
  */
 package org.apache.sling.replication.transport.authentication;
 
+import java.util.Map;
 
-@SuppressWarnings("serial")
-public class AuthenticationException extends Exception {
+/**
+ * Provides {@link TransportAuthenticationProvider}s instances of specific types with specific properties
+ */
+public interface TransportAuthenticationManager {
 
-    public AuthenticationException(String string) {
-        super(string);
-    }
-
-    public AuthenticationException(Exception e) {
-        super(e);
-    }
+    TransportAuthenticationProvider<?, ?> getAuthenticationHandler(String type, Map<String, String> properties);
 
 }

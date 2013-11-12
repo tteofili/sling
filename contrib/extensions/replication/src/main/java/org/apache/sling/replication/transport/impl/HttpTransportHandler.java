@@ -33,8 +33,8 @@ import org.apache.sling.replication.communication.ReplicationEndpoint;
 import org.apache.sling.replication.serialization.ReplicationPackage;
 import org.apache.sling.replication.transport.ReplicationTransportException;
 import org.apache.sling.replication.transport.TransportHandler;
-import org.apache.sling.replication.transport.authentication.AuthenticationContext;
-import org.apache.sling.replication.transport.authentication.AuthenticationHandler;
+import org.apache.sling.replication.transport.authentication.TransportAuthenticationContext;
+import org.apache.sling.replication.transport.authentication.TransportAuthenticationProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -53,18 +53,18 @@ public class HttpTransportHandler implements TransportHandler {
     @SuppressWarnings("unchecked")
     public void transport(ReplicationPackage replicationPackage,
                           ReplicationEndpoint replicationEndpoint,
-                          AuthenticationHandler<?, ?> authenticationHandler)
+                          TransportAuthenticationProvider<?, ?> transportAuthenticationProvider)
             throws ReplicationTransportException {
         if (log.isInfoEnabled()) {
             log.info("delivering package {} to {} using auth {}",
                     new Object[]{replicationPackage.getId(),
-                            replicationEndpoint.getUri(), authenticationHandler});
+                            replicationEndpoint.getUri(), transportAuthenticationProvider});
         }
         try {
             Executor executor = Executor.newInstance();
-            AuthenticationContext context = new AuthenticationContext();
+            TransportAuthenticationContext context = new TransportAuthenticationContext();
             context.addAttribute("endpoint", replicationEndpoint);
-            executor = ((AuthenticationHandler<Executor, Executor>) authenticationHandler)
+            executor = ((TransportAuthenticationProvider<Executor, Executor>) transportAuthenticationProvider)
                     .authenticate(executor, context);
 
             String[] paths = replicationPackage.getPaths();
@@ -95,7 +95,7 @@ public class HttpTransportHandler implements TransportHandler {
         }
     }
 
-    public boolean supportsAuthenticationHandler(AuthenticationHandler<?, ?> authenticationHandler) {
-        return authenticationHandler.canAuthenticate(Executor.class);
+    public boolean supportsAuthenticationHandler(TransportAuthenticationProvider<?, ?> transportAuthenticationProvider) {
+        return transportAuthenticationProvider.canAuthenticate(Executor.class);
     }
 }

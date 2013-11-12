@@ -18,7 +18,7 @@
  */
 package org.apache.sling.replication.transport;
 
-import org.apache.sling.replication.transport.authentication.AuthenticationHandler;
+import org.apache.sling.replication.transport.authentication.TransportAuthenticationProvider;
 import org.apache.sling.replication.communication.ReplicationEndpoint;
 import org.apache.sling.replication.serialization.ReplicationPackage;
 
@@ -29,9 +29,9 @@ import org.apache.sling.replication.serialization.ReplicationPackage;
 public interface TransportHandler {
 
     void transport(ReplicationPackage replicationPackage, ReplicationEndpoint replicationEndpoint,
-                    AuthenticationHandler<?, ?> authenticationHandler)
+                    TransportAuthenticationProvider<?, ?> transportAuthenticationProvider)
                     throws ReplicationTransportException;
 
-    boolean supportsAuthenticationHandler(AuthenticationHandler<?, ?> authenticationHandler);
+    boolean supportsAuthenticationHandler(TransportAuthenticationProvider<?, ?> transportAuthenticationProvider);
 
 }

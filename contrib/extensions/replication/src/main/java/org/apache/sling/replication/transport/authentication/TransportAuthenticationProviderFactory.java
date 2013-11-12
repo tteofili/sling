@@ -21,10 +21,11 @@ package org.apache.sling.replication.transport.authentication;
 import java.util.Map;
 
 /**
- * Provides {@link AuthenticationHandler}s instances of specific types with specific properties
+ * Factory for {@link TransportAuthenticationProvider}s
  */
-public interface AuthenticationHandlerProvider {
+public interface TransportAuthenticationProviderFactory {
 
-    AuthenticationHandler<?, ?> getAuthenticationHandler(String type, Map<String, String> properties);
+    TransportAuthenticationProvider<?, ?> createAuthenticationHandler(Map<String, String> properties);
 
+    String getType();
 }

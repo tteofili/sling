@@ -23,11 +23,11 @@ package org.apache.sling.replication.transport.authentication;
  * An <code>AuthenticationHandler</code> is responsible for authentication of instances sending and
  * receiving replication items.
  */
-public interface AuthenticationHandler<A, T> {
+public interface TransportAuthenticationProvider<A, T> {
 
     boolean canAuthenticate(Class<?> authenticable);
 
-    T authenticate(A authenticable, AuthenticationContext context)
-                    throws AuthenticationException;
+    T authenticate(A authenticable, TransportAuthenticationContext context)
+                    throws TransportAuthenticationException;
 
 }

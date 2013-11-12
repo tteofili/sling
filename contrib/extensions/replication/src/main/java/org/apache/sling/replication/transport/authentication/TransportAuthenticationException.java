@@ -18,23 +18,16 @@
  */
 package org.apache.sling.replication.transport.authentication;
 
-import java.util.HashMap;
-import java.util.Map;
 
-public class AuthenticationContext {
-    private Map<String, Object> attributes = new HashMap<String, Object>();
+@SuppressWarnings("serial")
+public class TransportAuthenticationException extends Exception {
 
-    @SuppressWarnings("unchecked")
-    public <T extends Object> T getAttribute(String name, Class<? extends T> klass) {
-        T result = null;
-        Object object = attributes.get(name);
-        if (klass.isInstance(object)) {
-            result = (T) object;
-        }
-        return result;
+    public TransportAuthenticationException(String string) {
+        super(string);
     }
 
-    public <T extends Object> void addAttribute(String name, T object) {
-        attributes.put(name, object);
+    public TransportAuthenticationException(Exception e) {
+        super(e);
     }
+
 }
