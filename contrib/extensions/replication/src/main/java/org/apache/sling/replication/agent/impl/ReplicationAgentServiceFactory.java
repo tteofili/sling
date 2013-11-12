@@ -156,7 +156,7 @@ public class ReplicationAgentServiceFactory {
         String af = PropertiesUtil.toString(config.get(AUTHENTICATION_FACTORY), DEFAULT_AUTHENTICATION_FACTORY);
         props.put(AUTHENTICATION_FACTORY, af);
 
-        TransportAuthenticationProvider<?, ?> transportAuthenticationProvider = transportAuthenticationProviderFactory.createAuthenticationHandler(authenticationProperties);
+        TransportAuthenticationProvider<?, ?> transportAuthenticationProvider = transportAuthenticationProviderFactory.createAuthenticationProvider(authenticationProperties);
         
         if (!transportHandler.supportsAuthenticationHandler(transportAuthenticationProvider)) {
             throw new Exception("authentication handler " + transportAuthenticationProvider

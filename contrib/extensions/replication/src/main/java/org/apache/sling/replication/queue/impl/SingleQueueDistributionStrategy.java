@@ -35,7 +35,7 @@ import org.apache.sling.replication.serialization.ReplicationPackage;
 
 /**
  * The default strategy for delivering packages to queues. Each agent just manages a single queue,
- * no failure / stuck handling where each pacakge is put regardless of anything.
+ * no failure / stuck handling where each package is put regardless of anything.
  */
 @Component(immediate = true)
 @Service(value = ReplicationQueueDistributionStrategy.class)

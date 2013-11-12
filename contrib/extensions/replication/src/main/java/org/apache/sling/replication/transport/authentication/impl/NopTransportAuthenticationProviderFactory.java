@@ -35,7 +35,7 @@ public class NopTransportAuthenticationProviderFactory implements TransportAuthe
 
     private static final TransportAuthenticationProvider<Object, Object> NOP_TRANSPORT_AUTHENTICATION_PROVIDER = new NopTransportAuthenticationProvider();
 
-    public TransportAuthenticationProvider<Object, Object> createAuthenticationHandler(Map<String, String> properties) {
+    public TransportAuthenticationProvider<Object, Object> createAuthenticationProvider(Map<String, String> properties) {
         return NOP_TRANSPORT_AUTHENTICATION_PROVIDER;
     }
 

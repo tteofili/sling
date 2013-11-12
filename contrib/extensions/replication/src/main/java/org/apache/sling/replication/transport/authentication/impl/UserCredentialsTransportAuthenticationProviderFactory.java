@@ -34,8 +34,8 @@ import org.apache.sling.replication.transport.authentication.TransportAuthentica
 public class UserCredentialsTransportAuthenticationProviderFactory implements TransportAuthenticationProviderFactory {
     public static final String TYPE = "user";
 
-    public TransportAuthenticationProvider<Executor, Executor> createAuthenticationHandler(
-                    Map<String, String> properties) {
+    public TransportAuthenticationProvider<Executor, Executor> createAuthenticationProvider(
+            Map<String, String> properties) {
         String user = null;
         Object userProp = properties.get("user");
         if (userProp != null) {

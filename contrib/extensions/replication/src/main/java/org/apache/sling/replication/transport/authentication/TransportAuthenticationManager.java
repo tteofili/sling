@@ -25,6 +25,6 @@ import java.util.Map;
  */
 public interface TransportAuthenticationManager {
 
-    TransportAuthenticationProvider<?, ?> getAuthenticationHandler(String type, Map<String, String> properties);
+    TransportAuthenticationProvider<?, ?> getAuthenticationProvider(String type, Map<String, String> properties);
 
 }

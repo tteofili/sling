@@ -35,7 +35,7 @@ import org.apache.sling.replication.transport.authentication.TransportAuthentica
 public class RepositoryTransportAuthenticationProviderFactory implements TransportAuthenticationProviderFactory {
     public static final String TYPE = "repo-user";
 
-    public TransportAuthenticationProvider<SlingRepository, Session> createAuthenticationHandler(Map<String, String> properties) {
+    public TransportAuthenticationProvider<SlingRepository, Session> createAuthenticationProvider(Map<String, String> properties) {
         String user = null;
         Object userProp = properties.get("user");
         if (userProp != null) {

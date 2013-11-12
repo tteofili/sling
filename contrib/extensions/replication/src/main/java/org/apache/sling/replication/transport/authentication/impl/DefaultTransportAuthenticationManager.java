@@ -53,14 +53,14 @@ public class DefaultTransportAuthenticationManager implements TransportAuthentic
         authenticationHandlerFactories.clear();
     }
 
-    public TransportAuthenticationProvider<?, ?> getAuthenticationHandler(String type,
-                    Map<String, String> properties) {
+    public TransportAuthenticationProvider<?, ?> getAuthenticationProvider(String type,
+                                                                           Map<String, String> properties) {
         TransportAuthenticationProvider<?, ?> transportAuthenticationProvider = null;
         TransportAuthenticationProviderFactory transportAuthenticationProviderFactory = authenticationHandlerFactories
                         .get(type);
         if (transportAuthenticationProviderFactory != null) {
             transportAuthenticationProvider = transportAuthenticationProviderFactory
-                            .createAuthenticationHandler(properties);
+                            .createAuthenticationProvider(properties);
         }
         return transportAuthenticationProvider;
     }
