@@ -28,7 +28,7 @@ import static org.junit.Assert.assertEquals;
 /**
  * Testcase for {@link NopTransportAuthenticationProvider}
  */
-public class NopAuthenticationHandlerTest {
+public class NopTransportAuthenticationProviderTest {
 
     @Test
     public void testAuthenticationWithNullAuthenticableAndContext() throws Exception {

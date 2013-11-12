@@ -28,7 +28,7 @@ import static org.junit.Assert.fail;
 /**
  * Testcase for {@link UserCredentialsTransportAuthenticationProvider}
  */
-public class UserCredentialsAuthenticationHandlerTest {
+public class UserCredentialsTransportAuthenticationProviderTest {
 
     @Test
     public void testAuthenticationWithNullAuthenticableAndContext() throws Exception {
