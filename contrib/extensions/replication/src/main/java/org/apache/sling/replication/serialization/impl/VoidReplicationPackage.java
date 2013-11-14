@@ -16,37 +16,58 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package org.apache.sling.replication.serialization.impl.vlt;
+package org.apache.sling.replication.serialization.impl;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-
+import java.util.Arrays;
+import org.apache.commons.io.IOUtils;
+import org.apache.jackrabbit.vault.util.Text;
 import org.apache.sling.replication.communication.ReplicationActionType;
 import org.apache.sling.replication.communication.ReplicationRequest;
 import org.apache.sling.replication.serialization.ReplicationPackage;
 
 /**
- * A void {@link ReplicationPackage} used mainly for deactivation
+ * A void {@link ReplicationPackage} used mainly for deletion of certain paths on the target instance
  */
 public class VoidReplicationPackage implements ReplicationPackage {
 
+    public static final String VOID = "VOID";
     private String type;
 
     private String[] paths;
 
     private String id;
 
-    public VoidReplicationPackage(ReplicationRequest request, String type) {
+    public VoidReplicationPackage(ReplicationRequest request) {
         this.type = type;
         this.paths = request.getPaths();
-        this.id = String.valueOf(request.getTime());
+        this.id = new StringBuilder(ReplicationActionType.DELETE.toString()).append(':').
+                append(Arrays.toString(request.getPaths())).append(':').
+                append(request.getTime()).toString();
     }
+
+    public static VoidReplicationPackage fromStream(InputStream stream) throws IOException {
+        VoidReplicationPackage replicationPackage = null;
+        String streamString = IOUtils.toString(stream);
+        int beginIndex = streamString.indexOf(':');
+        int endIndex = streamString.lastIndexOf(':');
+        if (beginIndex >= 0 && endIndex > beginIndex && streamString.startsWith(ReplicationActionType.DELETE.toString())) {
+            String pathsArrayString = Text.unescape(streamString.substring(beginIndex + 1, endIndex - 1));
+            String[] paths = pathsArrayString.replaceAll("\\[", "").replaceAll("\\]", "").split(", ");
+            ReplicationRequest request = new ReplicationRequest(Long.valueOf(streamString.substring(streamString.lastIndexOf(':') + 1)),
+                    ReplicationActionType.DELETE, paths);
+            replicationPackage = new VoidReplicationPackage(request);
+        }
+        return replicationPackage;
+    }
+
 
     private static final long serialVersionUID = 1L;
 
     public String getType() {
-        return type;
+        return VOID;
     }
 
     public String[] getPaths() {
@@ -58,7 +79,7 @@ public class VoidReplicationPackage implements ReplicationPackage {
     }
 
     public InputStream getInputStream() throws IOException {
-        return new ByteArrayInputStream("".getBytes());
+        return new ByteArrayInputStream(id.getBytes());
     }
 
     public String getId() {

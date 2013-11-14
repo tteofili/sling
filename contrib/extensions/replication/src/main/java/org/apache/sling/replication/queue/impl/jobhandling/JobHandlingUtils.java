@@ -22,6 +22,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Map;
+import org.apache.commons.io.IOUtils;
 import org.apache.sling.event.jobs.Job;
 import org.apache.sling.event.jobs.JobManager;
 import org.apache.sling.event.jobs.ScheduledJobInfo;
@@ -111,9 +112,11 @@ public class JobHandlingUtils {
             }
 
             public InputStream getInputStream() throws IOException {
-                // TODO : eventually re-enable it once SLING-3140 gets released
+                // TODO : use this once SLING-3140 gets released
                 // return new ByteArrayInputStream((byte[]) job.getProperty(BIN));
-                return null;
+
+                // workaround to make void package work while we get SLING-3140 to be released
+                return IOUtils.toInputStream(String.valueOf(job.getProperty(ID)));
             }
 
             public String getId() {

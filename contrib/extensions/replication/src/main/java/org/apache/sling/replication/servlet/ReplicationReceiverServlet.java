@@ -18,25 +18,25 @@
  */
 package org.apache.sling.replication.servlet;
 
+import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.util.Arrays;
-
 import javax.servlet.Servlet;
 import javax.servlet.ServletException;
-
+import javax.servlet.ServletInputStream;
 import org.apache.felix.scr.annotations.Component;
 import org.apache.felix.scr.annotations.Properties;
 import org.apache.felix.scr.annotations.Property;
+import org.apache.felix.scr.annotations.Reference;
 import org.apache.felix.scr.annotations.Service;
-import org.apache.jackrabbit.util.Text;
 import org.apache.sling.api.SlingHttpServletRequest;
 import org.apache.sling.api.SlingHttpServletResponse;
 import org.apache.sling.api.servlets.SlingAllMethodsServlet;
+import org.apache.sling.replication.serialization.ReplicationPackage;
+import org.apache.sling.replication.serialization.ReplicationPackageBuilder;
+import org.apache.sling.replication.serialization.ReplicationPackageBuilderProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import org.apache.sling.replication.communication.ReplicationActionType;
-import org.apache.sling.replication.serialization.ReplicationPackage;
 
 /**
  * Servlet to handle reception of replication content.
@@ -44,35 +44,52 @@ import org.apache.sling.replication.serialization.ReplicationPackage;
 @SuppressWarnings("serial")
 @Component(metatype = false)
 @Service(value = Servlet.class)
-@Properties({ @Property(name = "sling.servlet.paths", value = "/system/replication/receive"),
-        @Property(name = "sling.servlet.methods", value = "POST") })
+@Properties({@Property(name = "sling.servlet.paths", value = "/system/replication/receive"),
+        @Property(name = "sling.servlet.methods", value = "POST")})
 public class ReplicationReceiverServlet extends SlingAllMethodsServlet {
 
     private final Logger log = LoggerFactory.getLogger(getClass());
 
+    @Reference
+    private ReplicationPackageBuilderProvider replicationPackageBuilderProvider;
+
     @Override
     protected void doPost(SlingHttpServletRequest request, SlingHttpServletResponse response)
-                    throws ServletException, IOException {
+            throws ServletException, IOException {
         boolean success = false;
         final long start = System.currentTimeMillis();
         response.setContentType("text/plain");
         response.setCharacterEncoding("utf-8");
-        ReplicationActionType actionType = ReplicationActionType.fromName(request
-                        .getHeader("Action"));
 
-        String path = Text.unescape(request.getHeader("Path"));
         try {
 
-            ReplicationPackage replicationPackage = request.adaptTo(ReplicationPackage.class);
+            ReplicationPackage replicationPackage = null;
+            ServletInputStream stream = request.getInputStream();
+            if (request.getHeader("X-package-type") != null) {
+                ReplicationPackageBuilder replicationPacakageBuilder = replicationPackageBuilderProvider.getReplicationPacakageBuilder(request.getHeader("X-replication-type"));
+                replicationPackage = replicationPacakageBuilder.readPackage(stream, true);
+            } else {
+                BufferedInputStream bufferedInputStream = new BufferedInputStream(stream); // needed to allow for multiple reads
+                for (ReplicationPackageBuilder replicationPackageBuilder : replicationPackageBuilderProvider.getAvailableReplicationPacakageBuilders()) {
+                    try {
+                        replicationPackage = replicationPackageBuilder.readPackage(bufferedInputStream, true);
+                    } catch (Exception e) {
+                        if (log.isWarnEnabled()) {
+                            log.warn("package cannot be read from {}", replicationPackageBuilder);
+                        }
+                    }
+                }
+            }
+
             if (replicationPackage != null) {
                 if (log.isInfoEnabled()) {
                     log.info("replication package read and installed for path(s) {}",
-                                    Arrays.toString(replicationPackage.getPaths()));
+                            Arrays.toString(replicationPackage.getPaths()));
                 }
                 success = true;
             } else {
-                if (log.isInfoEnabled()) {
-                    log.info("could not read a replication package for path(s) {}", path);
+                if (log.isWarnEnabled()) {
+                    log.warn("could not read a replication package");
                 }
             }
         } catch (final Exception e) {
@@ -81,12 +98,11 @@ public class ReplicationReceiverServlet extends SlingAllMethodsServlet {
                 log.error("Error during replication: {}", e.getMessage(), e);
             }
             response.getWriter().print("error: " + e.toString());
-        }
-        finally {
+        } finally {
             final long end = System.currentTimeMillis();
             if (log.isInfoEnabled()) {
-                log.info("Processed replication request in {}ms: {} of {} : {}", new Object[] {
-                        end - start, actionType, path, success });
+                log.info("Processed replication request in {}ms: : {}", new Object[]{
+                        end - start, success});
             }
         }
 

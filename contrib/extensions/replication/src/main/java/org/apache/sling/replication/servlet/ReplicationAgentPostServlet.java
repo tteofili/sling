@@ -56,8 +56,8 @@ public class ReplicationAgentPostServlet extends SlingAllMethodsServlet {
 
         response.setContentType("application/json");
 
-        String action = request.getParameter("action");
-        String[] path = request.getParameterValues("path");
+        String action = request.getParameter("X-replication-action");
+        String[] path = request.getParameterValues("X-replication-path");
 
         ReplicationRequest replicationRequest = new ReplicationRequest(System.currentTimeMillis(),
                         ReplicationActionType.valueOf(action), path);

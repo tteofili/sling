@@ -44,7 +44,7 @@ public class HttpTransportHandlerTest {
         ReplicationPackage replicationPackage = mock(ReplicationPackage.class);
         when(replicationPackage.getAction()).thenReturn(ReplicationActionType.ADD.toString());
         when(replicationPackage.getType()).thenReturn("test");
-        when(replicationPackage.getPaths()).thenReturn(new String[]{"/"});
+        when(replicationPackage.getPaths()).thenReturn(new String[]{"/content"});
         ReplicationEndpoint replicationEndpoint = new ReplicationEndpoint(new URI("http://localhost:8080/system/replication/receive"));
         TransportAuthenticationProvider<Executor, Executor> transportAuthenticationProvider = mock(TransportAuthenticationProvider.class);
         Executor executor = mock(Executor.class);

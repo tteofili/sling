@@ -18,54 +18,106 @@
  */
 package org.apache.sling.replication.serialization.impl;
 
+import java.io.BufferedInputStream;
 import java.io.InputStream;
-
+import javax.jcr.RepositoryException;
+import javax.jcr.Session;
 import org.apache.sling.replication.communication.ReplicationActionType;
 import org.apache.sling.replication.communication.ReplicationRequest;
 import org.apache.sling.replication.serialization.ReplicationPackage;
 import org.apache.sling.replication.serialization.ReplicationPackageBuilder;
 import org.apache.sling.replication.serialization.ReplicationPackageBuildingException;
+import org.apache.sling.replication.serialization.ReplicationPackageReadingException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+/**
+ * base abstract implementation of a {@link ReplicationPackageBuilder}
+ */
 public abstract class AbstractReplicationPackageBuilder implements ReplicationPackageBuilder {
 
+    private final Logger log = LoggerFactory.getLogger(getClass());
+
     public ReplicationPackage createPackage(ReplicationRequest request)
-                    throws ReplicationPackageBuildingException {
-        ReplicationPackage replicationPackage = null;
+            throws ReplicationPackageBuildingException {
+        ReplicationPackage replicationPackage;
         if (ReplicationActionType.ADD.equals(request.getAction())) {
             replicationPackage = createPackageForAdd(request);
         } else if (ReplicationActionType.DELETE.equals(request.getAction())) {
-            replicationPackage = createPackageForDelete(request);
+            replicationPackage = new VoidReplicationPackage(request);
         } else {
             throw new ReplicationPackageBuildingException("unknown action type "
-                            + request.getAction());
+                    + request.getAction());
         }
         return replicationPackage;
     }
-
-    protected abstract ReplicationPackage createPackageForDelete(
-            final ReplicationRequest request);
 
     protected abstract ReplicationPackage createPackageForAdd(ReplicationRequest request)
-                    throws ReplicationPackageBuildingException;
+            throws ReplicationPackageBuildingException;
 
-    public ReplicationPackage readPackage(ReplicationRequest request, InputStream stream,
-                    boolean install) throws ReplicationPackageBuildingException {
+    public ReplicationPackage readPackage(InputStream stream,
+                                          boolean install) throws ReplicationPackageReadingException {
         ReplicationPackage replicationPackage = null;
-        if (ReplicationActionType.ADD.equals(request.getAction())) {
-            replicationPackage = readPackageForAdd(request, stream, install);
-        } else if (ReplicationActionType.DELETE.equals(request.getAction())) {
-            replicationPackage = readPackageForDelete(request, stream, install);
-        } else {
-            throw new ReplicationPackageBuildingException("unknown action type "
-                            + request.getAction());
+        if (!stream.markSupported()) {
+            stream = new BufferedInputStream(stream);
+        }
+        try {
+            stream.mark(10);
+            byte[] buffer = new byte[10];
+            int bytesRead = stream.read(buffer, 0, 10);
+            stream.reset();
+            String s = new String(buffer);
+            if (log.isInfoEnabled()) {
+                log.info("read {} bytes as s", bytesRead, s);
+            }
+            if (bytesRead > 0 && buffer[0] > 0 && s.startsWith("DEL")) {
+                replicationPackage = readPackageForDelete(stream);
+            }
+        } catch (Exception e) {
+            if (log.isWarnEnabled()) {
+                log.warn("{}", e);
+            }
+        }
+        stream.mark(-1);
+        if (replicationPackage == null) {
+            replicationPackage = readPackageForAdd(stream, install);
         }
         return replicationPackage;
     }
 
-    protected abstract ReplicationPackage readPackageForDelete(ReplicationRequest request,
-                                                               InputStream stream, boolean install) throws ReplicationPackageBuildingException;
+    private ReplicationPackage readPackageForDelete(InputStream stream) throws ReplicationPackageReadingException {
+        ReplicationPackage replicationPackage = null;
+        Session session = null;
+        try {
+            VoidReplicationPackage voidReplicationPackage = VoidReplicationPackage.fromStream(stream);
+            if (voidReplicationPackage != null) {
+                session = getSession();
+                if (session != null) {
+                    for (String path : voidReplicationPackage.getPaths()) {
+                        if (session.itemExists(path)) {
+                            session.removeItem(path);
+                        }
+                    }
+                    session.save();
+                    ReplicationRequest request = new ReplicationRequest(System.currentTimeMillis(),
+                            ReplicationActionType.DELETE, voidReplicationPackage.getPaths());
+                    replicationPackage = new VoidReplicationPackage(request);
+                }
+            }
+            return replicationPackage;
+        } catch (Exception e) {
+            throw new ReplicationPackageReadingException(e);
+        } finally {
+            if (session != null) {
+                session.logout();
+            }
+        }
 
-    protected abstract ReplicationPackage readPackageForAdd(ReplicationRequest request,
-                                                            InputStream stream, boolean install) throws ReplicationPackageBuildingException;
+    }
+
+    protected abstract Session getSession() throws RepositoryException;
+
+    protected abstract ReplicationPackage readPackageForAdd(InputStream stream, boolean install)
+            throws ReplicationPackageReadingException;
 
 }

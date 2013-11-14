@@ -28,10 +28,7 @@ import org.apache.http.HttpResponse;
 import org.apache.http.client.fluent.Executor;
 import org.apache.http.client.fluent.Request;
 import org.apache.http.client.fluent.Response;
-import org.apache.jackrabbit.util.Text;
-import org.apache.sling.replication.communication.ReplicationActionType;
 import org.apache.sling.replication.communication.ReplicationEndpoint;
-import org.apache.sling.replication.communication.ReplicationRequest;
 import org.apache.sling.replication.serialization.ReplicationPackage;
 import org.apache.sling.replication.serialization.ReplicationPackageBuilderProvider;
 import org.apache.sling.replication.transport.ReplicationTransportException;
@@ -77,21 +74,11 @@ public class PollingTransportHandler implements TransportHandler {
             HttpResponse httpResponse = response.returnResponse();
             HttpEntity entity = httpResponse.getEntity();
             Header typeHeader = httpResponse.getFirstHeader("type");
-            Header pathsHeader = httpResponse.getFirstHeader("path");
-            Header actionHeader = httpResponse.getFirstHeader("action");
 
-            if (typeHeader != null && pathsHeader != null && actionHeader != null) {
+            if (typeHeader != null) {
                 String type = typeHeader.getValue();
-                String[] paths = Text.unescape(pathsHeader.getValue()).replace("[", "")
-                                .replace("]", "").split(", ");
-                ReplicationActionType action = ReplicationActionType.valueOf(actionHeader
-                                .getValue());
-                ReplicationRequest replicationRequest = new ReplicationRequest(
-                                System.currentTimeMillis(), action, paths);
-
                 ReplicationPackage readPackage = packageBuilderProvider
-                                .getReplicationPacakageBuilder(type).readPackage(
-                                                replicationRequest, entity.getContent(), true);
+                                .getReplicationPacakageBuilder(type).readPackage(entity.getContent(), true);
 
                 if (log.isInfoEnabled()) {
                     log.info("package {} fetched and installed", readPackage.getId());
