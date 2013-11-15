@@ -5,7 +5,7 @@
     "TransportHandler.target" : "(name=http)", 
     "ReplicationPackageBuilder.target" : "(name=vlt)",
     "ReplicationQueueProvider.target" : "(name=sjh)",
-    "AuthenticationHandlerFactory.target" : "(name=user)",
+    "TransportAuthenticationProviderFactory.target" : "(name=user)",
     "authentication.properties" : ["user=admin","password=admin"],
     "ReplicationQueueDistributionStrategy.target" : "(name=error)",
     "rules" : ["trigger on path: /content/usergenerated"]

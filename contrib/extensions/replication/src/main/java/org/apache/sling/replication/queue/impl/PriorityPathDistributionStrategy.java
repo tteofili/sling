@@ -131,11 +131,11 @@ public class PriorityPathDistributionStrategy implements ReplicationQueueDistrib
         return queue;
     }
 
-    public void offer(ReplicationPackage replicationPackage, ReplicationAgent agent,
-                    ReplicationQueueProvider queueProvider) throws ReplicationQueueException {
+    public boolean offer(ReplicationPackage replicationPackage, ReplicationAgent agent,
+                         ReplicationQueueProvider queueProvider) throws ReplicationQueueException {
         ReplicationQueue queue = getQueue(replicationPackage, agent, queueProvider);
         if (queue != null) {
-            queue.add(replicationPackage);
+            return queue.add(replicationPackage);
         } else {
             throw new ReplicationQueueException("could not get a queue for agent "
                             + agent.getName());

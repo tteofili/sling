@@ -30,7 +30,7 @@ public class ReplicationAgentConfiguration {
 
     public static final String TRANSPORT = "TransportHandler.target";
 
-    public static final String AUTHENTICATION_FACTORY = "AuthenticationHandlerFactory.target";
+    public static final String TRANSPORT_AUTHENTICATION_FACTORY = "TransportAuthenticationProviderFactory.target";
 
     public static final String QUEUEPROVIDER = "ReplicationQueueProvider.target";
 
@@ -62,7 +62,7 @@ public class ReplicationAgentConfiguration {
         this.name = PropertiesUtil.toString(dictionary.get(NAME), "");
         this.endpoint = PropertiesUtil.toString(dictionary.get(ENDPOINT), "");
         this.targetAuthenticationHandlerFactory = PropertiesUtil.toString(
-                        dictionary.get(AUTHENTICATION_FACTORY), "");
+                        dictionary.get(TRANSPORT_AUTHENTICATION_FACTORY), "");
         this.targetReplicationBuilder = PropertiesUtil.toString(dictionary.get(PACKAGING), "");
         this.targetReplicationQueueProvider = PropertiesUtil.toString(
                         dictionary.get(QUEUEPROVIDER), "");

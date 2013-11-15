@@ -31,6 +31,7 @@ import org.apache.felix.scr.annotations.Reference;
 import org.apache.felix.scr.annotations.ReferencePolicy;
 import org.apache.sling.commons.osgi.PropertiesUtil;
 import org.apache.sling.event.jobs.consumer.JobConsumer;
+import org.apache.sling.replication.agent.AgentConfigurationException;
 import org.apache.sling.replication.agent.ReplicationAgent;
 import org.apache.sling.replication.agent.ReplicationAgentConfiguration;
 import org.apache.sling.replication.queue.ReplicationQueueDistributionStrategy;
@@ -53,13 +54,13 @@ import org.slf4j.LoggerFactory;
 /**
  * An OSGi service factory for {@link ReplicationAgent}s
  */
-@Component(metatype = true, 
-    label = "Replication Agents Factory",
-    description = "OSGi configuration based ReplicationAgent service factory",
-    name = ReplicationAgentServiceFactory.SERVICE_PID, 
-    configurationFactory = true, 
-    specVersion = "1.1", 
-    policy = ConfigurationPolicy.REQUIRE
+@Component(metatype = true,
+        label = "Replication Agents Factory",
+        description = "OSGi configuration based ReplicationAgent service factory",
+        name = ReplicationAgentServiceFactory.SERVICE_PID,
+        configurationFactory = true,
+        specVersion = "1.1",
+        policy = ConfigurationPolicy.REQUIRE
 )
 public class ReplicationAgentServiceFactory {
 
@@ -69,7 +70,7 @@ public class ReplicationAgentServiceFactory {
 
     private static final String TRANSPORT = ReplicationAgentConfiguration.TRANSPORT;
 
-    private static final String AUTHENTICATION_FACTORY = ReplicationAgentConfiguration.AUTHENTICATION_FACTORY;
+    private static final String TRANSPORT_AUTHENTICATION_FACTORY = ReplicationAgentConfiguration.TRANSPORT_AUTHENTICATION_FACTORY;
 
     private static final String QUEUEPROVIDER = ReplicationAgentConfiguration.QUEUEPROVIDER;
 
@@ -84,13 +85,13 @@ public class ReplicationAgentServiceFactory {
     private static final String DEFAULT_ENDPOINT = "http://localhost:4503/system/replication/receive";
 
     private static final String DEFAULT_PACKAGING = "(name="
-                    + FileVaultReplicationPackageBuilder.NAME + ")";
+            + FileVaultReplicationPackageBuilder.NAME + ")";
 
     private static final String DEFAULT_QUEUEPROVIDER = "(name="
-                    + JobHandlingReplicationQueueProvider.NAME + ")";
+            + JobHandlingReplicationQueueProvider.NAME + ")";
 
     private static final String DEFAULT_DISTRIBUTION = "(name="
-                    + SingleQueueDistributionStrategy.NAME + ")";
+            + SingleQueueDistributionStrategy.NAME + ")";
 
     @Property
     private static final String NAME = ReplicationAgentConfiguration.NAME;
@@ -113,25 +114,26 @@ public class ReplicationAgentServiceFactory {
     @Reference(name = "ReplicationQueueProvider", target = DEFAULT_QUEUEPROVIDER, policy = ReferencePolicy.DYNAMIC)
     private ReplicationQueueProvider queueProvider;
 
-    @Property(name = AUTHENTICATION_FACTORY, value = DEFAULT_AUTHENTICATION_FACTORY)
-    @Reference(name = "AuthenticationHandlerFactory", target = DEFAULT_AUTHENTICATION_FACTORY, policy = ReferencePolicy.DYNAMIC)
+    @Property(name = TRANSPORT_AUTHENTICATION_FACTORY, value = DEFAULT_AUTHENTICATION_FACTORY)
+    @Reference(name = "TransportAuthenticationProviderFactory", target = DEFAULT_AUTHENTICATION_FACTORY, policy = ReferencePolicy.DYNAMIC)
     private TransportAuthenticationProviderFactory transportAuthenticationProviderFactory;
 
     @Property(name = DISTRIBUTION, value = DEFAULT_DISTRIBUTION)
     @Reference(name = "ReplicationQueueDistributionStrategy", target = DEFAULT_DISTRIBUTION, policy = ReferencePolicy.DYNAMIC)
     private ReplicationQueueDistributionStrategy queueDistributionStrategy;
-    
+
     private ServiceRegistration agentReg;
 
     private ServiceRegistration jobReg;
 
     @Activate
     public void activate(BundleContext context, Map<String, ?> config) throws Exception {
+
         // inject configuration
         Dictionary<String, Object> props = new Hashtable<String, Object>();
 
         String name = PropertiesUtil
-                        .toString(config.get(NAME), String.valueOf(new Random().nextInt(1000)));
+                .toString(config.get(NAME), String.valueOf(new Random().nextInt(1000)));
         props.put(NAME, name);
 
         String endpoint = PropertiesUtil.toString(config.get(ENDPOINT), DEFAULT_ENDPOINT);
@@ -152,19 +154,25 @@ public class ReplicationAgentServiceFactory {
         Map<String, String> authenticationProperties = PropertiesUtil.toMap(config.get(AUTHENTICATION_PROPERTIES), new String[0]);
         props.put(AUTHENTICATION_PROPERTIES, authenticationProperties);
 
-        String af = PropertiesUtil.toString(config.get(AUTHENTICATION_FACTORY), DEFAULT_AUTHENTICATION_FACTORY);
-        props.put(AUTHENTICATION_FACTORY, af);
+        String af = PropertiesUtil.toString(config.get(TRANSPORT_AUTHENTICATION_FACTORY), DEFAULT_AUTHENTICATION_FACTORY);
+        props.put(TRANSPORT_AUTHENTICATION_FACTORY, af);
+
+
+        // check configuration is valid
+        if (name == null || transportHandler == null || endpoint == null || packageBuilder == null || queueProvider == null || transportAuthenticationProviderFactory == null || queueDistributionStrategy == null) {
+            throw new AgentConfigurationException("configuration for this agent is not valid");
+        }
 
         TransportAuthenticationProvider<?, ?> transportAuthenticationProvider = transportAuthenticationProviderFactory.createAuthenticationProvider(authenticationProperties);
-        
+
         if (!transportHandler.supportsAuthenticationProvider(transportAuthenticationProvider)) {
             throw new Exception("authentication handler " + transportAuthenticationProvider
-                            + " not supported by transport handler " + transportHandler);
+                    + " not supported by transport handler " + transportHandler);
         }
 
         if (log.isInfoEnabled()) {
-            log.info("bound services for {} :  {} - {} - {} - {} - {}", new Object[] { name,
-                    transportHandler, endpoint, packageBuilder, queueProvider, transportAuthenticationProvider});
+            log.info("bound services for {} :  {} - {} - {} - {} - {} - {}", new Object[]{name,
+                    transportHandler, transportAuthenticationProvider, endpoint, packageBuilder, queueProvider, queueDistributionStrategy});
         }
 
         ReplicationAgent agent = new SimpleReplicationAgent(name, endpoint, transportHandler, packageBuilder, queueProvider, transportAuthenticationProvider, queueDistributionStrategy);
@@ -173,11 +181,11 @@ public class ReplicationAgentServiceFactory {
         agentReg = context.registerService(ReplicationAgent.class.getName(), agent, props);
 
         // eventually register job consumer for sling job handling based queues
-        if (DEFAULT_QUEUEPROVIDER.equals(queue)){
+        if (DEFAULT_QUEUEPROVIDER.equals(queue)) {
             Dictionary<String, Object> jobProps = new Hashtable<String, Object>();
             String topic = new StringBuilder(JobHandlingReplicationQueue.REPLICATION_QUEUE_TOPIC).append('/')
-                            .append(name).toString();
-            String childTopic = topic+"/*";
+                    .append(name).toString();
+            String childTopic = topic + "/*";
             jobProps.put(JobConsumer.PROPERTY_TOPICS, new String[]{topic, childTopic});
             jobReg = context.registerService(JobConsumer.class.getName(), new ReplicationAgentJobConsumer(agent, packageBuilder), jobProps);
         }

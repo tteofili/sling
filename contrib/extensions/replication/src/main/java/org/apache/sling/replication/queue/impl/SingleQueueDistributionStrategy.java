@@ -78,11 +78,11 @@ public class SingleQueueDistributionStrategy implements ReplicationQueueDistribu
 
     }
 
-    public void offer(ReplicationPackage replicationPackage, ReplicationAgent agent,
-                    ReplicationQueueProvider queueProvider) throws ReplicationQueueException {
+    public boolean offer(ReplicationPackage replicationPackage, ReplicationAgent agent,
+                         ReplicationQueueProvider queueProvider) throws ReplicationQueueException {
         ReplicationQueue queue = queueProvider.getOrCreateDefaultQueue(agent);
         if (queue != null) {
-            queue.add(replicationPackage);
+            return queue.add(replicationPackage);
         } else {
             throw new ReplicationQueueException("could not get a queue for agent "
                             + agent.getName());

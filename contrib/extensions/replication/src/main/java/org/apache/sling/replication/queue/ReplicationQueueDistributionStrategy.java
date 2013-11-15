@@ -30,7 +30,7 @@ public interface ReplicationQueueDistributionStrategy {
     ReplicationQueueItemState add(ReplicationPackage replicationPackage, ReplicationAgent agent,
                                   ReplicationQueueProvider queueProvider) throws ReplicationQueueException;
 
-    void offer(ReplicationPackage replicationPackage, ReplicationAgent agent,
-               ReplicationQueueProvider queueProvider) throws ReplicationQueueException;
+    boolean offer(ReplicationPackage replicationPackage, ReplicationAgent agent,
+                  ReplicationQueueProvider queueProvider) throws ReplicationQueueException;
 
 }

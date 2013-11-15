@@ -5,7 +5,7 @@
     "TransportHandler.target" : "(name=repository)", 
     "ReplicationPackageBuilder.target" : "(name=vlt)",
     "ReplicationQueueProvider.target" : "(name=sjh)",
-    "AuthenticationHandlerFactory.target" : "(name=repo-user)",
+    "TransportAuthenticationProviderFactory.target" : "(name=repo-user)",
     "authentication.properties" : ["user=admin","password=admin"],
     "ReplicationQueueDistributionStrategy.target" : "(name=single)",
     "rules" : ["trigger on path: /content"]
