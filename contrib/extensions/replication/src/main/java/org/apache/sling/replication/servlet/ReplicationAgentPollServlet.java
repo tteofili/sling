@@ -19,11 +19,8 @@
 package org.apache.sling.replication.servlet;
 
 import java.io.IOException;
-import java.util.Arrays;
-
 import javax.servlet.Servlet;
 import javax.servlet.ServletException;
-
 import org.apache.commons.io.IOUtils;
 import org.apache.felix.scr.annotations.Component;
 import org.apache.felix.scr.annotations.Properties;
@@ -33,13 +30,13 @@ import org.apache.http.entity.ContentType;
 import org.apache.sling.api.SlingHttpServletRequest;
 import org.apache.sling.api.SlingHttpServletResponse;
 import org.apache.sling.api.servlets.SlingAllMethodsServlet;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import org.apache.sling.replication.agent.ReplicationAgent;
 import org.apache.sling.replication.agent.impl.ReplicationAgentResource;
+import org.apache.sling.replication.communication.ReplicationHeader;
 import org.apache.sling.replication.queue.ReplicationQueue;
 import org.apache.sling.replication.serialization.ReplicationPackage;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @Component(metatype = false)
 @Service(value = Servlet.class)
@@ -71,9 +68,7 @@ public class ReplicationAgentPollServlet extends SlingAllMethodsServlet {
                 if (head != null) {
                     int bytesCopied = IOUtils.copy(head.getInputStream(),
                                     response.getOutputStream());
-                    response.setHeader("type", head.getType());
-                    response.setHeader("action", head.getAction().toString());
-                    response.setHeader("path", Arrays.toString(head.getPaths()));
+                    response.setHeader(ReplicationHeader.TYPE.toString(), head.getType());
                     if (log.isInfoEnabled()) {
                         log.info("{} bytes written into the response", bytesCopied);
                     }

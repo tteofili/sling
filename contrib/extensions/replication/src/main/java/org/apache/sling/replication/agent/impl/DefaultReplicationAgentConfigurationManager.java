@@ -95,7 +95,11 @@ public class DefaultReplicationAgentConfigurationManager implements
             @SuppressWarnings("unchecked")
             Dictionary<String, Object> configurationProperties = configuration.getProperties();
             for (Map.Entry<String, Object> entry : updateProperties.entrySet()) {
-                configurationProperties.put(entry.getKey(), entry.getValue());
+                String key = entry.getKey();
+                if (key.startsWith("X-replication-")) {
+                    key = key.substring(0, 14);
+                }
+                configurationProperties.put(key, entry.getValue());
             }
             configuration.update(configurationProperties);
             return new ReplicationAgentConfiguration(configuration.getProperties());

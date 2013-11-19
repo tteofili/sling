@@ -29,6 +29,7 @@ import org.apache.http.client.fluent.Executor;
 import org.apache.http.client.fluent.Request;
 import org.apache.http.client.fluent.Response;
 import org.apache.sling.replication.communication.ReplicationEndpoint;
+import org.apache.sling.replication.communication.ReplicationHeader;
 import org.apache.sling.replication.serialization.ReplicationPackage;
 import org.apache.sling.replication.serialization.ReplicationPackageBuilderProvider;
 import org.apache.sling.replication.transport.ReplicationTransportException;
@@ -73,7 +74,7 @@ public class PollingTransportHandler implements TransportHandler {
             Response response = executor.execute(req);
             HttpResponse httpResponse = response.returnResponse();
             HttpEntity entity = httpResponse.getEntity();
-            Header typeHeader = httpResponse.getFirstHeader("type");
+            Header typeHeader = httpResponse.getFirstHeader(ReplicationHeader.TYPE.toString());
 
             if (typeHeader != null) {
                 String type = typeHeader.getValue();

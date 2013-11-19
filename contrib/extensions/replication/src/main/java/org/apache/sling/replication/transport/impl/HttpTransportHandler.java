@@ -29,6 +29,7 @@ import org.apache.http.client.fluent.Request;
 import org.apache.http.client.fluent.Response;
 import org.apache.http.entity.ContentType;
 import org.apache.sling.replication.communication.ReplicationEndpoint;
+import org.apache.sling.replication.communication.ReplicationHeader;
 import org.apache.sling.replication.serialization.ReplicationPackage;
 import org.apache.sling.replication.transport.ReplicationTransportException;
 import org.apache.sling.replication.transport.TransportHandler;
@@ -70,7 +71,7 @@ public class HttpTransportHandler implements TransportHandler {
             String type = replicationPackage.getType();
             String pathsString = Arrays.toString(paths);
             Request req = Request.Post(replicationEndpoint.getUri()).useExpectContinue()
-                    .addHeader("X-replication-type", type);
+                    .addHeader(ReplicationHeader.TYPE.toString(), type);
             if (replicationPackage.getInputStream() != null) {
                 req = req.bodyStream(replicationPackage.getInputStream(),
                         ContentType.APPLICATION_OCTET_STREAM);

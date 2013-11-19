@@ -32,6 +32,7 @@ import org.apache.felix.scr.annotations.Service;
 import org.apache.sling.api.SlingHttpServletRequest;
 import org.apache.sling.api.SlingHttpServletResponse;
 import org.apache.sling.api.servlets.SlingAllMethodsServlet;
+import org.apache.sling.replication.communication.ReplicationHeader;
 import org.apache.sling.replication.serialization.ReplicationPackage;
 import org.apache.sling.replication.serialization.ReplicationPackageBuilder;
 import org.apache.sling.replication.serialization.ReplicationPackageBuilderProvider;
@@ -65,8 +66,9 @@ public class ReplicationReceiverServlet extends SlingAllMethodsServlet {
 
             ReplicationPackage replicationPackage = null;
             ServletInputStream stream = request.getInputStream();
-            if (request.getHeader("X-package-type") != null) {
-                ReplicationPackageBuilder replicationPacakageBuilder = replicationPackageBuilderProvider.getReplicationPacakageBuilder(request.getHeader("X-replication-type"));
+            String typeHeader = request.getHeader(ReplicationHeader.TYPE.toString());
+            if (typeHeader != null) {
+                ReplicationPackageBuilder replicationPacakageBuilder = replicationPackageBuilderProvider.getReplicationPacakageBuilder(typeHeader);
                 replicationPackage = replicationPacakageBuilder.readPackage(stream, true);
             } else {
                 BufferedInputStream bufferedInputStream = new BufferedInputStream(stream); // needed to allow for multiple reads
@@ -75,7 +77,7 @@ public class ReplicationReceiverServlet extends SlingAllMethodsServlet {
                         replicationPackage = replicationPackageBuilder.readPackage(bufferedInputStream, true);
                     } catch (Exception e) {
                         if (log.isWarnEnabled()) {
-                            log.warn("package cannot be read from {}", replicationPackageBuilder);
+                            log.warn("received stream cannot be read with {}", replicationPackageBuilder);
                         }
                     }
                 }
