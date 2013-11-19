@@ -55,13 +55,16 @@ public class ReplicationAgentPollServlet extends SlingAllMethodsServlet {
 
         response.setContentType(ContentType.APPLICATION_OCTET_STREAM.toString());
 
-        String queueName = request.getParameter("queue");
+        String queueName = request.getParameter(ReplicationHeader.QUEUE.toString());
 
         ReplicationAgent agent = request.getResource().adaptTo(ReplicationAgent.class);
 
         if (agent != null) {
             try {
                 // TODO : consider using queue distribution strategy some way and validating who's making this request
+                if (log.isInfoEnabled()) {
+                    log.info("getting item from queue {}", queueName);
+                }
                 ReplicationQueue queue = agent.getQueue(queueName);
                 // get first item
                 ReplicationPackage head = queue.getHead();

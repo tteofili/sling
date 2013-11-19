@@ -25,7 +25,8 @@ public enum ReplicationHeader {
 
     TYPE("X-replication-type"),
     ACTION("X-replication-action"),
-    PATH("X-replication-path");
+    PATH("X-replication-path"),
+    QUEUE("X-replication-queue");
 
     private final String name;
 

@@ -37,12 +37,12 @@ public interface ReplicationRule {
      *
      * @param {@link ReplicationAgent agent} the agent to apply the rule to
      */
-    void apply(ReplicationAgent agent);
+    void apply(String ruleString, ReplicationAgent agent);
 
     /**
      * undo the application of this rule to the given agent
      *
      * @param agent the {@link ReplicationAgent agent} on which undoing this rule application
      */
-    void unapply(ReplicationAgent agent);
+    void undo(String ruleString, ReplicationAgent agent);
 }
