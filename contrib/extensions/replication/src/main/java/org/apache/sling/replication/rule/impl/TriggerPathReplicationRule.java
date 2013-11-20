@@ -98,7 +98,7 @@ public class TriggerPathReplicationRule implements ReplicationRule {
     }
 
     public boolean signatureMatches(String ruleString) {
-        return ruleString.startsWith(PREFIX); // TODO : improve this check
+        return ruleString.startsWith(PREFIX) && ruleString.substring(PREFIX.length() + 1).matches("(\\/\\w+)+");
     }
 
     public void undo(String ruleString, ReplicationAgent agent) {
