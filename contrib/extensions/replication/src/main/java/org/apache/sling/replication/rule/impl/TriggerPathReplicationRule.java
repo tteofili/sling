@@ -54,12 +54,11 @@ public class TriggerPathReplicationRule implements ReplicationRule {
     private final Logger log = LoggerFactory.getLogger(getClass());
 
     private BundleContext bundleContext;
-    private Map<String, ServiceRegistration> registrations;
+    private Map<String, ServiceRegistration> registrations = new HashMap<String, ServiceRegistration>();
 
     @Activate
     protected void activate(BundleContext bundleContext) {
         this.bundleContext = bundleContext;
-        this.registrations = new HashMap<String, ServiceRegistration>();
     }
 
     @Deactivate
@@ -87,24 +86,37 @@ public class TriggerPathReplicationRule implements ReplicationRule {
                 log.info("trigger agent {} on path '{}'", agent.getName(), path);
             }
             properties.put(EventConstants.EVENT_FILTER, "(path=" + path + "/*)");
-            ServiceRegistration triggerPathEventRegistration = bundleContext.registerService(EventHandler.class.getName(), new TriggerAgentEventListener(agent), properties);
-            registrations.put(agent.getName() + ruleString, triggerPathEventRegistration);
+            if (bundleContext != null) {
+                ServiceRegistration triggerPathEventRegistration = bundleContext.registerService(EventHandler.class.getName(), new TriggerAgentEventListener(agent), properties);
+                registrations.put(agent.getName() + ruleString, triggerPathEventRegistration);
+            } else {
+                if (log.isErrorEnabled()) {
+                    log.error("cannot register trigger since bundle context is null");
+                }
+            }
         } else {
             if (log.isWarnEnabled()) {
-                log.warn("rule {} doesn't match {}", ruleString, SIGNATURE);
+                log.warn("rule {} doesn't match signature: {}", ruleString, SIGNATURE);
             }
         }
 
     }
 
     public boolean signatureMatches(String ruleString) {
-        return ruleString.startsWith(PREFIX) && ruleString.substring(PREFIX.length() + 1).matches("(\\/\\w+)+");
+        return ruleString.startsWith(PREFIX) && ruleString.substring(PREFIX.length() + 1).matches("\\s*(\\/\\w+)+");
     }
 
     public void undo(String ruleString, ReplicationAgent agent) {
-        ServiceRegistration serviceRegistration = registrations.get(agent.getName() + ruleString);
-        if (serviceRegistration != null) {
-            serviceRegistration.unregister();
+        if (signatureMatches(ruleString)) {
+            ServiceRegistration serviceRegistration = registrations.get(agent.getName() + ruleString);
+            if (serviceRegistration != null) {
+                serviceRegistration.unregister();
+            }
+        }
+        else {
+            if (log.isWarnEnabled()) {
+                log.warn("rule {} doesn't match signature: {}", ruleString, SIGNATURE);
+            }
         }
     }
 
