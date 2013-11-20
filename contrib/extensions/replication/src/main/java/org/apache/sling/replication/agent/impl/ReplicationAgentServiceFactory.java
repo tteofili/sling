@@ -39,6 +39,7 @@ import org.apache.sling.replication.queue.ReplicationQueueProvider;
 import org.apache.sling.replication.queue.impl.SingleQueueDistributionStrategy;
 import org.apache.sling.replication.queue.impl.jobhandling.JobHandlingReplicationQueue;
 import org.apache.sling.replication.queue.impl.jobhandling.JobHandlingReplicationQueueProvider;
+import org.apache.sling.replication.rule.ReplicationRuleEngine;
 import org.apache.sling.replication.serialization.ReplicationPackageBuilder;
 import org.apache.sling.replication.serialization.impl.vlt.FileVaultReplicationPackageBuilder;
 import org.apache.sling.replication.transport.TransportHandler;
@@ -102,6 +103,9 @@ public class ReplicationAgentServiceFactory {
     @Property
     private static final String AUTHENTICATION_PROPERTIES = ReplicationAgentConfiguration.AUTHENTICATION_PROPERTIES;
 
+    @Property
+    private static final String RULES = ReplicationAgentConfiguration.RULES;
+
     @Property(name = TRANSPORT, value = DEFAULT_TRANSPORT)
     @Reference(name = "TransportHandler", target = DEFAULT_TRANSPORT, policy = ReferencePolicy.DYNAMIC)
     private TransportHandler transportHandler;
@@ -125,6 +129,9 @@ public class ReplicationAgentServiceFactory {
     private ServiceRegistration agentReg;
 
     private ServiceRegistration jobReg;
+
+    @Reference
+    private ReplicationRuleEngine replicationRuleEngine;
 
     @Activate
     public void activate(BundleContext context, Map<String, ?> config) throws Exception {
@@ -154,9 +161,11 @@ public class ReplicationAgentServiceFactory {
         Map<String, String> authenticationProperties = PropertiesUtil.toMap(config.get(AUTHENTICATION_PROPERTIES), new String[0]);
         props.put(AUTHENTICATION_PROPERTIES, authenticationProperties);
 
+        String[] rules = PropertiesUtil.toStringArray(config.get(RULES), new String[0]);
+        props.put(RULES, rules);
+
         String af = PropertiesUtil.toString(config.get(TRANSPORT_AUTHENTICATION_FACTORY), DEFAULT_AUTHENTICATION_FACTORY);
         props.put(TRANSPORT_AUTHENTICATION_FACTORY, af);
-
 
         // check configuration is valid
         if (name == null || transportHandler == null || endpoint == null || packageBuilder == null || queueProvider == null || transportAuthenticationProviderFactory == null || queueDistributionStrategy == null) {
@@ -179,6 +188,11 @@ public class ReplicationAgentServiceFactory {
 
         // register agent service
         agentReg = context.registerService(ReplicationAgent.class.getName(), agent, props);
+
+        // apply rules if any
+        if (rules.length > 0) {
+            replicationRuleEngine.applyRules(agent, rules);
+        }
 
         // eventually register job consumer for sling job handling based queues
         if (DEFAULT_QUEUEPROVIDER.equals(queue)) {

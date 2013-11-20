@@ -44,6 +44,8 @@ public class ReplicationAgentConfiguration {
 
     public static final String DISTRIBUTION = "ReplicationQueueDistributionStrategy.target";
 
+    public static final String RULES = "rules";
+
     private final String name;
 
     private final String endpoint;

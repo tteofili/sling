@@ -44,7 +44,7 @@ public abstract class AbstractReplicationPackageBuilder implements ReplicationPa
         if (ReplicationActionType.ADD.equals(request.getAction())) {
             replicationPackage = createPackageForAdd(request);
         } else if (ReplicationActionType.DELETE.equals(request.getAction())) {
-            replicationPackage = new VoidReplicationPackage(request);
+            replicationPackage = new VoidReplicationPackage(request, getName());
         } else {
             throw new ReplicationPackageBuildingException("unknown action type "
                     + request.getAction());
@@ -62,13 +62,13 @@ public abstract class AbstractReplicationPackageBuilder implements ReplicationPa
             stream = new BufferedInputStream(stream);
         }
         try {
-            stream.mark(10);
-            byte[] buffer = new byte[10];
-            int bytesRead = stream.read(buffer, 0, 10);
+            stream.mark(6);
+            byte[] buffer = new byte[6];
+            int bytesRead = stream.read(buffer, 0, 6);
             stream.reset();
             String s = new String(buffer);
             if (log.isInfoEnabled()) {
-                log.info("read {} bytes as s", bytesRead, s);
+                log.info("read {} bytes as {}", bytesRead, s);
             }
             if (bytesRead > 0 && buffer[0] > 0 && s.startsWith("DEL")) {
                 replicationPackage = readPackageForDelete(stream);
@@ -101,7 +101,7 @@ public abstract class AbstractReplicationPackageBuilder implements ReplicationPa
                     session.save();
                     ReplicationRequest request = new ReplicationRequest(System.currentTimeMillis(),
                             ReplicationActionType.DELETE, voidReplicationPackage.getPaths());
-                    replicationPackage = new VoidReplicationPackage(request);
+                    replicationPackage = new VoidReplicationPackage(request, getName());
                 }
             }
             return replicationPackage;
@@ -114,6 +114,8 @@ public abstract class AbstractReplicationPackageBuilder implements ReplicationPa
         }
 
     }
+
+    protected abstract String getName();
 
     protected abstract Session getSession() throws RepositoryException;
 

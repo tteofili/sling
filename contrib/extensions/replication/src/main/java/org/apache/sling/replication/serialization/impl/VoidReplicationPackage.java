@@ -33,14 +33,13 @@ import org.apache.sling.replication.serialization.ReplicationPackage;
  */
 public class VoidReplicationPackage implements ReplicationPackage {
 
-    public static final String VOID = "VOID";
     private String type;
 
     private String[] paths;
 
     private String id;
 
-    public VoidReplicationPackage(ReplicationRequest request) {
+    public VoidReplicationPackage(ReplicationRequest request, String type) {
         this.type = type;
         this.paths = request.getPaths();
         this.id = new StringBuilder(ReplicationActionType.DELETE.toString()).append(':').
@@ -58,7 +57,7 @@ public class VoidReplicationPackage implements ReplicationPackage {
             String[] paths = pathsArrayString.replaceAll("\\[", "").replaceAll("\\]", "").split(", ");
             ReplicationRequest request = new ReplicationRequest(Long.valueOf(streamString.substring(streamString.lastIndexOf(':') + 1)),
                     ReplicationActionType.DELETE, paths);
-            replicationPackage = new VoidReplicationPackage(request);
+            replicationPackage = new VoidReplicationPackage(request, "VOID");
         }
         return replicationPackage;
     }
@@ -67,7 +66,7 @@ public class VoidReplicationPackage implements ReplicationPackage {
     private static final long serialVersionUID = 1L;
 
     public String getType() {
-        return VOID;
+        return type;
     }
 
     public String[] getPaths() {

@@ -36,7 +36,7 @@ public class VoidReplicationPackageTest {
     @Test
     public void testCreatedAndReadPackagesEquality() throws Exception {
         ReplicationRequest request = new ReplicationRequest(123l, ReplicationActionType.DELETE, new String[]{"/abc"});
-        VoidReplicationPackage createdPackage = new VoidReplicationPackage(request);
+        VoidReplicationPackage createdPackage = new VoidReplicationPackage(request, "VOID");
         VoidReplicationPackage readPackage = VoidReplicationPackage.fromStream(new ByteArrayInputStream("DELETE:[/abc]:123".getBytes()));
         assertEquals(createdPackage.getId(), readPackage.getId());
         assertEquals(createdPackage.getAction(), readPackage.getAction());

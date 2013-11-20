@@ -75,6 +75,8 @@ public class ReplicationAgentPollServlet extends SlingAllMethodsServlet {
                     if (log.isInfoEnabled()) {
                         log.info("{} bytes written into the response", bytesCopied);
                     }
+                    // remove the item from the queue
+                    queue.removeHead();
                 } else {
                     if (log.isInfoEnabled()) {
                         log.info("nothing to fetch");

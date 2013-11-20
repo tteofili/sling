@@ -69,7 +69,14 @@ public class ReplicationReceiverServlet extends SlingAllMethodsServlet {
             String typeHeader = request.getHeader(ReplicationHeader.TYPE.toString());
             if (typeHeader != null) {
                 ReplicationPackageBuilder replicationPacakageBuilder = replicationPackageBuilderProvider.getReplicationPacakageBuilder(typeHeader);
-                replicationPackage = replicationPacakageBuilder.readPackage(stream, true);
+                if (replicationPacakageBuilder != null) {
+                    replicationPackage = replicationPacakageBuilder.readPackage(stream, true);
+                }
+                else {
+                    if (log.isWarnEnabled()) {
+                        log.warn("cannot read streams of type {}", typeHeader);
+                    }
+                }
             } else {
                 BufferedInputStream bufferedInputStream = new BufferedInputStream(stream); // needed to allow for multiple reads
                 for (ReplicationPackageBuilder replicationPackageBuilder : replicationPackageBuilderProvider.getAvailableReplicationPacakageBuilders()) {

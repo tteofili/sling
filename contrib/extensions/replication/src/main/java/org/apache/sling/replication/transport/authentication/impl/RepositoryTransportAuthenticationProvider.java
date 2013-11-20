@@ -47,8 +47,9 @@ public class RepositoryTransportAuthenticationProvider implements TransportAuthe
             throws TransportAuthenticationException {
         String path = context.getAttribute("path", String.class);
         if (path != null) {
+            Session session = null;
             try {
-                Session session = authenticable.login(credentials);
+                session = authenticable.login(credentials);
                 if (!session.nodeExists(path)) {
                     throw new TransportAuthenticationException("failed to read path " + path);
                 } else {
@@ -58,6 +59,9 @@ public class RepositoryTransportAuthenticationProvider implements TransportAuthe
                     return session;
                 }
             } catch (RepositoryException re) {
+                if (session != null) {
+                    session.logout();
+                }
                 throw new TransportAuthenticationException(re);
             }
         } else {

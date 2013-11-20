@@ -112,6 +112,11 @@ public class FileVaultReplicationPackageBuilder extends AbstractReplicationPacka
     }
 
     @Override
+    protected String getName() {
+        return NAME;
+    }
+
+    @Override
     protected Session getSession() throws RepositoryException {
         return repository.loginAdministrative(null);
     }

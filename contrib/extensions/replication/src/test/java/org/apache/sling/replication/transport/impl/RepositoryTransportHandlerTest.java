@@ -56,7 +56,7 @@ public class RepositoryTransportHandlerTest {
 
     @Test
     public void testDeliveryWithAuthenticatedSession() throws Exception {
-        String repoPath = "var/outbox/replication/rev1";
+        String repoPath = "/var/outbox/replication/rev1";
 
         Node addedNode = mock(Node.class);
         when(addedNode.getPath()).thenReturn(repoPath + "/some-id");
@@ -78,7 +78,7 @@ public class RepositoryTransportHandlerTest {
         TransportAuthenticationProvider<SlingRepository, Session> transportAuthenticationProvider = new RepositoryTransportAuthenticationProvider("user-123", "p455w0rd");
         ReplicationPackage replicationPackage = mock(ReplicationPackage.class);
         when(replicationPackage.getId()).thenReturn("some-id");
-        handler.transport(replicationPackage, new ReplicationEndpoint("repo://" + repoPath),
+        handler.transport(replicationPackage, new ReplicationEndpoint("repo:/" + repoPath),
                 transportAuthenticationProvider);
     }
 }
