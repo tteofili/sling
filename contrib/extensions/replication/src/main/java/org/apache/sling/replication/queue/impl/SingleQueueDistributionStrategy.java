@@ -53,7 +53,7 @@ public class SingleQueueDistributionStrategy implements ReplicationQueueDistribu
             log.info("using single queue distribution");
         }
         ReplicationQueueItemState state = new ReplicationQueueItemState();
-        ReplicationQueue queue = queueProvider.getOrCreateDefaultQueue(agent);
+        ReplicationQueue queue = queueProvider.getDefaultQueue(agent);
         if (log.isInfoEnabled()) {
             log.info("obtained queue {}", queue);
         }
@@ -80,7 +80,7 @@ public class SingleQueueDistributionStrategy implements ReplicationQueueDistribu
 
     public boolean offer(ReplicationPackage replicationPackage, ReplicationAgent agent,
                          ReplicationQueueProvider queueProvider) throws ReplicationQueueException {
-        ReplicationQueue queue = queueProvider.getOrCreateDefaultQueue(agent);
+        ReplicationQueue queue = queueProvider.getDefaultQueue(agent);
         if (queue != null) {
             return queue.add(replicationPackage);
         } else {

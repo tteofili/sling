@@ -78,7 +78,7 @@ public class ErrorAwareQueueDistributionStrategy implements ReplicationQueueDist
                 log.info("using error aware queue distribution");
             }
             ReplicationQueueItemState state = new ReplicationQueueItemState();
-            ReplicationQueue queue = queueProvider.getOrCreateDefaultQueue(agent);
+            ReplicationQueue queue = queueProvider.getDefaultQueue(agent);
             if (log.isInfoEnabled()) {
                 log.info("obtained queue {}", queue);
             }
@@ -108,7 +108,7 @@ public class ErrorAwareQueueDistributionStrategy implements ReplicationQueueDist
     public boolean offer(ReplicationPackage replicationPackage, ReplicationAgent agent,
                          ReplicationQueueProvider queueProvider) throws ReplicationQueueException {
         boolean added;
-        ReplicationQueue queue = queueProvider.getOrCreateDefaultQueue(agent);
+        ReplicationQueue queue = queueProvider.getDefaultQueue(agent);
         if (queue != null) {
             added = queue.add(replicationPackage);
         } else {
@@ -121,7 +121,7 @@ public class ErrorAwareQueueDistributionStrategy implements ReplicationQueueDist
 
     private void checkAndRemoveStuckItems(ReplicationAgent agent,
                                           ReplicationQueueProvider queueProvider) throws ReplicationQueueException {
-        ReplicationQueue defaultQueue = queueProvider.getOrCreateDefaultQueue(agent);
+        ReplicationQueue defaultQueue = queueProvider.getDefaultQueue(agent);
         // get first item in the queue with its status
         ReplicationPackage firstItem = defaultQueue.getHead();
         if (firstItem != null) {
@@ -136,7 +136,7 @@ public class ErrorAwareQueueDistributionStrategy implements ReplicationQueueDist
                     if (log.isWarnEnabled()) {
                         log.warn("item moved to the error queue");
                     }
-                    ReplicationQueue errorQueue = queueProvider.getOrCreateQueue(agent, "-error");
+                    ReplicationQueue errorQueue = queueProvider.getQueue(agent, "-error");
                     if (!errorQueue.add(firstItem)) {
                         if (log.isErrorEnabled()) {
                             log.error("failed to move item {} the queue {}", firstItem, errorQueue);

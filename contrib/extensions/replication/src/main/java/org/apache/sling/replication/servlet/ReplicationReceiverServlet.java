@@ -63,7 +63,6 @@ public class ReplicationReceiverServlet extends SlingAllMethodsServlet {
         response.setCharacterEncoding("utf-8");
 
         try {
-
             ReplicationPackage replicationPackage = null;
             ServletInputStream stream = request.getInputStream();
             String typeHeader = request.getHeader(ReplicationHeader.TYPE.toString());

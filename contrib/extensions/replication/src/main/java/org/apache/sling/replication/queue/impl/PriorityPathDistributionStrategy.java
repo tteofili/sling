@@ -121,12 +121,12 @@ public class PriorityPathDistributionStrategy implements ReplicationQueueDistrib
             if (log.isInfoEnabled()) {
                 log.info("using priority queue for path {}", pp);
             }
-            queue = queueProvider.getOrCreateQueue(agent, pp);
+            queue = queueProvider.getQueue(agent, pp);
         } else {
             if (log.isInfoEnabled()) {
                 log.info("using default queue");
             }
-            queue = queueProvider.getOrCreateDefaultQueue(agent);
+            queue = queueProvider.getDefaultQueue(agent);
         }
         return queue;
     }

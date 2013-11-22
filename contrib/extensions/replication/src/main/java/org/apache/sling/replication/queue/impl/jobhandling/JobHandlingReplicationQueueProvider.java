@@ -54,7 +54,7 @@ public class JobHandlingReplicationQueueProvider extends AbstractReplicationQueu
     private ConfigurationAdmin configAdmin;
 
     @Override
-    protected ReplicationQueue createQueue(ReplicationAgent agent, String queueName)
+    protected ReplicationQueue getOrCreateQueue(ReplicationAgent agent, String queueName)
                     throws ReplicationQueueException {
         try {
             String name = new StringBuilder(agent.getName()).append(queueName).toString();

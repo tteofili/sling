@@ -52,7 +52,7 @@ public class PriorityPathQueueDistributionStrategyTest {
         ReplicationAgent agent = mock(ReplicationAgent.class);
         ReplicationQueueProvider queueProvider = mock(ReplicationQueueProvider.class);
         ReplicationQueue queue = mock(ReplicationQueue.class);
-        when(queueProvider.getOrCreateDefaultQueue(agent)).thenReturn(queue);
+        when(queueProvider.getDefaultQueue(agent)).thenReturn(queue);
         when(queue.add(replicationPackage)).thenReturn(true);
         ReplicationQueueItemState state = mock(ReplicationQueueItemState.class);
         when(state.isSuccessfull()).thenReturn(true);
@@ -75,7 +75,7 @@ public class PriorityPathQueueDistributionStrategyTest {
         ReplicationAgent agent = mock(ReplicationAgent.class);
         ReplicationQueueProvider queueProvider = mock(ReplicationQueueProvider.class);
         ReplicationQueue queue = mock(ReplicationQueue.class);
-        when(queueProvider.getOrCreateQueue(agent, "/content")).thenReturn(queue);
+        when(queueProvider.getQueue(agent, "/content")).thenReturn(queue);
         when(queue.add(replicationPackage)).thenReturn(true);
         ReplicationQueueItemState state = mock(ReplicationQueueItemState.class);
         when(state.isSuccessfull()).thenReturn(true);
@@ -98,7 +98,7 @@ public class PriorityPathQueueDistributionStrategyTest {
         ReplicationAgent agent = mock(ReplicationAgent.class);
         ReplicationQueueProvider queueProvider = mock(ReplicationQueueProvider.class);
         ReplicationQueue queue = mock(ReplicationQueue.class);
-        when(queueProvider.getOrCreateDefaultQueue(agent)).thenReturn(queue);
+        when(queueProvider.getDefaultQueue(agent)).thenReturn(queue);
         when(queue.add(replicationPackage)).thenReturn(true);
         ReplicationQueueItemState state = mock(ReplicationQueueItemState.class);
         when(state.isSuccessfull()).thenReturn(false);
@@ -121,7 +121,7 @@ public class PriorityPathQueueDistributionStrategyTest {
         ReplicationAgent agent = mock(ReplicationAgent.class);
         ReplicationQueueProvider queueProvider = mock(ReplicationQueueProvider.class);
         ReplicationQueue queue = mock(ReplicationQueue.class);
-        when(queueProvider.getOrCreateQueue(agent, "/content")).thenReturn(queue);
+        when(queueProvider.getQueue(agent, "/content")).thenReturn(queue);
         when(queue.add(replicationPackage)).thenReturn(true);
         ReplicationQueueItemState state = mock(ReplicationQueueItemState.class);
         when(state.isSuccessfull()).thenReturn(false);
@@ -144,7 +144,7 @@ public class PriorityPathQueueDistributionStrategyTest {
         ReplicationAgent agent = mock(ReplicationAgent.class);
         ReplicationQueueProvider queueProvider = mock(ReplicationQueueProvider.class);
         ReplicationQueue queue = mock(ReplicationQueue.class);
-        when(queueProvider.getOrCreateDefaultQueue(agent)).thenReturn(queue);
+        when(queueProvider.getDefaultQueue(agent)).thenReturn(queue);
         when(queue.add(replicationPackage)).thenReturn(true);
         ReplicationQueueItemState returnedState = priorityPathDistributionStrategy.add(replicationPackage, agent, queueProvider);
         assertNull(returnedState);
@@ -163,7 +163,7 @@ public class PriorityPathQueueDistributionStrategyTest {
         ReplicationAgent agent = mock(ReplicationAgent.class);
         ReplicationQueueProvider queueProvider = mock(ReplicationQueueProvider.class);
         ReplicationQueue queue = mock(ReplicationQueue.class);
-        when(queueProvider.getOrCreateQueue(agent, "/apps")).thenReturn(queue);
+        when(queueProvider.getQueue(agent, "/apps")).thenReturn(queue);
         when(queue.add(replicationPackage)).thenReturn(true);
         ReplicationQueueItemState returnedState = priorityPathDistributionStrategy.add(replicationPackage, agent, queueProvider);
         assertNull(returnedState);
@@ -182,7 +182,7 @@ public class PriorityPathQueueDistributionStrategyTest {
         ReplicationAgent agent = mock(ReplicationAgent.class);
         ReplicationQueueProvider queueProvider = mock(ReplicationQueueProvider.class);
         ReplicationQueue queue = mock(ReplicationQueue.class);
-        when(queueProvider.getOrCreateDefaultQueue(agent)).thenReturn(queue);
+        when(queueProvider.getDefaultQueue(agent)).thenReturn(queue);
         when(queue.add(replicationPackage)).thenReturn(true);
         ReplicationQueueItemState state = mock(ReplicationQueueItemState.class);
         when(queue.getStatus(replicationPackage)).thenReturn(state);
@@ -203,7 +203,7 @@ public class PriorityPathQueueDistributionStrategyTest {
         ReplicationAgent agent = mock(ReplicationAgent.class);
         ReplicationQueueProvider queueProvider = mock(ReplicationQueueProvider.class);
         ReplicationQueue queue = mock(ReplicationQueue.class);
-        when(queueProvider.getOrCreateQueue(agent, "/apps")).thenReturn(queue);
+        when(queueProvider.getQueue(agent, "/apps")).thenReturn(queue);
         when(queue.add(replicationPackage)).thenReturn(true);
         ReplicationQueueItemState state = mock(ReplicationQueueItemState.class);
         when(queue.getStatus(replicationPackage)).thenReturn(state);
