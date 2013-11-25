@@ -21,6 +21,8 @@ package org.apache.sling.replication.servlet;
 import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.Dictionary;
+import java.util.Hashtable;
 import javax.servlet.Servlet;
 import javax.servlet.ServletException;
 import javax.servlet.ServletInputStream;
@@ -33,6 +35,8 @@ import org.apache.sling.api.SlingHttpServletRequest;
 import org.apache.sling.api.SlingHttpServletResponse;
 import org.apache.sling.api.servlets.SlingAllMethodsServlet;
 import org.apache.sling.replication.communication.ReplicationHeader;
+import org.apache.sling.replication.event.ReplicationEventFactory;
+import org.apache.sling.replication.event.ReplicationEventType;
 import org.apache.sling.replication.serialization.ReplicationPackage;
 import org.apache.sling.replication.serialization.ReplicationPackageBuilder;
 import org.apache.sling.replication.serialization.ReplicationPackageBuilderProvider;
@@ -54,6 +58,9 @@ public class ReplicationReceiverServlet extends SlingAllMethodsServlet {
     @Reference
     private ReplicationPackageBuilderProvider replicationPackageBuilderProvider;
 
+    @Reference
+    private ReplicationEventFactory replicationEventFactory;
+
     @Override
     protected void doPost(SlingHttpServletRequest request, SlingHttpServletResponse response)
             throws ServletException, IOException {
@@ -67,11 +74,10 @@ public class ReplicationReceiverServlet extends SlingAllMethodsServlet {
             ServletInputStream stream = request.getInputStream();
             String typeHeader = request.getHeader(ReplicationHeader.TYPE.toString());
             if (typeHeader != null) {
-                ReplicationPackageBuilder replicationPacakageBuilder = replicationPackageBuilderProvider.getReplicationPacakageBuilder(typeHeader);
+                ReplicationPackageBuilder replicationPacakageBuilder = replicationPackageBuilderProvider.getReplicationPackageBuilder(typeHeader);
                 if (replicationPacakageBuilder != null) {
                     replicationPackage = replicationPacakageBuilder.readPackage(stream, true);
-                }
-                else {
+                } else {
                     if (log.isWarnEnabled()) {
                         log.warn("cannot read streams of type {}", typeHeader);
                     }
@@ -95,6 +101,11 @@ public class ReplicationReceiverServlet extends SlingAllMethodsServlet {
                             Arrays.toString(replicationPackage.getPaths()));
                 }
                 success = true;
+
+                Dictionary<String, Object> dictionary = new Hashtable<String, Object>();
+                dictionary.put("replication.action", replicationPackage.getAction().toString());
+                dictionary.put("replication.path", replicationPackage.getPaths());
+                replicationEventFactory.generateEvent(ReplicationEventType.PACKAGE_INSTALLED, dictionary);
             } else {
                 if (log.isWarnEnabled()) {
                     log.warn("could not read a replication package");

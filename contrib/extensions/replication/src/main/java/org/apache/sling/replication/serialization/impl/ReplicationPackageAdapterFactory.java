@@ -61,7 +61,7 @@ public class ReplicationPackageAdapterFactory implements AdapterFactory {
                 SlingHttpServletRequest request = (SlingHttpServletRequest) adaptable;
                 String name = request.getHeader("Type");
                 ReplicationPackageBuilder replicationPacakageBuilder = packageBuilderProvider
-                                .getReplicationPacakageBuilder(name);
+                                .getReplicationPackageBuilder(name);
                 if (log.isInfoEnabled()) {
                     log.info("using {} package builder", replicationPacakageBuilder);
                 }

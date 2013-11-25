@@ -79,7 +79,7 @@ public class PollingTransportHandler implements TransportHandler {
             if (typeHeader != null) {
                 String type = typeHeader.getValue();
                 ReplicationPackage readPackage = packageBuilderProvider
-                                .getReplicationPacakageBuilder(type).readPackage(entity.getContent(), true);
+                                .getReplicationPackageBuilder(type).readPackage(entity.getContent(), true);
 
                 if (log.isInfoEnabled()) {
                     log.info("package {} fetched and installed", readPackage.getId());

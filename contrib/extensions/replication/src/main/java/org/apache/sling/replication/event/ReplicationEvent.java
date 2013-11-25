@@ -29,6 +29,10 @@ public class ReplicationEvent extends Event {
     public static final String EVENT_TOPIC = "org/apache/sling/replication/event";
 
     public ReplicationEvent(ReplicationEventType type, Dictionary<?, ?> properties) {
-        super(new StringBuilder(EVENT_TOPIC).append(type.toString()).toString(), properties);
+        super(getTopic(type), properties);
+    }
+
+    public static String getTopic(ReplicationEventType type) {
+        return new StringBuilder(EVENT_TOPIC).append('/').append(type.toString()).toString();
     }
 }

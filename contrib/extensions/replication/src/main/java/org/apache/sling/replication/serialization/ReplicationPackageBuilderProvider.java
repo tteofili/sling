@@ -27,6 +27,6 @@ public interface ReplicationPackageBuilderProvider {
 
     Collection<ReplicationPackageBuilder> getAvailableReplicationPacakageBuilders();
 
-    ReplicationPackageBuilder getReplicationPacakageBuilder(String name);
+    ReplicationPackageBuilder getReplicationPackageBuilder(String name);
 
 }

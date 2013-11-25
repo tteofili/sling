@@ -82,7 +82,7 @@ public class DefaultReplicationPackageBuilderProvider implements ReplicationPack
         return replicationPackageBuilders.values();
     }
 
-    public ReplicationPackageBuilder getReplicationPacakageBuilder(String name) {
+    public ReplicationPackageBuilder getReplicationPackageBuilder(String name) {
         return replicationPackageBuilders.get(name);
     }
 
