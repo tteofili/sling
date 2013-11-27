@@ -45,9 +45,22 @@ public interface ReplicationAgent {
      */
     ReplicationQueue getQueue(String name) throws ReplicationQueueException;
 
+    /**
+     * execute a {@link ReplicationRequest} against this agent waiting for a {@link ReplicationResponse}
+     *
+     * @param replicationRequest the replication request
+     * @return a {@link ReplicationResponse}
+     * @throws AgentReplicationException
+     */
     ReplicationResponse execute(ReplicationRequest replicationRequest)
             throws AgentReplicationException;
 
+    /**
+     * Asynchronously sends a {@link ReplicationRequest} without waiting for any response
+     *
+     * @param replicationRequest the replication request
+     * @throws AgentReplicationException
+     */
     void send(ReplicationRequest replicationRequest) throws AgentReplicationException;
 
     /**
