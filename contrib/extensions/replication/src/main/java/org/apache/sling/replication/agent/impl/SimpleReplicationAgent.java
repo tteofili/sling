@@ -44,19 +44,19 @@ public class SimpleReplicationAgent implements ReplicationAgent {
 
     private final Logger log = LoggerFactory.getLogger(getClass());
 
-    private ReplicationPackageBuilder packageBuilder;
+    private final ReplicationPackageBuilder packageBuilder;
 
-    private ReplicationQueueProvider queueProvider;
+    private final ReplicationQueueProvider queueProvider;
 
-    private TransportHandler transportHandler;
+    private final TransportHandler transportHandler;
 
-    private TransportAuthenticationProvider<?, ?> transportAuthenticationProvider;
+    private final TransportAuthenticationProvider<?, ?> transportAuthenticationProvider;
 
-    private ReplicationQueueDistributionStrategy queueDistributionStrategy;
+    private final ReplicationQueueDistributionStrategy queueDistributionStrategy;
 
-    private String name;
+    private final String name;
 
-    private String endpoint;
+    private final String endpoint;
 
     public SimpleReplicationAgent(String name, String endpoint,
                                   TransportHandler transportHandler, ReplicationPackageBuilder packageBuilder,
@@ -91,7 +91,7 @@ public class SimpleReplicationAgent implements ReplicationAgent {
                     this, queueProvider);
             if (state != null) {
                 replicationResponse.setStatus(state.getItemState().toString());
-                replicationResponse.setSuccessfull(state.isSuccessfull());
+                replicationResponse.setSuccessful(state.isSuccessful());
             } else {
                 replicationResponse.setStatus(ReplicationQueueItemState.ItemState.ERROR.toString());
             }
@@ -99,7 +99,7 @@ public class SimpleReplicationAgent implements ReplicationAgent {
             if (log.isErrorEnabled()) {
                 log.error("an error happened during queue processing", e);
             }
-            replicationResponse.setSuccessfull(false);
+            replicationResponse.setSuccessful(false);
         }
 
         return replicationResponse;

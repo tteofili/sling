@@ -68,7 +68,7 @@ public class ReplicationAgentPostServlet extends SlingAllMethodsServlet {
         if (agent != null) {
             try {
                 ReplicationResponse replicationResponse = agent.execute(replicationRequest);
-                if (replicationResponse.isSuccessfull()
+                if (replicationResponse.isSuccessful()
                                 || ItemState.DROPPED.toString().equals(
                                                 replicationResponse.getStatus())) {
                     response.setStatus(200);

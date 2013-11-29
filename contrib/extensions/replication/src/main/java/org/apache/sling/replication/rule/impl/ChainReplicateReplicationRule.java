@@ -54,7 +54,7 @@ public class ChainReplicateReplicationRule implements ReplicationRule {
     private final Logger log = LoggerFactory.getLogger(getClass());
 
     private BundleContext bundleContext;
-    private Map<String, ServiceRegistration> registrations = new HashMap<String, ServiceRegistration>();
+    private final Map<String, ServiceRegistration> registrations = new HashMap<String, ServiceRegistration>();
 
     @Activate
     protected void activate(BundleContext bundleContext) {
@@ -62,7 +62,7 @@ public class ChainReplicateReplicationRule implements ReplicationRule {
     }
 
     @Deactivate
-    protected void deactivate() throws Exception {
+    protected void deactivate() {
         for (Map.Entry<String, ServiceRegistration> entry : registrations.entrySet()) {
             if (entry.getValue() != null) {
                 entry.getValue().unregister();

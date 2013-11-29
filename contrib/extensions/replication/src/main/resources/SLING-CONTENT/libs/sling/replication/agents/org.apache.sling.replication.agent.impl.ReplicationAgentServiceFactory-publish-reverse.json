@@ -1,7 +1,7 @@
 {
     "jcr:primaryType" : "sling:OsgiConfig",
     "name" : "publish-reverse",
-    "endpoint" : "http://localhost:4503/system/replication/agent/reverse-pub",
+    "endpoint" : "http://localhost:4503/system/replication/agent/reverserepo",
     "TransportHandler.target" : "(name=poll)", 
     "ReplicationPackageBuilder.target" : "(name=vlt)",
     "ReplicationQueueProvider.target" : "(name=sjh)",

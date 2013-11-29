@@ -22,10 +22,10 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class TransportAuthenticationContext {
-    private Map<String, Object> attributes = new HashMap<String, Object>();
+    private final Map<String, Object> attributes = new HashMap<String, Object>();
 
     @SuppressWarnings("unchecked")
-    public <T extends Object> T getAttribute(String name, Class<? extends T> klass) {
+    public <T> T getAttribute(String name, Class<? extends T> klass) {
         T result = null;
         Object object = attributes.get(name);
         if (klass.isInstance(object)) {
@@ -34,7 +34,7 @@ public class TransportAuthenticationContext {
         return result;
     }
 
-    public <T extends Object> void addAttribute(String name, T object) {
+    public <T> void addAttribute(String name, T object) {
         attributes.put(name, object);
     }
 }

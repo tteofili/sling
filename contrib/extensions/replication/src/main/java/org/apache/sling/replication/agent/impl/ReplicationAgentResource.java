@@ -47,8 +47,7 @@ public class ReplicationAgentResource extends AbstractResource {
     }
 
     public String getPath() {
-        return new StringBuilder(BASE_PATH).append('/').append(replicationAgent.getName())
-                        .toString();
+        return BASE_PATH + '/' + replicationAgent.getName();
     }
 
     public String getResourceType() {

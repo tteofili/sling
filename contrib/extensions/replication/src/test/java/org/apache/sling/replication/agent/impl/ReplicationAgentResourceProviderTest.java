@@ -97,7 +97,7 @@ public class ReplicationAgentResourceProviderTest {
                     BundleContext context) throws InvalidSyntaxException {
         ServiceReference serviceReference = mock(ServiceReference.class);
         ServiceReference[] agentServiceReferences = new ServiceReference[] { serviceReference };
-        String filter = new StringBuilder("(name=").append(path).append(")").toString();
+        String filter = "(name=" + path + ")";
         when(context.getServiceReferences(ReplicationAgent.class.getName(), filter)).thenReturn(
                         agentServiceReferences);
         SimpleReplicationAgent replicationAgent = new SimpleReplicationAgent(path, null,

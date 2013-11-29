@@ -45,7 +45,7 @@ import org.slf4j.LoggerFactory;
 @Deprecated
 public class ReplicationPackageAdapterFactory implements AdapterFactory {
 
-    private Logger log = LoggerFactory.getLogger(getClass());
+    private final Logger log = LoggerFactory.getLogger(getClass());
 
     @Reference
     private ReplicationPackageBuilderProvider packageBuilderProvider;
@@ -60,14 +60,14 @@ public class ReplicationPackageAdapterFactory implements AdapterFactory {
             if (adaptable instanceof SlingHttpServletRequest) {
                 SlingHttpServletRequest request = (SlingHttpServletRequest) adaptable;
                 String name = request.getHeader("Type");
-                ReplicationPackageBuilder replicationPacakageBuilder = packageBuilderProvider
+                ReplicationPackageBuilder replicationPackageBuilder = packageBuilderProvider
                                 .getReplicationPackageBuilder(name);
                 if (log.isInfoEnabled()) {
-                    log.info("using {} package builder", replicationPacakageBuilder);
+                    log.info("using {} package builder", replicationPackageBuilder);
                 }
-                if (replicationPacakageBuilder != null) {
+                if (replicationPackageBuilder != null) {
                     InputStream stream = request.getInputStream();
-                    pkg = replicationPacakageBuilder.readPackage(stream, true);
+                    pkg = replicationPackageBuilder.readPackage(stream, true);
                     if (pkg != null) {
                         if (log.isInfoEnabled()) {
                             log.info("package {} created", Arrays.toString(pkg.getPaths()));

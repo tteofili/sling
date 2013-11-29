@@ -68,7 +68,7 @@ public class SingleQueueDistributionStrategy implements ReplicationQueueDistribu
                     log.error("could not add the item to the queue {}", queue);
                 }
                 state.setItemState(ItemState.ERROR);
-                state.setSuccessfull(false);
+                state.setSuccessful(false);
             }
             return state;
         } else {

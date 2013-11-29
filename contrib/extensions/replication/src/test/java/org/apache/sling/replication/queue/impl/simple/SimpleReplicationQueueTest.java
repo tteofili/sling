@@ -51,7 +51,7 @@ public class SimpleReplicationQueueTest {
         queue.removeHead();
         ReplicationQueueItemState status = queue.getStatus(pkg);
         assertNotNull(status);
-        assertTrue(status.isSuccessfull());
+        assertTrue(status.isSuccessful());
     }
 
     @Test
@@ -64,7 +64,7 @@ public class SimpleReplicationQueueTest {
         queue.removeHead();
         ReplicationQueueItemState status = queue.getStatus(pkg);
         assertNotNull(status);
-        assertTrue(status.isSuccessfull());
+        assertTrue(status.isSuccessful());
         assertEquals(1, status.getAttempts());
     }
 

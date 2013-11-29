@@ -197,8 +197,7 @@ public class ReplicationAgentServiceFactory {
         // eventually register job consumer for sling job handling based queues
         if (DEFAULT_QUEUEPROVIDER.equals(queue)) {
             Dictionary<String, Object> jobProps = new Hashtable<String, Object>();
-            String topic = new StringBuilder(JobHandlingReplicationQueue.REPLICATION_QUEUE_TOPIC).append('/')
-                    .append(name).toString();
+            String topic = JobHandlingReplicationQueue.REPLICATION_QUEUE_TOPIC + '/' + name;
             String childTopic = topic + "/*";
             jobProps.put(JobConsumer.PROPERTY_TOPICS, new String[]{topic, childTopic});
             jobReg = context.registerService(JobConsumer.class.getName(), new ReplicationAgentJobConsumer(agent, packageBuilder), jobProps);

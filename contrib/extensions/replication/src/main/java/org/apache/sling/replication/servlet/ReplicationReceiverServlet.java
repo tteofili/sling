@@ -74,9 +74,9 @@ public class ReplicationReceiverServlet extends SlingAllMethodsServlet {
             ServletInputStream stream = request.getInputStream();
             String typeHeader = request.getHeader(ReplicationHeader.TYPE.toString());
             if (typeHeader != null) {
-                ReplicationPackageBuilder replicationPacakageBuilder = replicationPackageBuilderProvider.getReplicationPackageBuilder(typeHeader);
-                if (replicationPacakageBuilder != null) {
-                    replicationPackage = replicationPacakageBuilder.readPackage(stream, true);
+                ReplicationPackageBuilder replicationPackageBuilder = replicationPackageBuilderProvider.getReplicationPackageBuilder(typeHeader);
+                if (replicationPackageBuilder != null) {
+                    replicationPackage = replicationPackageBuilder.readPackage(stream, true);
                 } else {
                     if (log.isWarnEnabled()) {
                         log.warn("cannot read streams of type {}", typeHeader);
@@ -84,7 +84,7 @@ public class ReplicationReceiverServlet extends SlingAllMethodsServlet {
                 }
             } else {
                 BufferedInputStream bufferedInputStream = new BufferedInputStream(stream); // needed to allow for multiple reads
-                for (ReplicationPackageBuilder replicationPackageBuilder : replicationPackageBuilderProvider.getAvailableReplicationPacakageBuilders()) {
+                for (ReplicationPackageBuilder replicationPackageBuilder : replicationPackageBuilderProvider.getAvailableReplicationPackageBuilders()) {
                     try {
                         replicationPackage = replicationPackageBuilder.readPackage(bufferedInputStream, true);
                     } catch (Exception e) {
@@ -103,7 +103,7 @@ public class ReplicationReceiverServlet extends SlingAllMethodsServlet {
                 success = true;
 
                 Dictionary<String, Object> dictionary = new Hashtable<String, Object>();
-                dictionary.put("replication.action", replicationPackage.getAction().toString());
+                dictionary.put("replication.action", replicationPackage.getAction());
                 dictionary.put("replication.path", replicationPackage.getPaths());
                 replicationEventFactory.generateEvent(ReplicationEventType.PACKAGE_INSTALLED, dictionary);
             } else {

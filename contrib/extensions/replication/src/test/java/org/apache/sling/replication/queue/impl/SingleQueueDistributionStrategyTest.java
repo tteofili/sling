@@ -47,11 +47,11 @@ public class SingleQueueDistributionStrategyTest {
         when(queueProvider.getDefaultQueue(agent)).thenReturn(queue);
         when(queue.add(replicationPackage)).thenReturn(true);
         ReplicationQueueItemState state = mock(ReplicationQueueItemState.class);
-        when(state.isSuccessfull()).thenReturn(true);
+        when(state.isSuccessful()).thenReturn(true);
         when(queue.getStatus(replicationPackage)).thenReturn(state);
         ReplicationQueueItemState returnedState = singleQueueDistributionStrategy.add(replicationPackage, agent, queueProvider);
         assertNotNull(returnedState);
-        assertTrue(returnedState.isSuccessfull());
+        assertTrue(returnedState.isSuccessful());
     }
 
     @Test
@@ -64,11 +64,11 @@ public class SingleQueueDistributionStrategyTest {
         when(queueProvider.getDefaultQueue(agent)).thenReturn(queue);
         when(queue.add(replicationPackage)).thenReturn(true);
         ReplicationQueueItemState state = mock(ReplicationQueueItemState.class);
-        when(state.isSuccessfull()).thenReturn(false);
+        when(state.isSuccessful()).thenReturn(false);
         when(queue.getStatus(replicationPackage)).thenReturn(state);
         ReplicationQueueItemState returnedState = singleQueueDistributionStrategy.add(replicationPackage, agent, queueProvider);
         assertNotNull(returnedState);
-        assertFalse(returnedState.isSuccessfull());
+        assertFalse(returnedState.isSuccessful());
     }
 
     @Test

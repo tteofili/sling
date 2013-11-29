@@ -56,8 +56,7 @@ public class JobHandlingUtils {
     public static Job getJob(ScheduledJobInfo info, JobManager jobManager, String topic) {
         String id = String.valueOf(info.getJobProperties().get(ID));
         Map<String, Object> jobProps = JobHandlingUtils.createIdPropertiesFromId(id);
-        Job job = jobManager.getJob(topic, jobProps);
-        return job;
+        return jobManager.getJob(topic, jobProps);
     }
 
     public static ReplicationPackage getPackage(ReplicationPackageBuilder packageBuilder,
@@ -135,7 +134,7 @@ public class JobHandlingUtils {
     }
 
     public static Map<String, Object> createFullPropertiesFromPackage(
-                    ReplicationPackage replicationPackage) throws IOException {
+                    ReplicationPackage replicationPackage) {
         Map<String, Object> properties = new HashMap<String, Object>();
         properties.put(ID, replicationPackage.getId());
         properties.put(PATHS, replicationPackage.getPaths());

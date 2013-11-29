@@ -121,8 +121,6 @@ public class JobHandlingReplicationQueue implements ReplicationQueue {
         Job firstItem = getFirstItem();
         if (firstItem != null) {
             jobManager.removeJobById(firstItem.getId());
-        } else {
-
         }
     }
 

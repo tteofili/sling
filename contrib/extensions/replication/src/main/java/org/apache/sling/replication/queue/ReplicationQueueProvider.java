@@ -73,7 +73,7 @@ public interface ReplicationQueueProvider {
      * @return a collection of replication queues
      * @throws ReplicationQueueException
      */
-    Collection<ReplicationQueue> getAllQueues() throws ReplicationQueueException;
+    Collection<ReplicationQueue> getAllQueues();
 
     /**
      * removes an existing queue owned by this provider

@@ -57,10 +57,8 @@ public class JobHandlingReplicationQueueProvider extends AbstractReplicationQueu
     protected ReplicationQueue getOrCreateQueue(ReplicationAgent agent, String queueName)
                     throws ReplicationQueueException {
         try {
-            String name = new StringBuilder(agent.getName()).append(queueName).toString();
-            String topic = new StringBuilder(
-                            JobHandlingReplicationQueue.REPLICATION_QUEUE_TOPIC).append('/')
-                            .append(agent.getName()).append(queueName).toString();
+            String name = agent.getName() + queueName;
+            String topic = JobHandlingReplicationQueue.REPLICATION_QUEUE_TOPIC + '/' + agent.getName() + queueName;
             if (jobManager.getQueue(name) == null) {
                 Configuration config = configAdmin.createFactoryConfiguration(
                                 QueueConfiguration.class.getName(), null);

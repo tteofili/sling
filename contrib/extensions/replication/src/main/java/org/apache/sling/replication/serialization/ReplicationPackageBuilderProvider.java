@@ -25,7 +25,7 @@ import java.util.Collection;
  */
 public interface ReplicationPackageBuilderProvider {
 
-    Collection<ReplicationPackageBuilder> getAvailableReplicationPacakageBuilders();
+    Collection<ReplicationPackageBuilder> getAvailableReplicationPackageBuilders();
 
     ReplicationPackageBuilder getReplicationPackageBuilder(String name);
 

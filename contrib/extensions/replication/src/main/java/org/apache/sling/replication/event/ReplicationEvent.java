@@ -33,6 +33,6 @@ public class ReplicationEvent extends Event {
     }
 
     public static String getTopic(ReplicationEventType type) {
-        return new StringBuilder(EVENT_TOPIC).append('/').append(type.toString()).toString();
+        return EVENT_TOPIC + '/' + type.toString();
     }
 }

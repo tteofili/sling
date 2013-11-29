@@ -38,7 +38,7 @@ public abstract class AbstractReplicationQueueProvider implements ReplicationQue
 
     private final Logger log = LoggerFactory.getLogger(getClass());
 
-    private Map<String, ReplicationQueue> queueMap = new HashMap<String, ReplicationQueue>();
+    private final Map<String, ReplicationQueue> queueMap = new HashMap<String, ReplicationQueue>();
 
     public ReplicationQueue getQueue(ReplicationAgent agent,
                                      ReplicationPackage replicationPackage) throws ReplicationQueueException {
@@ -47,7 +47,7 @@ public abstract class AbstractReplicationQueueProvider implements ReplicationQue
 
     public ReplicationQueue getQueue(ReplicationAgent agent, String queueName)
                     throws ReplicationQueueException {
-        String key = new StringBuilder(agent.getName()).append(queueName).toString();
+        String key = agent.getName() + queueName;
         if (log.isInfoEnabled()) {
             log.info("creating a queue with key {}", key);
         }

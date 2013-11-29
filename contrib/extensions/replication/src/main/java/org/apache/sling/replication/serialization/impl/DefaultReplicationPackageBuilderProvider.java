@@ -52,7 +52,7 @@ public class DefaultReplicationPackageBuilderProvider implements ReplicationPack
 
     private final Logger log = LoggerFactory.getLogger(getClass());
 
-    private Map<String, ReplicationPackageBuilder> replicationPackageBuilders = new HashMap<String, ReplicationPackageBuilder>();
+    private final Map<String, ReplicationPackageBuilder> replicationPackageBuilders = new HashMap<String, ReplicationPackageBuilder>();
 
     @Deactivate
     protected void deactivate() {
@@ -78,7 +78,7 @@ public class DefaultReplicationPackageBuilderProvider implements ReplicationPack
         log.debug("Unregistering Replication PackageBuilder {} ", replicationPackageBuilder);
     }
 
-    public Collection<ReplicationPackageBuilder> getAvailableReplicationPacakageBuilders() {
+    public Collection<ReplicationPackageBuilder> getAvailableReplicationPackageBuilders() {
         return replicationPackageBuilders.values();
     }
 

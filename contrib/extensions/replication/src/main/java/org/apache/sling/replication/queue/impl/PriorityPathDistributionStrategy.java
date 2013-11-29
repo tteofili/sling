@@ -57,7 +57,7 @@ public class PriorityPathDistributionStrategy implements ReplicationQueueDistrib
     private String[] priorityPaths;
 
     @Activate
-    protected void activate(ComponentContext context) throws Exception {
+    protected void activate(ComponentContext context) {
         priorityPaths = PropertiesUtil.toStringArray(context.getProperties().get(PRIORITYPATHS));
     }
 
@@ -85,7 +85,7 @@ public class PriorityPathDistributionStrategy implements ReplicationQueueDistrib
                     log.error("could not add the item to the queue {}", queue);
                 }
                 state.setItemState(ItemState.ERROR);
-                state.setSuccessfull(false);
+                state.setSuccessful(false);
             }
             return state;
         } else {

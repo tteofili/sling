@@ -30,9 +30,9 @@ public class ReplicationAgentQueueResource extends AbstractResource {
 
     public static final String RESOURCE_TYPE = "sling/replication/agent/queue";
 
-    private ReplicationQueue queue;
+    private final ReplicationQueue queue;
 
-    private ResourceResolver resourceResolver;
+    private final ResourceResolver resourceResolver;
 
     public ReplicationAgentQueueResource(
             ReplicationQueue queue,
@@ -42,9 +42,7 @@ public class ReplicationAgentQueueResource extends AbstractResource {
     }
 
     public String getPath() {
-        return new StringBuilder(ReplicationAgentResource.BASE_PATH).append('/')
-                .append(queue.getName()).append("/queue")
-                .toString();
+        return ReplicationAgentResource.BASE_PATH + '/' + queue.getName() + "/queue";
     }
 
     public String getResourceType() {
@@ -57,8 +55,7 @@ public class ReplicationAgentQueueResource extends AbstractResource {
 
     public ResourceMetadata getResourceMetadata() {
         ResourceMetadata metadata = new ResourceMetadata();
-        metadata.setResolutionPath(new StringBuilder(ReplicationAgentResource.BASE_PATH)
-                .append('/').append(queue.getName()).toString());
+        metadata.setResolutionPath(ReplicationAgentResource.BASE_PATH + '/' + queue.getName());
         return metadata;
     }
 

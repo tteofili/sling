@@ -72,7 +72,7 @@ public class SimpleReplicationQueue implements ReplicationQueue {
             result = queue.offer(replicationPackage, 10, TimeUnit.SECONDS);
         } catch (InterruptedException e) {
             log.error("cannot add an item to the queue", e);
-            status.setSuccessfull(false);
+            status.setSuccessful(false);
         } finally {
             statusMap.put(replicationPackage, status);
         }
@@ -104,7 +104,7 @@ public class SimpleReplicationQueue implements ReplicationQueue {
 
     public void removeHead() {
         ReplicationPackage element = queue.remove();
-        statusMap.get(element).setSuccessfull(true);
+        statusMap.get(element).setSuccessful(true);
     }
 
     public boolean isEmpty() {

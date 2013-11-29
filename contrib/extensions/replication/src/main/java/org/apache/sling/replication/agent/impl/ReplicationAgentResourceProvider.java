@@ -141,7 +141,7 @@ public class ReplicationAgentResourceProvider implements ResourceProvider {
         try {
             replicationAgentReferences = context.getServiceReferences(
                     ReplicationAgent.class.getName(),
-                    new StringBuilder("(name=").append(agentName).append(")").toString());
+                    "(name=" + agentName + ")");
             if (replicationAgentReferences != null && replicationAgentReferences.length == 1) {
                 replicationAgent = (ReplicationAgent) context
                         .getService(replicationAgentReferences[0]);

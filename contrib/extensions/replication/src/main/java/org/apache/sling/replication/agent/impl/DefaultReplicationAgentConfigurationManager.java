@@ -68,8 +68,7 @@ public class DefaultReplicationAgentConfigurationManager implements
     }
 
     private Configuration getOsgiConfiguration(ReplicationAgent replicationAgent) throws Exception {
-        String filter = new StringBuilder("(name=").append(replicationAgent.getName()).append(")")
-                        .toString();
+        String filter = "(name=" + replicationAgent.getName() + ")";
         Configuration[] configurations = configAdmin.listConfigurations(filter);
         if (configurations == null) {
           throw new Exception("no configuration found");

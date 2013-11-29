@@ -55,7 +55,7 @@ public class DefaultReplicationAgentsManager implements ReplicationAgentsManager
 
     private final Logger log = LoggerFactory.getLogger(getClass());
 
-    private SortedSet<ReplicationAgent> replicationAgents = new TreeSet<ReplicationAgent>(new ReplicationAgentComparator());
+    private final SortedSet<ReplicationAgent> replicationAgents = new TreeSet<ReplicationAgent>(new ReplicationAgentComparator());
 
     public SortedSet<ReplicationAgent> getAgentsFor(ReplicationActionType action, String... paths) {
         // TODO : implement the filtering based on rules here

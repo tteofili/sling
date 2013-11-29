@@ -30,11 +30,11 @@ import org.slf4j.LoggerFactory;
 public class UserCredentialsTransportAuthenticationProvider implements
         TransportAuthenticationProvider<Executor, Executor> {
 
-    private Logger log = LoggerFactory.getLogger(getClass());
+    private final Logger log = LoggerFactory.getLogger(getClass());
 
-    private String username;
+    private final String username;
 
-    private String password;
+    private final String password;
 
     public UserCredentialsTransportAuthenticationProvider(String username, String password) {
         this.username = username;

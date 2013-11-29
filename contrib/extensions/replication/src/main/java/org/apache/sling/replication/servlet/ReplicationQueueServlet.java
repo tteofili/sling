@@ -55,9 +55,7 @@ public class ReplicationQueueServlet extends SlingAllMethodsServlet {
     }
 
     private String toJSoN(ReplicationQueue queue) {
-        return new StringBuilder("{").append("\"name\":\"").append(queue.getName()).append("\",\"empty\":")
-                .append(queue.isEmpty())
-                .append("}").toString();
+        return "{" + "\"name\":\"" + queue.getName() + "\",\"empty\":" + queue.isEmpty() + "}";
     }
 
 }

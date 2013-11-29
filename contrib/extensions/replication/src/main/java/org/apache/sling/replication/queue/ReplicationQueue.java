@@ -60,7 +60,7 @@ public interface ReplicationQueue {
      * @return a replication agent
      * @throws ReplicationQueueException
      */
-    ReplicationAgent getAgent() throws ReplicationQueueException;
+    ReplicationAgent getAgent();
 
     /**
      * get the first item (FIFO wise, the next to be processed) into the queue
@@ -68,14 +68,14 @@ public interface ReplicationQueue {
      * @return the first replication package into the queue
      * @throws ReplicationQueueException
      */
-    ReplicationPackage getHead() throws ReplicationQueueException;
+    ReplicationPackage getHead();
 
     /**
      * remove the first package into the queue from it
      *
      * @throws ReplicationQueueException
      */
-    void removeHead() throws ReplicationQueueException;
+    void removeHead();
 
     /**
      * check if the queue is empty

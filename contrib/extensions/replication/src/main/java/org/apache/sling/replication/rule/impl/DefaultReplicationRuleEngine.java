@@ -51,7 +51,7 @@ public class DefaultReplicationRuleEngine implements ReplicationRuleEngine {
 
     private final Logger log = LoggerFactory.getLogger(getClass());
 
-    private Collection<ReplicationRule> replicationRules = new LinkedList<ReplicationRule>();
+    private final Collection<ReplicationRule> replicationRules = new LinkedList<ReplicationRule>();
 
     @Deactivate
     protected void deactivate() {

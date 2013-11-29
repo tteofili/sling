@@ -28,12 +28,12 @@ public class ReplicationQueueItemState {
 
     private ItemState state;
 
-    public boolean isSuccessfull() {
+    public boolean isSuccessful() {
         return ItemState.SUCCEEDED.equals(state);
     }
 
-    public void setSuccessfull(boolean successfull) {
-        state = successfull ? ItemState.SUCCEEDED : ItemState.ERROR;
+    public void setSuccessful(boolean successful) {
+        state = successful ? ItemState.SUCCEEDED : ItemState.ERROR;
     }
 
     public int getAttempts() {
@@ -54,9 +54,7 @@ public class ReplicationQueueItemState {
 
     @Override
     public String toString() {
-        return new StringBuilder("{\"attempts\":\"").append(attempts).append("\",\"")
-                        .append("successfull\":\"").append(isSuccessfull()).append("\",\"")
-                        .append("state\":\"").append(state).append("\"}").toString();
+        return "{\"attempts\":\"" + attempts + "\",\"" + "successfull\":\"" + isSuccessful() + "\",\"" + "state\":\"" + state + "\"}";
     }
 
     public enum ItemState {

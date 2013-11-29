@@ -43,7 +43,8 @@ public interface ReplicationRule {
     /**
      * apply this rule to a replication agent
      *
-     * @param {@link ReplicationAgent agent} the agent to apply the rule to
+     * @param ruleString the rule to apply to the agent
+     * @param agent      {@link ReplicationAgent agent} the agent to apply the rule to
      */
     void apply(String ruleString, ReplicationAgent agent);
 

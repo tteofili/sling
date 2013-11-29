@@ -26,7 +26,7 @@ import java.util.Map;
 public interface ReplicationAgentConfigurationManager {
 
     /**
-     * retrieve a {@link ReplicationAgentConfiguration} for a giveng {@link ReplicationAgent}
+     * retrieve a {@link ReplicationAgentConfiguration} for a given {@link ReplicationAgent}
      *
      * @param replicationAgent a {@link ReplicationAgent}
      * @return a {@link ReplicationAgentConfiguration} for the given agent

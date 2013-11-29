@@ -25,7 +25,7 @@ import org.apache.sling.api.resource.ResourceResolver;
 import org.apache.sling.replication.agent.ReplicationAgentConfiguration;
 
 /**
- * a {@Resource} for a {@link ReplicationAgentConfiguration}
+ * a {@link Resource} for a {@link ReplicationAgentConfiguration}
  */
 public class ReplicationAgentConfigurationResource extends AbstractResource {
 
@@ -46,9 +46,7 @@ public class ReplicationAgentConfigurationResource extends AbstractResource {
     }
 
     public String getPath() {
-        return new StringBuilder(ReplicationAgentResource.BASE_PATH).append('/')
-                        .append(replicationAgentConfiguration.getName()).append("/configuration")
-                        .toString();
+        return ReplicationAgentResource.BASE_PATH + '/' + replicationAgentConfiguration.getName() + "/configuration";
     }
 
     public String getResourceType() {
@@ -61,8 +59,7 @@ public class ReplicationAgentConfigurationResource extends AbstractResource {
 
     public ResourceMetadata getResourceMetadata() {
         ResourceMetadata metadata = new ResourceMetadata();
-        metadata.setResolutionPath(new StringBuilder(ReplicationAgentResource.BASE_PATH)
-                        .append('/').append(replicationAgentConfiguration.getName()).toString());
+        metadata.setResolutionPath(ReplicationAgentResource.BASE_PATH + '/' + replicationAgentConfiguration.getName());
         return metadata;
     }
 

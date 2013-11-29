@@ -93,7 +93,7 @@ public class ErrorAwareQueueDistributionStrategy implements ReplicationQueueDist
                         log.error("could not add the item to the queue {}", queue);
                     }
                     state.setItemState(ItemState.ERROR);
-                    state.setSuccessfull(false);
+                    state.setSuccessful(false);
                 }
                 return state;
             } else {
@@ -129,7 +129,7 @@ public class ErrorAwareQueueDistributionStrategy implements ReplicationQueueDist
             // if item is still in the queue after a max no. of attempts, move it to the error queue
             int attempts = status.getAttempts();
             if (log.isInfoEnabled()) {
-                log.info("attemps for item {}: {}", firstItem.getId(), attempts);
+                log.info("attempts for item {}: {}", firstItem.getId(), attempts);
             }
             if (attempts > attemptsThreshold) {
                 if (ERROR.equals(stuckQueueHandling)) {

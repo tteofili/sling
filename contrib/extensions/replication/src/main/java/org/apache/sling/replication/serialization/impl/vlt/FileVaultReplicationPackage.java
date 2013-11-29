@@ -40,9 +40,9 @@ public class FileVaultReplicationPackage implements ReplicationPackage {
 
     private final String[] paths;
 
-    private VaultPackage pkg;
+    private final VaultPackage pkg;
 
-    private String action;
+    private final String action;
 
     public FileVaultReplicationPackage(VaultPackage pkg) {
         this.pkg = pkg;

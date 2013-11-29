@@ -33,18 +33,16 @@ import org.apache.sling.replication.serialization.ReplicationPackage;
  */
 public class VoidReplicationPackage implements ReplicationPackage {
 
-    private String type;
+    private final String type;
 
-    private String[] paths;
+    private final String[] paths;
 
-    private String id;
+    private final String id;
 
     public VoidReplicationPackage(ReplicationRequest request, String type) {
         this.type = type;
         this.paths = request.getPaths();
-        this.id = new StringBuilder(ReplicationActionType.DELETE.toString()).append(':').
-                append(Arrays.toString(request.getPaths())).append(':').
-                append(request.getTime()).toString();
+        this.id = ReplicationActionType.DELETE.toString() + ':' + Arrays.toString(request.getPaths()) + ':' + request.getTime();
     }
 
     public static VoidReplicationPackage fromStream(InputStream stream) throws IOException {
