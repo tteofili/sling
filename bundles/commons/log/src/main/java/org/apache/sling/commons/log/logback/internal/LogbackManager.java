@@ -307,6 +307,8 @@ public class LogbackManager extends LoggerContextAwareBase {
             addInfo("OsgiIntegrationListener : context reset detected. Adding LogManager to context map and firing"
                 + " listeners");
 
+            context.setPackagingDataEnabled(logConfigManager.isPackagingDataEnabled());
+
             // Attach a console appender to handle logging untill we configure
             // one. This would be removed in LogConfigManager.reset
             final Logger rootLogger = getLoggerContext().getLogger(org.slf4j.Logger.ROOT_LOGGER_NAME);
@@ -445,6 +447,12 @@ public class LogbackManager extends LoggerContextAwareBase {
                 }
             }
         }
+
+        for (LogConfig lc : logConfigManager.getLogConfigs()) {
+            for (String category : lc.getCategories()) {
+                ctx.loggerNameToConfigMapping.put(category, lc);
+            }
+        }
         return ctx;
     }
 
@@ -457,6 +465,8 @@ public class LogbackManager extends LoggerContextAwareBase {
          * List of logger which have explicitly defined level or appenders set
          */
         final List<Logger> loggerInfos = new ArrayList<Logger>();
+
+        final Map<String,LogConfig> loggerNameToConfigMapping = new HashMap<String, LogConfig>();
 
         final Map<String, Appender<ILoggingEvent>> appenders = new HashMap<String, Appender<ILoggingEvent>>();
 
@@ -504,6 +514,10 @@ public class LogbackManager extends LoggerContextAwareBase {
 
         Map<String,Appender<ILoggingEvent>> getAppenderMap(){
             return Collections.unmodifiableMap(appenders);
+        }
+
+        LogConfig getConfig(String loggerName) {
+            return loggerNameToConfigMapping.get(loggerName);
         }
     }
 
