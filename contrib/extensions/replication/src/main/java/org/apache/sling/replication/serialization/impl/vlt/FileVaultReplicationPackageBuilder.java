@@ -98,7 +98,7 @@ public class FileVaultReplicationPackageBuilder extends AbstractReplicationPacka
             opts.setMetaInf(inf);
             opts.setRootPath("/");
             File tmpFile = File.createTempFile("vlt-rp-" + System.nanoTime(), ".zip");
-            if (tmpFile.createNewFile()) {
+            if (!tmpFile.createNewFile()) {
                 VaultPackage pkg = packaging.getPackageManager().assemble(session, opts, tmpFile);
 
                 return new FileVaultReplicationPackage(pkg);

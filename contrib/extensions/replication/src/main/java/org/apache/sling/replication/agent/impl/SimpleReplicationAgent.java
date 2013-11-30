@@ -144,7 +144,7 @@ public class SimpleReplicationAgent implements ReplicationAgent {
 
     public ReplicationQueue getQueue(String name) throws ReplicationQueueException {
         ReplicationQueue queue;
-        if (name != null) {
+        if (name != null && name.length() > 0) {
             queue = queueProvider.getQueue(this, name);
         } else {
             queue = queueProvider.getDefaultQueue(this);

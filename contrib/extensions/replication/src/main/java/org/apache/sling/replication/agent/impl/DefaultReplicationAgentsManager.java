@@ -23,7 +23,6 @@ import java.util.Comparator;
 import java.util.Map;
 import java.util.SortedSet;
 import java.util.TreeSet;
-
 import org.apache.felix.scr.annotations.Component;
 import org.apache.felix.scr.annotations.Deactivate;
 import org.apache.felix.scr.annotations.Reference;
@@ -31,25 +30,24 @@ import org.apache.felix.scr.annotations.ReferenceCardinality;
 import org.apache.felix.scr.annotations.ReferencePolicy;
 import org.apache.felix.scr.annotations.References;
 import org.apache.felix.scr.annotations.Service;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import org.apache.sling.replication.agent.ReplicationAgent;
 import org.apache.sling.replication.agent.ReplicationAgentsManager;
 import org.apache.sling.replication.communication.ReplicationActionType;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Default implementation of {@link ReplicationAgentsManager}
  */
 @Component
-@References({ 
-    @Reference(name = "replicationAgent", 
-               referenceInterface = ReplicationAgent.class, 
-               cardinality = ReferenceCardinality.OPTIONAL_MULTIPLE, 
-               policy = ReferencePolicy.DYNAMIC,
-               bind = "bindReplicationAgent", 
-               unbind = "unbindReplicationAgent")
-    })
+@References({
+        @Reference(name = "replicationAgent",
+                referenceInterface = ReplicationAgent.class,
+                cardinality = ReferenceCardinality.OPTIONAL_MULTIPLE,
+                policy = ReferencePolicy.DYNAMIC,
+                bind = "bindReplicationAgent",
+                unbind = "unbindReplicationAgent")
+})
 @Service(value = ReplicationAgentsManager.class)
 public class DefaultReplicationAgentsManager implements ReplicationAgentsManager {
 
@@ -62,13 +60,17 @@ public class DefaultReplicationAgentsManager implements ReplicationAgentsManager
         return Collections.unmodifiableSortedSet(replicationAgents);
     }
 
+    public ReplicationAgent[] getAllAvailableAgents() {
+        return replicationAgents.toArray(new ReplicationAgent[replicationAgents.size()]);
+    }
+
     @Deactivate
     protected void deactivate() {
         replicationAgents.clear();
     }
 
     protected void bindReplicationAgent(final ReplicationAgent replicationAgent,
-                    Map<String, Object> properties) {
+                                        Map<String, Object> properties) {
         synchronized (replicationAgents) {
             replicationAgents.add(replicationAgent);
         }
@@ -76,7 +78,7 @@ public class DefaultReplicationAgentsManager implements ReplicationAgentsManager
     }
 
     protected void unbindReplicationAgent(final ReplicationAgent replicationAgent,
-                    Map<String, Object> properties) {
+                                          Map<String, Object> properties) {
         synchronized (replicationAgents) {
             replicationAgents.remove(replicationAgent);
         }

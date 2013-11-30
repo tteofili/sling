@@ -35,4 +35,10 @@ public interface ReplicationAgentsManager {
      */
     SortedSet<ReplicationAgent> getAgentsFor(ReplicationActionType action, String... paths);
 
+    /**
+     * get all the agents registered and active in the system
+     *
+     * @return an array of {@link ReplicationAgent}s
+     */
+    ReplicationAgent[] getAllAvailableAgents();
 }

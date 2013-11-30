@@ -25,7 +25,7 @@ import org.apache.sling.api.resource.ResourceResolver;
 import org.apache.sling.replication.agent.ReplicationAgentConfiguration;
 
 /**
- * a {@link Resource} for a {@link ReplicationAgentConfiguration}
+ * a {@link org.apache.sling.api.resource.Resource} for a {@link ReplicationAgentConfiguration}
  */
 public class ReplicationAgentConfigurationResource extends AbstractResource {
 
