@@ -89,6 +89,7 @@ public class RepositoryTransportHandler implements TransportHandler {
                                 replicationPackage.getId(), addedNode.getPath());
                     }
                     Dictionary<Object, Object> props = new Properties();
+                    props.put("transport", NAME);
                     replicationEventFactory.generateEvent(ReplicationEventType.PACKAGE_REPLICATED, props);
 
                 } else {

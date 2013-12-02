@@ -94,6 +94,9 @@ public class ReplicationAgentServiceFactory {
     private static final String DEFAULT_DISTRIBUTION = "(name="
             + SingleQueueDistributionStrategy.NAME + ")";
 
+    @Property(boolValue = true)
+    private static final String ENABLED = ReplicationAgentConfiguration.ENABLED;
+
     @Property
     private static final String NAME = ReplicationAgentConfiguration.NAME;
 
@@ -139,68 +142,73 @@ public class ReplicationAgentServiceFactory {
         // inject configuration
         Dictionary<String, Object> props = new Hashtable<String, Object>();
 
-        String name = PropertiesUtil
-                .toString(config.get(NAME), String.valueOf(new Random().nextInt(1000)));
-        props.put(NAME, name);
+        boolean enabled = PropertiesUtil.toBoolean(config.get(ENABLED), true);
+        if (enabled) {
+            props.put(ENABLED, enabled);
 
-        String endpoint = PropertiesUtil.toString(config.get(ENDPOINT), DEFAULT_ENDPOINT);
-        props.put(ENDPOINT, endpoint);
+            String name = PropertiesUtil
+                    .toString(config.get(NAME), String.valueOf(new Random().nextInt(1000)));
+            props.put(NAME, name);
 
-        String transport = PropertiesUtil.toString(config.get(TRANSPORT), DEFAULT_TRANSPORT);
-        props.put(TRANSPORT, transport);
+            String endpoint = PropertiesUtil.toString(config.get(ENDPOINT), DEFAULT_ENDPOINT);
+            props.put(ENDPOINT, endpoint);
 
-        String packaging = PropertiesUtil.toString(config.get(PACKAGING), DEFAULT_PACKAGING);
-        props.put(PACKAGING, packaging);
+            String transport = PropertiesUtil.toString(config.get(TRANSPORT), DEFAULT_TRANSPORT);
+            props.put(TRANSPORT, transport);
 
-        String queue = PropertiesUtil.toString(config.get(QUEUEPROVIDER), DEFAULT_QUEUEPROVIDER);
-        props.put(QUEUEPROVIDER, queue);
+            String packaging = PropertiesUtil.toString(config.get(PACKAGING), DEFAULT_PACKAGING);
+            props.put(PACKAGING, packaging);
 
-        String distribution = PropertiesUtil.toString(config.get(DISTRIBUTION), DEFAULT_DISTRIBUTION);
-        props.put(DISTRIBUTION, distribution);
+            String queue = PropertiesUtil.toString(config.get(QUEUEPROVIDER), DEFAULT_QUEUEPROVIDER);
+            props.put(QUEUEPROVIDER, queue);
 
-        Map<String, String> authenticationProperties = PropertiesUtil.toMap(config.get(AUTHENTICATION_PROPERTIES), new String[0]);
-        props.put(AUTHENTICATION_PROPERTIES, authenticationProperties);
+            String distribution = PropertiesUtil.toString(config.get(DISTRIBUTION), DEFAULT_DISTRIBUTION);
+            props.put(DISTRIBUTION, distribution);
 
-        String[] rules = PropertiesUtil.toStringArray(config.get(RULES), new String[0]);
-        props.put(RULES, rules);
+            Map<String, String> authenticationProperties = PropertiesUtil.toMap(config.get(AUTHENTICATION_PROPERTIES), new String[0]);
+            props.put(AUTHENTICATION_PROPERTIES, authenticationProperties);
 
-        String af = PropertiesUtil.toString(config.get(TRANSPORT_AUTHENTICATION_FACTORY), DEFAULT_AUTHENTICATION_FACTORY);
-        props.put(TRANSPORT_AUTHENTICATION_FACTORY, af);
+            String[] rules = PropertiesUtil.toStringArray(config.get(RULES), new String[0]);
+            props.put(RULES, rules);
 
-        // check configuration is valid
-        if (name == null || transportHandler == null || endpoint == null || packageBuilder == null || queueProvider == null || transportAuthenticationProviderFactory == null || queueDistributionStrategy == null) {
-            throw new AgentConfigurationException("configuration for this agent is not valid");
-        }
+            String af = PropertiesUtil.toString(config.get(TRANSPORT_AUTHENTICATION_FACTORY), DEFAULT_AUTHENTICATION_FACTORY);
+            props.put(TRANSPORT_AUTHENTICATION_FACTORY, af);
 
-        TransportAuthenticationProvider<?, ?> transportAuthenticationProvider = transportAuthenticationProviderFactory.createAuthenticationProvider(authenticationProperties);
+            // check configuration is valid
+            if (name == null || transportHandler == null || endpoint == null || packageBuilder == null || queueProvider == null || transportAuthenticationProviderFactory == null || queueDistributionStrategy == null) {
+                throw new AgentConfigurationException("configuration for this agent is not valid");
+            }
 
-        if (!transportHandler.supportsAuthenticationProvider(transportAuthenticationProvider)) {
-            throw new Exception("authentication handler " + transportAuthenticationProvider
-                    + " not supported by transport handler " + transportHandler);
-        }
+            TransportAuthenticationProvider<?, ?> transportAuthenticationProvider = transportAuthenticationProviderFactory.createAuthenticationProvider(authenticationProperties);
 
-        if (log.isInfoEnabled()) {
-            log.info("bound services for {} :  {} - {} - {} - {} - {} - {}", new Object[]{name,
-                    transportHandler, transportAuthenticationProvider, endpoint, packageBuilder, queueProvider, queueDistributionStrategy});
-        }
+            if (!transportHandler.supportsAuthenticationProvider(transportAuthenticationProvider)) {
+                throw new Exception("authentication handler " + transportAuthenticationProvider
+                        + " not supported by transport handler " + transportHandler);
+            }
 
-        ReplicationAgent agent = new SimpleReplicationAgent(name, endpoint, transportHandler, packageBuilder, queueProvider, transportAuthenticationProvider, queueDistributionStrategy);
+            if (log.isInfoEnabled()) {
+                log.info("bound services for {} :  {} - {} - {} - {} - {} - {}", new Object[]{name,
+                        transportHandler, transportAuthenticationProvider, endpoint, packageBuilder, queueProvider, queueDistributionStrategy});
+            }
 
-        // register agent service
-        agentReg = context.registerService(ReplicationAgent.class.getName(), agent, props);
+            ReplicationAgent agent = new SimpleReplicationAgent(name, endpoint, transportHandler, packageBuilder, queueProvider, transportAuthenticationProvider, queueDistributionStrategy);
 
-        // apply rules if any
-        if (rules.length > 0) {
-            replicationRuleEngine.applyRules(agent, rules);
-        }
+            // register agent service
+            agentReg = context.registerService(ReplicationAgent.class.getName(), agent, props);
 
-        // eventually register job consumer for sling job handling based queues
-        if (DEFAULT_QUEUEPROVIDER.equals(queue)) {
-            Dictionary<String, Object> jobProps = new Hashtable<String, Object>();
-            String topic = JobHandlingReplicationQueue.REPLICATION_QUEUE_TOPIC + '/' + name;
-            String childTopic = topic + "/*";
-            jobProps.put(JobConsumer.PROPERTY_TOPICS, new String[]{topic, childTopic});
-            jobReg = context.registerService(JobConsumer.class.getName(), new ReplicationAgentJobConsumer(agent, packageBuilder), jobProps);
+            // apply rules if any
+            if (rules.length > 0) {
+                replicationRuleEngine.applyRules(agent, rules);
+            }
+
+            // eventually register job consumer for sling job handling based queues
+            if (DEFAULT_QUEUEPROVIDER.equals(queue)) {
+                Dictionary<String, Object> jobProps = new Hashtable<String, Object>();
+                String topic = JobHandlingReplicationQueue.REPLICATION_QUEUE_TOPIC + '/' + name;
+                String childTopic = topic + "/*";
+                jobProps.put(JobConsumer.PROPERTY_TOPICS, new String[]{topic, childTopic});
+                jobReg = context.registerService(JobConsumer.class.getName(), new ReplicationAgentJobConsumer(agent, packageBuilder), jobProps);
+            }
         }
     }
 

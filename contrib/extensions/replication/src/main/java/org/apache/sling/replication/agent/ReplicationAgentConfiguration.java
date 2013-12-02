@@ -46,6 +46,8 @@ public class ReplicationAgentConfiguration {
 
     public static final String RULES = "rules";
 
+    public static final String ENABLED = "enabled";
+
     private final String name;
 
     private final String endpoint;
