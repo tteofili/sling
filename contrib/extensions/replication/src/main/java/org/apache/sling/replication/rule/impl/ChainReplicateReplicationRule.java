@@ -130,19 +130,24 @@ public class ChainReplicateReplicationRule implements ReplicationRule {
         }
 
         public void handleEvent(Event event) {
-            if (log.isInfoEnabled()) {
-                log.info("triggering chain replication from event {}", event);
-            }
             Object actionProperty = event.getProperty("replication.action");
             Object pathProperty = event.getProperty("replication.path");
             if (actionProperty != null && pathProperty != null) {
-                ReplicationActionType action = ReplicationActionType.valueOf(String.valueOf(actionProperty));
                 String[] paths = (String[]) pathProperty;
-                try {
-                    agent.send(new ReplicationRequest(System.currentTimeMillis(), action, paths));
-                } catch (AgentReplicationException e) {
-                    if (log.isErrorEnabled()) {
-                        log.error("triggered replication resulted in an error {}", e);
+                for (String p : paths) {
+                    if (p.startsWith(path)) {
+                        if (log.isInfoEnabled()) {
+                            log.info("triggering chain replication from event {}", event);
+                        }
+                        ReplicationActionType action = ReplicationActionType.valueOf(String.valueOf(actionProperty));
+                        try {
+                            agent.send(new ReplicationRequest(System.currentTimeMillis(), action, paths));
+                        } catch (AgentReplicationException e) {
+                            if (log.isErrorEnabled()) {
+                                log.error("triggered replication resulted in an error {}", e);
+                            }
+                        }
+                        break;
                     }
                 }
             }
