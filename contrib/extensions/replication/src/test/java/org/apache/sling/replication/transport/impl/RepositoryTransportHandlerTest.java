@@ -24,6 +24,7 @@ import javax.jcr.Node;
 import javax.jcr.Session;
 import org.apache.sling.jcr.api.SlingRepository;
 import org.apache.sling.replication.communication.ReplicationEndpoint;
+import org.apache.sling.replication.event.ReplicationEventFactory;
 import org.apache.sling.replication.serialization.ReplicationPackage;
 import org.apache.sling.replication.transport.ReplicationTransportException;
 import org.apache.sling.replication.transport.authentication.TransportAuthenticationProvider;
@@ -72,9 +73,15 @@ public class RepositoryTransportHandlerTest {
         when(repo.login(any(Credentials.class))).thenReturn(session);
 
         RepositoryTransportHandler handler = new RepositoryTransportHandler();
-        Field field = handler.getClass().getDeclaredField("repository");
-        field.setAccessible(true);
-        field.set(handler, repo);
+        Field repositoryField = handler.getClass().getDeclaredField("repository");
+        repositoryField.setAccessible(true);
+        repositoryField.set(handler, repo);
+
+        ReplicationEventFactory replicationEventFactory = mock(ReplicationEventFactory.class);
+        Field replicationEventFactoryField = handler.getClass().getDeclaredField("replicationEventFactory");
+        replicationEventFactoryField.setAccessible(true);
+        replicationEventFactoryField.set(handler, replicationEventFactory);
+
         TransportAuthenticationProvider<SlingRepository, Session> transportAuthenticationProvider = new RepositoryTransportAuthenticationProvider("user-123", "p455w0rd");
         ReplicationPackage replicationPackage = mock(ReplicationPackage.class);
         when(replicationPackage.getId()).thenReturn("some-id");

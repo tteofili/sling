@@ -19,6 +19,8 @@
 package org.apache.sling.replication.transport.impl;
 
 import java.net.URI;
+import java.util.Dictionary;
+import java.util.Properties;
 import javax.jcr.Node;
 import javax.jcr.Session;
 import javax.jcr.nodetype.NodeType;
@@ -30,6 +32,8 @@ import org.apache.jackrabbit.JcrConstants;
 import org.apache.jackrabbit.util.Text;
 import org.apache.sling.jcr.api.SlingRepository;
 import org.apache.sling.replication.communication.ReplicationEndpoint;
+import org.apache.sling.replication.event.ReplicationEventFactory;
+import org.apache.sling.replication.event.ReplicationEventType;
 import org.apache.sling.replication.serialization.ReplicationPackage;
 import org.apache.sling.replication.transport.ReplicationTransportException;
 import org.apache.sling.replication.transport.TransportHandler;
@@ -51,6 +55,9 @@ public class RepositoryTransportHandler implements TransportHandler {
 
     @Reference
     private SlingRepository repository;
+
+    @Reference
+    private ReplicationEventFactory replicationEventFactory;
 
     public void transport(ReplicationPackage replicationPackage,
                           ReplicationEndpoint replicationEndpoint,
@@ -81,7 +88,9 @@ public class RepositoryTransportHandler implements TransportHandler {
                         log.info("package {} delivered to the repository as node {} ",
                                 replicationPackage.getId(), addedNode.getPath());
                     }
-                    // TODO : trigger event, this event can be used to ask an author to get the persisted package
+                    Dictionary<Object, Object> props = new Properties();
+                    replicationEventFactory.generateEvent(ReplicationEventType.PACKAGE_REPLICATED, props);
+
                 } else {
                     throw new ReplicationTransportException(
                             "could not get a Session to deliver package to the repository");
