@@ -21,8 +21,10 @@ package org.apache.sling.replication.serialization.impl.vlt;
 import java.io.File;
 import java.io.InputStream;
 import java.util.Properties;
+
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
+
 import org.apache.felix.scr.annotations.Component;
 import org.apache.felix.scr.annotations.Property;
 import org.apache.felix.scr.annotations.Reference;
@@ -36,10 +38,12 @@ import org.apache.jackrabbit.vault.packaging.JcrPackage;
 import org.apache.jackrabbit.vault.packaging.Packaging;
 import org.apache.jackrabbit.vault.packaging.VaultPackage;
 import org.apache.sling.jcr.api.SlingRepository;
+
 import org.apache.sling.replication.communication.ReplicationRequest;
 import org.apache.sling.replication.serialization.ReplicationPackage;
 import org.apache.sling.replication.serialization.ReplicationPackageBuilder;
 import org.apache.sling.replication.serialization.ReplicationPackageBuildingException;
+
 import org.apache.sling.replication.serialization.ReplicationPackageReadingException;
 import org.apache.sling.replication.serialization.impl.AbstractReplicationPackageBuilder;
 import org.slf4j.Logger;

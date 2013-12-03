@@ -54,7 +54,7 @@ public class ReplicationQueueItemState {
 
     @Override
     public String toString() {
-        return "{\"attempts\":\"" + attempts + "\",\"" + "successfull\":\"" + isSuccessful() + "\",\"" + "state\":\"" + state + "\"}";
+        return "{\"attempts\":\"" + attempts + "\",\"" + "successful\":\"" + isSuccessful() + "\",\"" + "state\":\"" + state + "\"}";
     }
 
     public enum ItemState {

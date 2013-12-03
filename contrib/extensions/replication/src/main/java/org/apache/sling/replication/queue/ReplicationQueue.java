@@ -58,7 +58,6 @@ public interface ReplicationQueue {
      * get the agent this queue is used for
      *
      * @return a replication agent
-     * @throws ReplicationQueueException
      */
     ReplicationAgent getAgent();
 
@@ -66,7 +65,6 @@ public interface ReplicationQueue {
      * get the first item (FIFO wise, the next to be processed) into the queue
      *
      * @return the first replication package into the queue
-     * @throws ReplicationQueueException
      */
     ReplicationPackage getHead();
 

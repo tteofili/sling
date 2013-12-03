@@ -26,6 +26,7 @@ import org.apache.sling.replication.event.ReplicationEvent;
 import org.apache.sling.replication.event.ReplicationEventFactory;
 import org.apache.sling.replication.event.ReplicationEventType;
 import org.osgi.service.event.EventAdmin;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

@@ -28,6 +28,7 @@ import org.apache.felix.scr.annotations.Service;
 import org.apache.sling.api.resource.Resource;
 import org.apache.sling.api.resource.ResourceProvider;
 import org.apache.sling.api.resource.ResourceResolver;
+
 import org.apache.sling.replication.agent.AgentConfigurationException;
 import org.apache.sling.replication.agent.ReplicationAgent;
 import org.apache.sling.replication.agent.ReplicationAgentConfiguration;
@@ -38,6 +39,11 @@ import org.osgi.framework.ServiceReference;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import org.apache.sling.replication.agent.AgentConfigurationException;
+import org.apache.sling.replication.agent.ReplicationAgent;
+import org.apache.sling.replication.agent.ReplicationAgentConfiguration;
+import org.apache.sling.replication.agent.ReplicationAgentConfigurationManager;
+
 /**
  * {@link ResourceProvider} for {@link ReplicationAgent}s
  */
@@ -47,6 +53,7 @@ import org.slf4j.LoggerFactory;
 public class ReplicationAgentResourceProvider implements ResourceProvider {
 
     private static final String CONFIGURATION_PATH = "/configuration";
+
     private static final String QUEUE_PATH = "/queue";
 
     private final Logger log = LoggerFactory.getLogger(getClass());

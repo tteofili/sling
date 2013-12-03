@@ -31,6 +31,7 @@ public class ReplicationAgentConfigurationResource extends AbstractResource {
 
     public static final String RESOURCE_TYPE = "sling/replication/agent/configuration";
 
+
     private final ReplicationAgentConfiguration replicationAgentConfiguration;
 
     private final ResourceResolver resourceResolver;

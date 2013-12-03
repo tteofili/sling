@@ -19,6 +19,7 @@
 package org.apache.sling.replication.serialization;
 
 import java.io.InputStream;
+
 import org.apache.sling.replication.communication.ReplicationRequest;
 
 /**

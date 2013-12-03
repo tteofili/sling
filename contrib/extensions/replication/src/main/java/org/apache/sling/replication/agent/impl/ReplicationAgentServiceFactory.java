@@ -22,6 +22,7 @@ import java.util.Dictionary;
 import java.util.Hashtable;
 import java.util.Map;
 import java.util.Random;
+
 import org.apache.felix.scr.annotations.Activate;
 import org.apache.felix.scr.annotations.Component;
 import org.apache.felix.scr.annotations.ConfigurationPolicy;
@@ -46,6 +47,7 @@ import org.apache.sling.replication.transport.TransportHandler;
 import org.apache.sling.replication.transport.authentication.TransportAuthenticationProvider;
 import org.apache.sling.replication.transport.authentication.TransportAuthenticationProviderFactory;
 import org.apache.sling.replication.transport.authentication.impl.UserCredentialsTransportAuthenticationProviderFactory;
+
 import org.apache.sling.replication.transport.impl.HttpTransportHandler;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.ServiceRegistration;
