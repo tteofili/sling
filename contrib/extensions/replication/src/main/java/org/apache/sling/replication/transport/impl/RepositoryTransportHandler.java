@@ -90,6 +90,7 @@ public class RepositoryTransportHandler implements TransportHandler {
                     }
                     Dictionary<Object, Object> props = new Properties();
                     props.put("transport", NAME);
+                    props.put("path", replicationPackage.getPaths());
                     replicationEventFactory.generateEvent(ReplicationEventType.PACKAGE_REPLICATED, props);
 
                 } else {

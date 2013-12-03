@@ -19,7 +19,6 @@
 package org.apache.sling.replication.serialization.impl.vlt;
 
 import java.io.File;
-import java.io.IOException;
 import java.io.InputStream;
 import java.util.Properties;
 import javax.jcr.RepositoryException;
@@ -98,14 +97,8 @@ public class FileVaultReplicationPackageBuilder extends AbstractReplicationPacka
             opts.setMetaInf(inf);
             opts.setRootPath("/");
             File tmpFile = File.createTempFile("vlt-rp-" + System.nanoTime(), ".zip");
-            if (!tmpFile.createNewFile()) {
-                VaultPackage pkg = packaging.getPackageManager().assemble(session, opts, tmpFile);
-
-                return new FileVaultReplicationPackage(pkg);
-            }
-            else {
-                throw new IOException("could not create temp file for VLT package");
-            }
+            VaultPackage pkg = packaging.getPackageManager().assemble(session, opts, tmpFile);
+            return new FileVaultReplicationPackage(pkg);
         } catch (Exception e) {
             throw new ReplicationPackageBuildingException(e);
         } finally {

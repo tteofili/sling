@@ -85,6 +85,7 @@ public class RepositoryTransportHandlerTest {
         TransportAuthenticationProvider<SlingRepository, Session> transportAuthenticationProvider = new RepositoryTransportAuthenticationProvider("user-123", "p455w0rd");
         ReplicationPackage replicationPackage = mock(ReplicationPackage.class);
         when(replicationPackage.getId()).thenReturn("some-id");
+        when(replicationPackage.getPaths()).thenReturn(new String[]{"/apps", "/libs"});
         handler.transport(replicationPackage, new ReplicationEndpoint("repo:/" + repoPath),
                 transportAuthenticationProvider);
     }
