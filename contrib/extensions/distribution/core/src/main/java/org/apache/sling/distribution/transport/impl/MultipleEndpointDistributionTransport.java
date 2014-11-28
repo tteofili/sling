@@ -63,7 +63,8 @@ public class MultipleEndpointDistributionTransport implements DistributionTransp
             if (distributionPackage != null) {
                 transportHelper.deliverPackage(resourceResolver, distributionPackage, secret);
             } else if (distributionRequest != null) {
-                for (DistributionPackage retrievedPackage : transportHelper.retrievePackages(resourceResolver, distributionRequest, secret)) {
+                Iterable<DistributionPackage> distributionPackages = transportHelper.retrievePackages(resourceResolver, distributionRequest, secret);
+                for (DistributionPackage retrievedPackage : distributionPackages) {
                     result.add(retrievedPackage);
                 }
             }
