@@ -20,7 +20,6 @@ package org.apache.sling.distribution.transport.impl;
 
 import javax.annotation.Nonnull;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 import org.apache.sling.api.resource.ResourceResolver;
@@ -28,7 +27,6 @@ import org.apache.sling.distribution.communication.DistributionRequest;
 import org.apache.sling.distribution.packaging.DistributionPackage;
 import org.apache.sling.distribution.transport.DistributionTransport;
 import org.apache.sling.distribution.transport.DistributionTransportException;
-import org.apache.sling.distribution.transport.DistributionTransportResult;
 import org.apache.sling.distribution.transport.DistributionTransportSecret;
 
 /**
@@ -78,10 +76,9 @@ public class MultipleEndpointDistributionTransport implements DistributionTransp
         return result;
     }
 
-    public DistributionTransportResult deliverPackage(@Nonnull ResourceResolver resourceResolver, @Nonnull DistributionPackage distributionPackage,
+    public void deliverPackage(@Nonnull ResourceResolver resourceResolver, @Nonnull DistributionPackage distributionPackage,
                                                       @Nonnull DistributionTransportSecret secret) throws DistributionTransportException {
         doTransport(resourceResolver, null, distributionPackage, secret);
-        return new DistributionTransportResult(Collections.<String, String>emptyMap(), true);
     }
 
     @Nonnull

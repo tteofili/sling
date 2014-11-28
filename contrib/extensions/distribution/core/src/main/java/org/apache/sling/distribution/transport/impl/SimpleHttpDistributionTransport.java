@@ -23,7 +23,6 @@ import java.io.InputStream;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -43,7 +42,6 @@ import org.apache.sling.distribution.packaging.DistributionPackage;
 import org.apache.sling.distribution.serialization.DistributionPackageBuilder;
 import org.apache.sling.distribution.transport.DistributionTransport;
 import org.apache.sling.distribution.transport.DistributionTransportException;
-import org.apache.sling.distribution.transport.DistributionTransportResult;
 import org.apache.sling.distribution.transport.DistributionTransportSecret;
 import org.apache.sling.distribution.util.RequestUtils;
 import org.slf4j.Logger;
@@ -66,50 +64,47 @@ public class SimpleHttpDistributionTransport implements DistributionTransport {
         this.maxNumberOfPackages = maxNumberOfPackages;
     }
 
-    @Nonnull
-    public DistributionTransportResult deliverPackage(@Nonnull ResourceResolver resourceResolver, @Nonnull DistributionPackage distributionPackage,
-                                                      @Nonnull DistributionTransportSecret secret) throws DistributionTransportException {
+    public void deliverPackage(@Nonnull ResourceResolver resourceResolver, @Nonnull DistributionPackage distributionPackage,
+                               @Nonnull DistributionTransportSecret secret) throws DistributionTransportException {
         String hostAndPort = getHostAndPort(distributionEndpoint.getUri());
 
         URI packageOrigin = distributionPackage.getInfo().getOrigin();
         if (packageOrigin != null && hostAndPort.equals(getHostAndPort(packageOrigin))) {
             log.info("skipping distribution of package {} to same origin {}", distributionPackage.getId(), hostAndPort);
-            return new DistributionTransportResult(Collections.<String, String>emptyMap(), false);
-        }
-
-        log.info("delivering package {} to {} using secret {}", new Object[]{
-                distributionPackage.getId(),
-                distributionEndpoint.getUri(),
-                secret
-        });
-
-        try {
-            Executor executor = Executor.newInstance();
-
-            executor = authenticate(secret, executor);
-
-            Request req = Request.Post(distributionEndpoint.getUri()).useExpectContinue();
-
-            InputStream inputStream = null;
-            Response response = null;
-            try {
-                inputStream = distributionPackage.createInputStream();
-
-                req = req.bodyStream(inputStream, ContentType.APPLICATION_OCTET_STREAM);
-                response = executor.execute(req);
-            } finally {
-                IOUtils.closeQuietly(inputStream);
-            }
-
-            Content content = response.returnContent();
-            log.info("distribution content of type {} for {} delivered: {}", new Object[]{
-                    distributionPackage.getType(),
-                    Arrays.toString(distributionPackage.getInfo().getPaths()),
-                    content
+        } else {
+            log.info("delivering package {} to {} using secret {}", new Object[]{
+                    distributionPackage.getId(),
+                    distributionEndpoint.getUri(),
+                    secret
             });
-            return new DistributionTransportResult(Collections.<String, String>emptyMap(), true);
-        } catch (Exception ex) {
-            throw new DistributionTransportException(ex);
+
+            try {
+                Executor executor = Executor.newInstance();
+
+                executor = authenticate(secret, executor);
+
+                Request req = Request.Post(distributionEndpoint.getUri()).useExpectContinue();
+
+                InputStream inputStream = null;
+                Response response = null;
+                try {
+                    inputStream = distributionPackage.createInputStream();
+
+                    req = req.bodyStream(inputStream, ContentType.APPLICATION_OCTET_STREAM);
+                    response = executor.execute(req);
+                } finally {
+                    IOUtils.closeQuietly(inputStream);
+                }
+
+                Content content = response.returnContent();
+                log.info("distribution content of type {} for {} delivered: {}", new Object[]{
+                        distributionPackage.getType(),
+                        Arrays.toString(distributionPackage.getInfo().getPaths()),
+                        content
+                });
+            } catch (Exception ex) {
+                throw new DistributionTransportException(ex);
+            }
         }
 
     }

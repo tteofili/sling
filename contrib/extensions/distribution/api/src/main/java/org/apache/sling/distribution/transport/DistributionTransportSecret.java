@@ -22,29 +22,17 @@ import javax.annotation.CheckForNull;
 import java.io.InputStream;
 import java.util.Map;
 
+import aQute.bnd.annotation.ConsumerType;
+
 /**
  * The secret to be transported for authenticating transport layer connecting two instances.
  * <p/>
- * Secrets can take different forms, like e.g. username and password, tokens, public keys, etc.
+ * Secrets can take different forms, like e.g. username and password, tokens, public keys, etc. and are meant to be used
+ * by transport implementations lying under {@link org.apache.sling.distribution.packaging.DistributionPackageImporter importers}
+ * and / or {@link org.apache.sling.distribution.packaging.DistributionPackageExporter exporters}.
  */
+@ConsumerType
 public interface DistributionTransportSecret {
-
-    /**
-     * Get the secret represented as a token
-     *
-     * @return a token if {@code this} secret can be represented as a token, or {@code null} otherwise
-     */
-    @CheckForNull
-    String asToken();
-
-    /**
-     * Get the secrete as a raw {@link java.io.InputStream binary}.
-     * Note that each call to this method will create a new stream, so the caller will be responsible of closing it.
-     *
-     * @return the secret as an {@link java.io.InputStream}, or {@code null} if such a secret cannot represented as a stream.
-     */
-    @CheckForNull
-    InputStream asStream();
 
     /**
      * Get the secret as a {@link java.util.Map} of credentials, this can contain, for example, entries holding information
@@ -55,4 +43,14 @@ public interface DistributionTransportSecret {
      */
     @CheckForNull
     Map<String, String> asCredentialsMap();
+
+    /**
+     * Get the secrete as a raw {@link java.io.InputStream binary}.
+     * Note that each call to this method will create a new stream, so the caller will be responsible of closing it.
+     *
+     * @return the secret as an {@link java.io.InputStream}, or {@code null} if such a secret cannot represented as a stream.
+     */
+    @CheckForNull
+    InputStream asStream();
+
 }

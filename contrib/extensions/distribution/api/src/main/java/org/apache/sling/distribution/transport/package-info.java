@@ -16,20 +16,9 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+
+@Version("0.1.0")
 package org.apache.sling.distribution.transport;
 
-import javax.annotation.CheckForNull;
+import aQute.bnd.annotation.Version;
 
-/**
- * A provider for {@link org.apache.sling.distribution.transport.DistributionTransportSecret}s
- */
-public interface DistributionTransportSecretProvider {
-
-    /**
-     * Get a {@link org.apache.sling.distribution.transport.DistributionTransportSecret}
-     *
-     * @return a {@link org.apache.sling.distribution.transport.DistributionTransportSecret secret}
-     */
-    @CheckForNull
-    DistributionTransportSecret getSecret();
-}

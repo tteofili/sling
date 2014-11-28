@@ -24,7 +24,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 
 import org.apache.commons.io.IOUtils;
@@ -37,14 +36,12 @@ import org.apache.sling.api.resource.ResourceResolver;
 import org.apache.sling.distribution.packaging.DistributionPackage;
 import org.apache.sling.distribution.serialization.DistributionPackageBuilder;
 import org.apache.sling.distribution.transport.DistributionTransportException;
-import org.apache.sling.distribution.transport.DistributionTransportResult;
 import org.apache.sling.distribution.transport.DistributionTransportSecret;
-import org.apache.sling.distribution.transport.authentication.TransportAuthenticationContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Advanced HTTP {@link org.apache.sling.distribution.transport.DistributionTransportHandler} supporting custom HTTP headers
+ * Advanced HTTP {@link org.apache.sling.distribution.transport.DistributionTransport} supporting custom HTTP headers
  * and body.
  */
 public class AdvancedHttpDistributionTransport extends SimpleHttpDistributionTransport {
@@ -81,21 +78,17 @@ public class AdvancedHttpDistributionTransport extends SimpleHttpDistributionTra
         this.distributionEndpoint = distributionEndpoint;
     }
 
-    @Nonnull
     @Override
-    public DistributionTransportResult deliverPackage(@Nonnull ResourceResolver resourceResolver, @Nonnull DistributionPackage distributionPackage,
-                                                      @Nonnull DistributionTransportSecret secret) throws DistributionTransportException {
+    public void deliverPackage(@Nonnull ResourceResolver resourceResolver, @Nonnull DistributionPackage distributionPackage,
+                               @Nonnull DistributionTransportSecret secret) throws DistributionTransportException {
         log.info("delivering package {} to {} using auth {}",
                 new Object[]{distributionPackage.getId(),
                         distributionEndpoint.getUri(), secret});
 
         try {
-            Executor executor = Executor.newInstance();
-            TransportAuthenticationContext context = new TransportAuthenticationContext();
-            context.addAttribute("endpoint", distributionEndpoint);
-            executor = authenticate(secret, executor);
+            Executor executor = authenticate(secret, Executor.newInstance());
 
-            return deliverPackage(executor, distributionPackage, distributionEndpoint);
+            deliverPackage(executor, distributionPackage, distributionEndpoint);
 
         } catch (Exception ex) {
             throw new DistributionTransportException(ex);
@@ -141,7 +134,7 @@ public class AdvancedHttpDistributionTransport extends SimpleHttpDistributionTra
         return boundHeaders.toArray(new String[boundHeaders.size()]);
     }
 
-    private DistributionTransportResult deliverPackage(Executor executor, DistributionPackage distributionPackage,
+    private void deliverPackage(Executor executor, DistributionPackage distributionPackage,
                                                        DistributionEndpoint distributionEndpoint) throws IOException {
         String type = distributionPackage.getType();
 
@@ -175,7 +168,6 @@ public class AdvancedHttpDistributionTransport extends SimpleHttpDistributionTra
         Content content = response.returnContent();
         log.info("Distribution content of type {} for {} delivered: {}", new Object[]{
                 type, Arrays.toString(distributionPackage.getInfo().getPaths()), content});
-        return new DistributionTransportResult(Collections.<String, String>emptyMap(), true);
     }
 
     private static void addHeader(Request req, String header) {

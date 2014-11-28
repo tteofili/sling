@@ -39,7 +39,7 @@ import org.apache.sling.distribution.packaging.DistributionPackage;
 import org.apache.sling.distribution.packaging.DistributionPackageExportException;
 import org.apache.sling.distribution.packaging.DistributionPackageExporter;
 import org.apache.sling.distribution.serialization.DistributionPackageBuilder;
-import org.apache.sling.distribution.transport.authentication.TransportAuthenticationProvider;
+import org.apache.sling.distribution.transport.DistributionTransportSecretProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -95,9 +95,9 @@ public class RemoteDistributionPackageExporterFactory implements DistributionPac
     @Reference(name = "packageBuilder")
     DistributionPackageBuilder packageBuilder;
 
-    @Property(name = "transportAuthenticationProvider.target")
-    @Reference(name = "transportAuthenticationProvider")
-    TransportAuthenticationProvider transportAuthenticationProvider;
+    @Property(name = "distributionTransportSecretProvider.target")
+    @Reference(name = "distributionTransportSecretProvider")
+    DistributionTransportSecretProvider distributionTransportSecretProvider;
 
     @Reference
     private DistributionComponentManager componentManager;
@@ -112,7 +112,7 @@ public class RemoteDistributionPackageExporterFactory implements DistributionPac
         String endpointStrategyName = PropertiesUtil.toString(config.get(ENDPOINTS_STRATEGY), "One");
         int pollItems = PropertiesUtil.toInteger(config.get(PULL_ITEMS), Integer.MAX_VALUE);
 
-        exporter = new RemoteDistributionPackageExporter(packageBuilder, transportAuthenticationProvider, endpoints, endpointStrategyName, pollItems);
+        exporter = new RemoteDistributionPackageExporter(packageBuilder, distributionTransportSecretProvider, endpoints, endpointStrategyName, pollItems);
     }
 
 
