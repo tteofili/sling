@@ -243,3 +243,4 @@ There is a single entry point in triggering a distribution workflow, via [Distri
 - pushing to / pulling from JMS (pros: established pattern for producers/consumers problems, cons: other library / systems involved as a possible PoF)
 - WebSocket support (pros: once established it's bidirectional and therefore also publish can directly push stuff to author)
 - asynchronous import of packages (pros: parallel transport and import, cons: complex management of multiple queues on different publish instances)
+- pluggable serialization formats: avro, kryo, protobuf, thrift, etc.
