@@ -1,0 +1,10 @@
+{"namespace": "org.apache.sling.distribution.serialization.impl.avro",
+  "type": "record",
+  "name": "AvroShallowResource",
+  "fields": [
+    {"name": "name", "type": "string"},
+    {"name": "valueMap",  "type": {"type": "map", "values": "bytes"}},
+    {"name": "path", "type": ["string", "null"]},
+    {"name": "resourceType", "type": ["string", "null"]}
+  ]
+}

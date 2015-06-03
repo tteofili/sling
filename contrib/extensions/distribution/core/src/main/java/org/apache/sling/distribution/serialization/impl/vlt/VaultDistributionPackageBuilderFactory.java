@@ -42,6 +42,8 @@ import org.apache.sling.distribution.serialization.DistributionPackageBuilder;
 import org.apache.sling.distribution.serialization.DistributionPackageBuildingException;
 import org.apache.sling.distribution.serialization.DistributionPackageReadingException;
 import org.apache.sling.distribution.serialization.impl.ResourceSharedDistributionPackageBuilder;
+import org.apache.sling.distribution.serialization.impl.kryo.KryoJcrDistributionPackageBuilder;
+import org.apache.sling.distribution.serialization.impl.kryo.KryoResourceDistributionPackageBuilder;
 
 @Component(metatype = true,
         label = "Apache Sling Distribution Packaging - Vault Package Builder Factory",
@@ -138,8 +140,10 @@ public class VaultDistributionPackageBuilderFactory implements DistributionPacka
         }
         if ("filevlt".equals(type)) {
             packageBuilder = new ResourceSharedDistributionPackageBuilder(new FileVaultDistributionPackageBuilder(name, packaging, importMode, aclHandling, packageRoots, tempFsFolder));
-        } else  {
+        } else if ("jcrvlt".equals(type)) {
             packageBuilder = new ResourceSharedDistributionPackageBuilder(new JcrVaultDistributionPackageBuilder(name, packaging, importMode, aclHandling, packageRoots, tempFsFolder, tempJcrFolder));
+        } else {
+            packageBuilder = new ResourceSharedDistributionPackageBuilder(new KryoResourceDistributionPackageBuilder());
         }
     }
 

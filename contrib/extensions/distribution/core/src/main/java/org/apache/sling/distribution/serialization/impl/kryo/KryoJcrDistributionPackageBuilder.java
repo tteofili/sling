@@ -100,8 +100,7 @@ public class KryoJcrDistributionPackageBuilder extends AbstractDistributionPacka
 
             log.debug("copied {} bytes", copied);
 
-            DistributionPackage distributionPackage = new FileDistributionPackage(file, getType());
-            return distributionPackage;
+            return new FileDistributionPackage(file, getType());
         } catch (Exception e) {
             throw new DistributionPackageReadingException(e);
         }
