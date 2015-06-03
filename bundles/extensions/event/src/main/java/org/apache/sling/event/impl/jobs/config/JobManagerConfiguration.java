@@ -183,6 +183,8 @@ public class JobManagerConfiguration implements TopologyEventListener {
     /** The topology capabilities. */
     private volatile TopologyCapabilities topologyCapabilities;
 
+    private final AtomicBoolean firstTopologyEvent = new AtomicBoolean(true);
+
     /**
      * Activate this component.
      * @param props Configuration properties
@@ -501,25 +503,29 @@ public class JobManagerConfiguration implements TopologyEventListener {
         final CheckTopologyTask mt = new CheckTopologyTask(this);
         mt.fullRun(!isConfigChange, isConfigChange);
 
-        // and run checker again in some seconds (if leader)
-        // notify listeners afterwards
-        final Scheduler local = this.scheduler;
-        if ( local != null ) {
-            local.schedule(new Runnable() {
+        if ( eventType == Type.TOPOLOGY_INIT ) {
+            notifiyListeners();
+        } else {
+            // and run checker again in some seconds (if leader)
+            // notify listeners afterwards
+            final Scheduler local = this.scheduler;
+            if ( local != null ) {
+                local.schedule(new Runnable() {
 
-                    @Override
-                    public void run() {
-                        if ( newCaps.isLeader() && newCaps.isActive() ) {
-                            mt.assignUnassignedJobs();
-                        }
-                        // start listeners
-                        synchronized ( listeners ) {
-                            if ( topologyCapabilities != null && newCaps.isActive() ) {
-                                notifiyListeners();
+                        @Override
+                        public void run() {
+                            if ( newCaps.isLeader() && newCaps.isActive() ) {
+                                mt.assignUnassignedJobs();
+                            }
+                            // start listeners
+                            if ( newCaps.isActive() ) {
+                                synchronized ( listeners ) {
+                                    notifiyListeners();
+                                }
                             }
                         }
-                    }
-                }, local.AT(new Date(System.currentTimeMillis() + this.backgroundLoadDelay * 1000)));
+                    }, local.AT(new Date(System.currentTimeMillis() + this.backgroundLoadDelay * 1000)));
+            }
         }
         logger.debug("Job processing started");
     }
@@ -546,18 +552,24 @@ public class JobManagerConfiguration implements TopologyEventListener {
             }
         }
 
+        TopologyEvent.Type eventType = event.getType();
+        if( this.firstTopologyEvent.compareAndSet(true, false) ) {
+            if ( eventType == Type.TOPOLOGY_CHANGED ) {
+                eventType = Type.TOPOLOGY_INIT;
+            }
+        }
         synchronized ( this.listeners ) {
 
-            if ( event.getType() == Type.TOPOLOGY_CHANGING ) {
+            if ( eventType == Type.TOPOLOGY_CHANGING ) {
                this.stopProcessing();
 
-            } else if ( event.getType() == Type.TOPOLOGY_INIT
+            } else if ( eventType == Type.TOPOLOGY_INIT
                 || event.getType() == Type.TOPOLOGY_CHANGED
                 || event.getType() == Type.PROPERTIES_CHANGED ) {
 
                 this.stopProcessing();
 
-                this.startProcessing(event.getType(), new TopologyCapabilities(event.getNewView(), this), false);
+                this.startProcessing(eventType, new TopologyCapabilities(event.getNewView(), this), false);
             }
 
         }

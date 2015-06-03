@@ -18,6 +18,7 @@
  */
 package org.apache.sling.nosql.generic.resource.impl;
 
+import java.util.Collections;
 import java.util.Dictionary;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -50,13 +51,16 @@ import org.osgi.service.event.EventAdmin;
  */
 public class NoSqlResourceProvider implements ResourceProvider, ModifyingResourceProvider, QueriableResourceProvider {
     
+    private static final String ROOT_PATH = "/";
+    private static final NoSqlData ROOT_DATA = new NoSqlData(ROOT_PATH, Collections.<String, Object>emptyMap());
+    
     private final NoSqlAdapter adapter;
     private final EventAdmin eventAdmin;
     private final Map<String, NoSqlData> changedResources = new HashMap<String, NoSqlData>();
     private final Set<String> deletedResources = new HashSet<String>();
     
     public NoSqlResourceProvider(NoSqlAdapter adapter, EventAdmin eventAdmin) {
-        this.adapter = adapter;
+        this.adapter = new ValueMapConvertingNoSqlAdapter(adapter);
         this.eventAdmin = eventAdmin;
     }
 
@@ -64,6 +68,10 @@ public class NoSqlResourceProvider implements ResourceProvider, ModifyingResourc
     // ### READONLY ACCESS ###
     
     public Resource getResource(ResourceResolver resourceResolver, String path) {
+        if (ROOT_PATH.equals(path)) {
+            return new NoSqlResource(ROOT_DATA, resourceResolver, this);
+        }
+        
         if (!adapter.validPath(path)) {
             return null;
         }
@@ -116,7 +124,9 @@ public class NoSqlResourceProvider implements ResourceProvider, ModifyingResourc
 
     private boolean isDeleted(String path) {
         for (String deletedPath : deletedResources) {
-            return path.equals(deletedPath) || path.equals(deletedPath + "/");
+            if (path.equals(deletedPath) || path.equals(deletedPath + "/")) {
+                return true;
+            }
         }
         return false;
     }
@@ -126,7 +136,7 @@ public class NoSqlResourceProvider implements ResourceProvider, ModifyingResourc
     
     public Resource create(ResourceResolver resolver, String path, Map<String, Object> properties)
             throws PersistenceException {
-        if (!adapter.validPath(path)) {
+        if (ROOT_PATH.equals(path) || !adapter.validPath(path)) {
             throw new PersistenceException("Illegal path - unable to create resource at " + path, null, path, null);
         }
 
@@ -138,13 +148,14 @@ public class NoSqlResourceProvider implements ResourceProvider, ModifyingResourc
         }
         
         // create new resource in changeset
-        NoSqlData data = new NoSqlData(path, NoSqlValueMap.convertForWriteAll(new HashMap<String, Object>(properties)));
+        Map<String, Object> writableMap = properties != null ? new HashMap<String, Object>(properties) : new HashMap<String, Object>();
+        NoSqlData data = new NoSqlData(path, NoSqlValueMap.convertForWriteAll(writableMap));
         changedResources.put(path, data);
         return new NoSqlResource(data, resolver, this);
     }
     
     public void delete(ResourceResolver resolver, String path) throws PersistenceException {
-        if (!adapter.validPath(path)) {
+        if (ROOT_PATH.equals(path) || !adapter.validPath(path)) {
             throw new PersistenceException("Unable to delete resource at {}" + path, null, path, null);
         }
 
@@ -184,6 +195,9 @@ public class NoSqlResourceProvider implements ResourceProvider, ModifyingResourc
                notifyRemoved(path);
             }
             for (NoSqlData item : changedResources.values()) {
+                if (ROOT_PATH.equals(item.getPath())) {
+                    throw new PersistenceException("Unable to store resource at {}" + item.getPath(), null, item.getPath(), null);
+                }
                 boolean created = adapter.store(item);
                 if (created) {
                     notifyAdded(item.getPath());
@@ -209,7 +223,6 @@ public class NoSqlResourceProvider implements ResourceProvider, ModifyingResourc
     private void notifyAdded(String path) {
         final Dictionary<String, Object> props = new Hashtable<String, Object>();
         props.put(SlingConstants.PROPERTY_PATH, path);
-        props.put("event.distribute", "");
         final Event event = new Event(SlingConstants.TOPIC_RESOURCE_ADDED, props);
         this.eventAdmin.postEvent(event);
     }
@@ -217,7 +230,6 @@ public class NoSqlResourceProvider implements ResourceProvider, ModifyingResourc
     private void notifyUpdated(String path) {
         final Dictionary<String, Object> props = new Hashtable<String, Object>();
         props.put(SlingConstants.PROPERTY_PATH, path);
-        props.put("event.distribute", "");
         final Event event = new Event(SlingConstants.TOPIC_RESOURCE_CHANGED, props);
         this.eventAdmin.postEvent(event);
     }    
@@ -225,7 +237,6 @@ public class NoSqlResourceProvider implements ResourceProvider, ModifyingResourc
     private void notifyRemoved(String path) {
         final Dictionary<String, Object> props = new Hashtable<String, Object>();
         props.put(SlingConstants.PROPERTY_PATH, path);
-        props.put("event.distribute", "");
         final Event event = new Event(SlingConstants.TOPIC_RESOURCE_REMOVED, props);
         this.eventAdmin.postEvent(event);
     }

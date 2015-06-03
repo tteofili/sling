@@ -198,7 +198,7 @@ public abstract class AbstractNoSqlResourceProviderTest {
         // ensure that value map has only supported primitive types (all other supported types converted to string)
         ValueMap valueMap = resource1.getValueMap();
         for (Map.Entry<String, Object> entry : valueMap.entrySet()) {
-            assertTrue(NoSqlValueMap.isValidPrimitveType(entry.getValue().getClass()));
+            assertTrue(NoSqlValueMap.isValidType(entry.getValue().getClass()));
         }
     }
 
@@ -206,6 +206,12 @@ public abstract class AbstractNoSqlResourceProviderTest {
     public void testPrimaryTypeResourceType() throws PersistenceException {
         Resource resource = context.resourceResolver().getResource(testRoot().getPath());
         assertEquals(JcrConstants.NT_UNSTRUCTURED, resource.getResourceType());
+    }
+
+    @Test
+    public void testCreateWithNullMap() throws IOException {
+        Resource resource1 = context.resourceResolver().getResource(testRoot().getPath() + "/node1");
+        context.resourceResolver().create(resource1, "nullMap", null);
     }
 
 }

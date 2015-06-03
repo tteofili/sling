@@ -54,8 +54,14 @@ final class ContextResourceResolverFactory {
             case JCR_JACKRABBIT:
                 initializeJcrJackrabbit(factory);
                 break;
+            case JCR_OAK:
+                initializeJcrOak(factory);
+                break;
             case RESOURCERESOLVER_MOCK:
                 initializeResourceResolverMock(factory);
+                break;
+            case NONE:
+                initializeResourceResolverNone(factory);
                 break;
             default:
                 throw new IllegalArgumentException("Invalid resource resolver type: " + type);
@@ -80,7 +86,15 @@ final class ContextResourceResolverFactory {
         // register sling node types?
     }
 
+    private static void initializeJcrOak(ResourceResolverFactory factory) {
+        // register sling node types?
+    }
+
     private static void initializeResourceResolverMock(ResourceResolverFactory factory) {
+        // nothing to do
+    }
+
+    private static void initializeResourceResolverNone(ResourceResolverFactory factory) {
         // nothing to do
     }
 
