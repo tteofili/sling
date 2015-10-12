@@ -1,5 +1,6 @@
 package org.apache.sling.distribution.serialization.impl.avro;
 
+import javax.annotation.Nonnull;
 import java.io.File;
 import java.io.InputStream;
 
@@ -9,6 +10,7 @@ import org.apache.sling.distribution.DistributionRequestType;
 import org.apache.sling.distribution.SimpleDistributionRequest;
 import org.apache.sling.distribution.packaging.DistributionPackage;
 import org.apache.sling.distribution.serialization.impl.FileDistributionPackage;
+import org.apache.sling.distribution.serialization.impl.kryo.KryoResourceDistributionPackageBuilder;
 import org.apache.sling.testing.resourceresolver.MockHelper;
 import org.apache.sling.testing.resourceresolver.MockResourceResolverFactory;
 import org.junit.Before;
@@ -65,5 +67,27 @@ public class AvroDistributionPackageBuilderTest {
         DistributionPackage distributionPackage = new FileDistributionPackage(f, "avro");
         boolean success = avroDistributionPackageBuilder.installPackage(resourceResolver, distributionPackage);
         assertTrue(success);
+    }
+
+    @Test
+    public void testPackageLifecycle() throws Exception {
+        AvroDistributionPackageBuilder avroDistributionPackageBuilder = new AvroDistributionPackageBuilder();
+        DistributionPackage distributionPackage = avroDistributionPackageBuilder.createPackage(resourceResolver, new DistributionRequest() {
+            @Nonnull
+            public DistributionRequestType getRequestType() {
+                return DistributionRequestType.ADD;
+            }
+
+            public String[] getPaths() {
+                return new String[]{"/libs"};
+            }
+
+            public boolean isDeep(String path) {
+                return false;
+            }
+        });
+        assertNotNull(distributionPackage);
+        DistributionPackage readPackage = avroDistributionPackageBuilder.readPackage(resourceResolver, distributionPackage.createInputStream());
+        assertTrue(avroDistributionPackageBuilder.installPackage(resourceResolver, readPackage));
     }
 }
