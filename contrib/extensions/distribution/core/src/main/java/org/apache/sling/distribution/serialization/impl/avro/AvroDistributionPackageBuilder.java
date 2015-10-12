@@ -86,7 +86,7 @@ public class AvroDistributionPackageBuilder implements DistributionPackageBuilde
                 map.put(entry.getKey(), entry.getValue().toString());
             }
             avroShallowResource.setValueMap(map);
-            File file = new File("dp.s.avro");
+            File file = File.createTempFile("dp-" + System.nanoTime(), ".avro");
             dataFileWriter.create(schema, file);
             dataFileWriter.append(avroShallowResource);
             dataFileWriter.close();
@@ -101,7 +101,7 @@ public class AvroDistributionPackageBuilder implements DistributionPackageBuilde
     public DistributionPackage readPackage(@Nonnull ResourceResolver resourceResolver, @Nonnull InputStream stream) throws DistributionPackageReadingException {
         DistributionPackage distributionPackage = null;
         try {
-            File file = new File("dp.r.avro");
+            File file = File.createTempFile("dp-" + System.nanoTime(), ".avro");;
             IOUtils.copy(stream, new FileOutputStream(file));
             readAvroResources(file);
             distributionPackage = new FileDistributionPackage(file, getType());
