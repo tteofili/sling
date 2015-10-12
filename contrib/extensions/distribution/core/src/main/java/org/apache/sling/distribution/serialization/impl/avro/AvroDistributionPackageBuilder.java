@@ -1,0 +1,153 @@
+package org.apache.sling.distribution.serialization.impl.avro;
+
+import javax.annotation.Nonnull;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.charset.Charset;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.Map;
+
+import com.esotericsoftware.kryo.io.Input;
+import org.apache.avro.Schema;
+import org.apache.avro.file.DataFileReader;
+import org.apache.avro.file.DataFileWriter;
+import org.apache.avro.io.DatumReader;
+import org.apache.avro.io.DatumWriter;
+import org.apache.avro.specific.SpecificDatumReader;
+import org.apache.avro.specific.SpecificDatumWriter;
+import org.apache.commons.io.IOUtils;
+import org.apache.sling.api.resource.Resource;
+import org.apache.sling.api.resource.ResourceResolver;
+import org.apache.sling.api.resource.ValueMap;
+import org.apache.sling.distribution.DistributionRequest;
+import org.apache.sling.distribution.packaging.DistributionPackage;
+import org.apache.sling.distribution.serialization.DistributionPackageBuilder;
+import org.apache.sling.distribution.serialization.DistributionPackageBuildingException;
+import org.apache.sling.distribution.serialization.DistributionPackageReadingException;
+import org.apache.sling.distribution.serialization.impl.FileDistributionPackage;
+
+/**
+ *
+ */
+public class AvroDistributionPackageBuilder implements DistributionPackageBuilder {
+
+    private DataFileWriter<AvroShallowResource> dataFileWriter;
+    private Schema schema;
+
+    public AvroDistributionPackageBuilder() {
+        DatumWriter<AvroShallowResource> datumWriter = new SpecificDatumWriter<AvroShallowResource>(AvroShallowResource.class);
+        this.dataFileWriter = new DataFileWriter<AvroShallowResource>(datumWriter);
+        try {
+            schema = new Schema.Parser().parse(new File(getClass().getResource("/shallowresource.avsc").getFile()));
+        } catch (IOException e) {
+            // do nothing
+        }
+    }
+
+    @Override
+    public String getType() {
+        return "avro";
+    }
+
+    @Override
+    public DistributionPackage createPackage(@Nonnull ResourceResolver resourceResolver, @Nonnull DistributionRequest request) throws DistributionPackageBuildingException {
+        DistributionPackage distributionPackage = null;
+        try {
+
+            AvroShallowResource avroShallowResource = new AvroShallowResource();
+            avroShallowResource.setName("avro_" + System.nanoTime());
+            String path = request.getPaths()[0];
+            avroShallowResource.setPath(path);
+            Resource resource = resourceResolver.getResource(path);
+            avroShallowResource.setResourceType(resource.getResourceType());
+            ValueMap valueMap = resource.getValueMap();
+            Map<CharSequence, CharSequence> map = new HashMap<CharSequence, CharSequence>();
+            for (Map.Entry<String, Object> entry : valueMap.entrySet()) {
+                map.put(entry.getKey(), entry.getValue().toString());
+            }
+            avroShallowResource.setValueMap(map);
+            File file = new File("dp.s.avro");
+            dataFileWriter.create(schema, file);
+            dataFileWriter.append(avroShallowResource);
+            dataFileWriter.close();
+            distributionPackage = new FileDistributionPackage(file, getType());
+        } catch (Exception e) {
+            // do nothing
+        }
+        return distributionPackage;
+    }
+
+    @Override
+    public DistributionPackage readPackage(@Nonnull ResourceResolver resourceResolver, @Nonnull InputStream stream) throws DistributionPackageReadingException {
+        DistributionPackage distributionPackage = null;
+        try {
+            File file = new File("dp.r.avro");
+            IOUtils.copy(stream, new FileOutputStream(file));
+            readAvroResources(file);
+            distributionPackage = new FileDistributionPackage(file, getType());
+
+        } catch (Exception e) {
+            // do nothing
+        }
+        return distributionPackage;
+    }
+
+    private Collection<AvroShallowResource> readAvroResources(File file) throws IOException {
+        DatumReader<AvroShallowResource> datumReader = new SpecificDatumReader<AvroShallowResource>(AvroShallowResource.class);
+        DataFileReader<AvroShallowResource> dataFileReader = new DataFileReader<AvroShallowResource>(file, datumReader);
+        AvroShallowResource avroResource = null;
+        Collection<AvroShallowResource> avroResources = new LinkedList<AvroShallowResource>();
+        while (dataFileReader.hasNext()) {
+// Reuse avroResource object by passing it to next(). This saves us from
+// allocating and garbage collecting many objects for files with
+// many items.
+            avroResource = dataFileReader.next(avroResource);
+            avroResources.add(avroResource);
+            System.out.println(avroResource);
+        }
+        return avroResources;
+    }
+
+    @Override
+    public DistributionPackage getPackage(@Nonnull ResourceResolver resourceResolver, @Nonnull String id) {
+        File file = new File(id);
+        if (file.exists()) {
+            return new FileDistributionPackage(file, getType());
+        } else {
+            return null;
+        }
+    }
+
+    @Override
+    public boolean installPackage(@Nonnull ResourceResolver resourceResolver, @Nonnull DistributionPackage distributionPackage) throws DistributionPackageReadingException {
+        if (distributionPackage instanceof FileDistributionPackage) {
+            try {
+                String filePath = ((FileDistributionPackage) distributionPackage).getId();
+                File f = new File(filePath);
+                Collection<AvroShallowResource> avroShallowResources = readAvroResources(f);
+                for (AvroShallowResource r : avroShallowResources) {
+                    String path = r.getPath().toString();
+                    String parent = path.substring(0, path.lastIndexOf('/'));
+                    Map<String, Object> map = new HashMap<String, Object>();
+                    Map<CharSequence, CharSequence> valueMap = r.getValueMap();
+                    for (Map.Entry<CharSequence, CharSequence> entry : valueMap.entrySet()) {
+                        map.put(entry.getKey().toString(), entry.getValue().toString());
+                    }
+                    Resource createdResource = resourceResolver.create(resourceResolver.getResource(parent), path, map);
+                }
+                resourceResolver.commit();
+            } catch (Exception e) {
+                throw new DistributionPackageReadingException(e);
+            }
+            return true;
+        } else {
+            return false;
+        }
+    }
+}

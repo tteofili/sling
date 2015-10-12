@@ -7,10 +7,10 @@ package org.apache.sling.distribution.serialization.impl.avro;
 @SuppressWarnings("all")
 @org.apache.avro.specific.AvroGenerated
 public class AvroShallowResource extends org.apache.avro.specific.SpecificRecordBase implements org.apache.avro.specific.SpecificRecord {
-  public static final org.apache.avro.Schema SCHEMA$ = new org.apache.avro.Schema.Parser().parse("{\"type\":\"record\",\"name\":\"AvroShallowResource\",\"namespace\":\"org.apache.sling.distribution.serialization.impl.avro\",\"fields\":[{\"name\":\"name\",\"type\":\"string\"},{\"name\":\"valueMap\",\"type\":{\"type\":\"map\",\"values\":\"bytes\"}},{\"name\":\"path\",\"type\":[\"string\",\"null\"]},{\"name\":\"resourceType\",\"type\":[\"string\",\"null\"]}]}");
+  public static final org.apache.avro.Schema SCHEMA$ = new org.apache.avro.Schema.Parser().parse("{\"type\":\"record\",\"name\":\"AvroShallowResource\",\"namespace\":\"org.apache.sling.distribution.serialization.impl.avro\",\"fields\":[{\"name\":\"name\",\"type\":\"string\"},{\"name\":\"valueMap\",\"type\":{\"type\":\"map\",\"values\":\"string\"}},{\"name\":\"path\",\"type\":[\"string\",\"null\"]},{\"name\":\"resourceType\",\"type\":[\"string\",\"null\"]}]}");
   public static org.apache.avro.Schema getClassSchema() { return SCHEMA$; }
   @Deprecated public java.lang.CharSequence name;
-  @Deprecated public java.util.Map<java.lang.CharSequence,java.nio.ByteBuffer> valueMap;
+  @Deprecated public java.util.Map<java.lang.CharSequence,java.lang.CharSequence> valueMap;
   @Deprecated public java.lang.CharSequence path;
   @Deprecated public java.lang.CharSequence resourceType;
 
@@ -24,7 +24,7 @@ public class AvroShallowResource extends org.apache.avro.specific.SpecificRecord
   /**
    * All-args constructor.
    */
-  public AvroShallowResource(java.lang.CharSequence name, java.util.Map<java.lang.CharSequence,java.nio.ByteBuffer> valueMap, java.lang.CharSequence path, java.lang.CharSequence resourceType) {
+  public AvroShallowResource(java.lang.CharSequence name, java.util.Map<java.lang.CharSequence,java.lang.CharSequence> valueMap, java.lang.CharSequence path, java.lang.CharSequence resourceType) {
     this.name = name;
     this.valueMap = valueMap;
     this.path = path;
@@ -47,7 +47,7 @@ public class AvroShallowResource extends org.apache.avro.specific.SpecificRecord
   public void put(int field$, java.lang.Object value$) {
     switch (field$) {
     case 0: name = (java.lang.CharSequence)value$; break;
-    case 1: valueMap = (java.util.Map<java.lang.CharSequence,java.nio.ByteBuffer>)value$; break;
+    case 1: valueMap = (java.util.Map<java.lang.CharSequence,java.lang.CharSequence>)value$; break;
     case 2: path = (java.lang.CharSequence)value$; break;
     case 3: resourceType = (java.lang.CharSequence)value$; break;
     default: throw new org.apache.avro.AvroRuntimeException("Bad index");
@@ -72,7 +72,7 @@ public class AvroShallowResource extends org.apache.avro.specific.SpecificRecord
   /**
    * Gets the value of the 'valueMap' field.
    */
-  public java.util.Map<java.lang.CharSequence,java.nio.ByteBuffer> getValueMap() {
+  public java.util.Map<java.lang.CharSequence,java.lang.CharSequence> getValueMap() {
     return valueMap;
   }
 
@@ -80,7 +80,7 @@ public class AvroShallowResource extends org.apache.avro.specific.SpecificRecord
    * Sets the value of the 'valueMap' field.
    * @param value the value to set.
    */
-  public void setValueMap(java.util.Map<java.lang.CharSequence,java.nio.ByteBuffer> value) {
+  public void setValueMap(java.util.Map<java.lang.CharSequence,java.lang.CharSequence> value) {
     this.valueMap = value;
   }
 
@@ -136,7 +136,7 @@ public class AvroShallowResource extends org.apache.avro.specific.SpecificRecord
     implements org.apache.avro.data.RecordBuilder<AvroShallowResource> {
 
     private java.lang.CharSequence name;
-    private java.util.Map<java.lang.CharSequence,java.nio.ByteBuffer> valueMap;
+    private java.util.Map<java.lang.CharSequence,java.lang.CharSequence> valueMap;
     private java.lang.CharSequence path;
     private java.lang.CharSequence resourceType;
 
@@ -213,12 +213,12 @@ public class AvroShallowResource extends org.apache.avro.specific.SpecificRecord
     }
 
     /** Gets the value of the 'valueMap' field */
-    public java.util.Map<java.lang.CharSequence,java.nio.ByteBuffer> getValueMap() {
+    public java.util.Map<java.lang.CharSequence,java.lang.CharSequence> getValueMap() {
       return valueMap;
     }
     
     /** Sets the value of the 'valueMap' field */
-    public org.apache.sling.distribution.serialization.impl.avro.AvroShallowResource.Builder setValueMap(java.util.Map<java.lang.CharSequence,java.nio.ByteBuffer> value) {
+    public org.apache.sling.distribution.serialization.impl.avro.AvroShallowResource.Builder setValueMap(java.util.Map<java.lang.CharSequence,java.lang.CharSequence> value) {
       validate(fields()[1], value);
       this.valueMap = value;
       fieldSetFlags()[1] = true;
@@ -292,7 +292,7 @@ public class AvroShallowResource extends org.apache.avro.specific.SpecificRecord
       try {
         AvroShallowResource record = new AvroShallowResource();
         record.name = fieldSetFlags()[0] ? this.name : (java.lang.CharSequence) defaultValue(fields()[0]);
-        record.valueMap = fieldSetFlags()[1] ? this.valueMap : (java.util.Map<java.lang.CharSequence,java.nio.ByteBuffer>) defaultValue(fields()[1]);
+        record.valueMap = fieldSetFlags()[1] ? this.valueMap : (java.util.Map<java.lang.CharSequence,java.lang.CharSequence>) defaultValue(fields()[1]);
         record.path = fieldSetFlags()[2] ? this.path : (java.lang.CharSequence) defaultValue(fields()[2]);
         record.resourceType = fieldSetFlags()[3] ? this.resourceType : (java.lang.CharSequence) defaultValue(fields()[3]);
         return record;
