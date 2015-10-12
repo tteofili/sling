@@ -23,7 +23,6 @@ import java.util.Collections;
 import java.util.ListIterator;
 import java.util.Map;
 import java.util.concurrent.ConcurrentSkipListMap;
-
 import javax.script.Bindings;
 import javax.script.SimpleBindings;
 
@@ -37,8 +36,8 @@ import org.apache.felix.scr.annotations.ReferencePolicy;
 import org.apache.felix.scr.annotations.Service;
 import org.apache.sling.scripting.sightly.SightlyException;
 import org.apache.sling.scripting.sightly.extension.RuntimeExtension;
-import org.apache.sling.scripting.sightly.impl.engine.runtime.RenderContextImpl;
 import org.apache.sling.scripting.sightly.impl.plugin.UsePlugin;
+import org.apache.sling.scripting.sightly.impl.utils.RenderUtils;
 import org.apache.sling.scripting.sightly.render.RenderContext;
 import org.apache.sling.scripting.sightly.use.ProviderOutcome;
 import org.apache.sling.scripting.sightly.use.UseProvider;
@@ -72,27 +71,25 @@ public class UseRuntimeExtension implements RuntimeExtension {
         if (arguments.length != 2) {
             throw new SightlyException("Use extension requires two arguments");
         }
-        RenderContextImpl renderContextImpl = (RenderContextImpl) renderContext;
-        String identifier = renderContextImpl.toString(arguments[0]);
+        String identifier = RenderUtils.toString(arguments[0]);
         if (StringUtils.isEmpty(identifier)) {
-            return null;
+            throw new SightlyException("data-sly-use needs to be passed an identifier");
         }
-        Map<String, Object> useArgumentsMap = renderContextImpl.toMap(arguments[1]);
+        Map<String, Object> useArgumentsMap = RenderUtils.toMap(arguments[1]);
         Bindings useArguments = new SimpleBindings(Collections.unmodifiableMap(useArgumentsMap));
         ArrayList<UseProvider> providers = new ArrayList<UseProvider>(providersMap.values());
         ListIterator<UseProvider> iterator = providers.listIterator(providers.size());
-        Throwable failureCause = null;
         while (iterator.hasPrevious()) {
             UseProvider provider = iterator.previous();
             ProviderOutcome outcome = provider.provide(identifier, renderContext, useArguments);
+            Throwable failureCause;
             if (outcome.isSuccess()) {
                 return outcome.getResult();
             } else if ((failureCause = outcome.getCause()) != null) {
                 throw new SightlyException("Identifier " + identifier + " cannot be correctly instantiated by the Use API", failureCause);
             }
         }
-        LOG.error("No use provider could resolve identifier " + identifier);
-        return null;
+        throw new SightlyException("No use provider could resolve identifier " + identifier);
     }
 
     // OSGi ################################################################################################################################

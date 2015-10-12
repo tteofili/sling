@@ -81,7 +81,7 @@ public class JcrResourceBundle extends ResourceBundle {
         log.info("Finding all dictionaries for '{}' (basename: {}) ...", locale, baseName == null ? "<none>" : baseName);
 
         long start = System.currentTimeMillis();
-        refreshSession(resourceResolver);
+        resourceResolver.refresh();
         Set<String> roots = loadPotentialLanguageRoots(resourceResolver, locale, baseName);
         this.resources = loadFully(resourceResolver, roots, this.languageRoots);
 
@@ -92,10 +92,6 @@ public class JcrResourceBundle extends ResourceBundle {
                 new Object[] { resources.size(), locale, baseName == null ? "<none>" : baseName, (end - start)}
             );
         }
-    }
-
-    static void refreshSession(final ResourceResolver resolver) {
-        resolver.refresh();
     }
 
     protected Set<String> getLanguageRootPaths() {
@@ -143,6 +139,9 @@ public class JcrResourceBundle extends ResourceBundle {
 
     @Override
     protected Object handleGetObject(String key) {
+        if (log.isDebugEnabled()) {
+            log.debug("Requesting key '{}' from resource bundle (baseName '{}', locale '{}')", new Object[] {key, baseName, locale});
+        }
         return resources.get(key);
     }
 

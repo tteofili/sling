@@ -32,6 +32,7 @@ import java.util.Set;
 import java.util.TreeSet;
 import java.util.concurrent.ConcurrentHashMap;
 
+import org.apache.sling.commons.scheduler.Scheduler;
 import org.apache.sling.distribution.DistributionRequest;
 import org.apache.sling.distribution.DistributionRequestType;
 import org.apache.sling.distribution.SimpleDistributionRequest;
@@ -54,19 +55,23 @@ public abstract class AbstractJcrEventTrigger implements DistributionTrigger {
     private final Map<String, JcrEventDistributionTriggerListener> registeredListeners = new ConcurrentHashMap<String, JcrEventDistributionTriggerListener>();
 
     private final String path;
+
     private final String serviceUser;
 
     private final SlingRepository repository;
 
     private Session cachedSession;
 
-    AbstractJcrEventTrigger(SlingRepository repository, String path, String serviceUser) {
+    private final Scheduler scheduler;
+
+    AbstractJcrEventTrigger(SlingRepository repository, Scheduler scheduler, String path, String serviceUser) {
         if (path == null || serviceUser == null) {
             throw new IllegalArgumentException("path and service are required");
         }
         this.repository = repository;
         this.path = path;
         this.serviceUser = serviceUser;
+        this.scheduler = scheduler;
     }
 
     public void register(@Nonnull DistributionRequestHandler requestHandler) throws DistributionTriggerException {
@@ -103,34 +108,41 @@ public abstract class AbstractJcrEventTrigger implements DistributionTrigger {
         }
 
         public void onEvent(EventIterator eventIterator) {
-            log.info("handling event {}");
+            log.info("jcr trigger onevent");
+
             List<DistributionRequest> requestList = new ArrayList<DistributionRequest>();
 
             while (eventIterator.hasNext()) {
                 Event event = eventIterator.nextEvent();
+                log.info("handling event {}", event);
                 try {
                     if (DistributionJcrUtils.isSafe(event)) {
                         DistributionRequest request = processEvent(event);
                         if (request != null) {
                             addToList(request, requestList);
                         }
-
+                    } else {
+                        log.info("skip unsafe event {}", event);
                     }
                 } catch (RepositoryException e) {
                     log.error("Error while handling event {}", event, e);
                 }
             }
 
-            for (DistributionRequest request: requestList) {
-                requestHandler.handle(request);
+
+            if (requestList.size() > 0) {
+                boolean scheduled = scheduler.schedule(new DistributionExecutor(requestList, requestHandler), scheduler.NOW());
+
+                log.info("scheduled {} distributions {}", scheduled, requestList.size());
             }
+
         }
     }
 
     private void addToList(DistributionRequest request, List<DistributionRequest> requestList) {
-        DistributionRequest lastRequest = requestList.isEmpty()? null : requestList.get(requestList.size() - 1);
+        DistributionRequest lastRequest = requestList.isEmpty() ? null : requestList.get(requestList.size() - 1);
 
-        if (lastRequest == null || lastRequest.getRequestType() == null || !lastRequest.getRequestType().equals(request.getRequestType())) {
+        if (lastRequest == null || !lastRequest.getRequestType().equals(request.getRequestType())) {
             requestList.add(request);
         } else if (hasDeepPaths(request) || hasDeepPaths(lastRequest)) {
             requestList.add(request);
@@ -138,7 +150,7 @@ public abstract class AbstractJcrEventTrigger implements DistributionTrigger {
             Set<String> allPaths = new TreeSet<String>();
             allPaths.addAll(Arrays.asList(lastRequest.getPaths()));
             allPaths.addAll(Arrays.asList(request.getPaths()));
-            lastRequest = new SimpleDistributionRequest(lastRequest.getRequestType(), allPaths.toArray(new String[0]));
+            lastRequest = new SimpleDistributionRequest(lastRequest.getRequestType(), allPaths.toArray(new String[allPaths.size()]));
             requestList.set(requestList.size() - 1, lastRequest);
         }
     }
@@ -148,7 +160,7 @@ public abstract class AbstractJcrEventTrigger implements DistributionTrigger {
     }
 
     public void disable() {
-        for (JcrEventDistributionTriggerListener listener: registeredListeners.values()) {
+        for (JcrEventDistributionTriggerListener listener : registeredListeners.values()) {
             Session session;
             try {
                 session = getSession();
@@ -193,8 +205,7 @@ public abstract class AbstractJcrEventTrigger implements DistributionTrigger {
      */
     Session getSession() throws RepositoryException {
         return cachedSession != null ? cachedSession
-                : (cachedSession = repository.loginAdministrative(null)); // TODO: change after SLING-4312
-                // : (cachedSession = repository.loginService(serviceUser, null));
+            : (cachedSession = repository.loginService(serviceUser, null));
     }
 
 
@@ -219,12 +230,31 @@ public abstract class AbstractJcrEventTrigger implements DistributionTrigger {
             return false;
         }
 
-        for (String path: distributionRequest.getPaths()) {
+        for (String path : distributionRequest.getPaths()) {
             if (distributionRequest.isDeep(path)) {
                 return true;
             }
         }
         return false;
+    }
+
+
+    class DistributionExecutor implements Runnable {
+
+        private final List<DistributionRequest> requestList;
+        private final DistributionRequestHandler requestHandler;
+
+        public DistributionExecutor(List<DistributionRequest> requestList, DistributionRequestHandler requestHandler) {
+
+            this.requestList = requestList;
+            this.requestHandler = requestHandler;
+        }
+
+        public void run() {
+            for (DistributionRequest request : requestList) {
+                requestHandler.handle(request);
+            }
+        }
     }
 
 

@@ -191,6 +191,13 @@ public class ResourceResolverFactoryActivator implements Runnable {
               description = "The maximum number of cached vanity path entries. " +
                             "Default is -1 (no limit)")
     private static final String PROP_MAX_CACHED_VANITY_PATHS = "resource.resolver.vanitypath.maxEntries";
+    
+    private static final boolean DEFAULT_MAX_CACHED_VANITY_PATHS_STARTUP = true;
+    @Property(boolValue = DEFAULT_MAX_CACHED_VANITY_PATHS_STARTUP,
+              label = "Limit the maximum number of cached vanity path entries only at startup",
+              description = "Limit the maximum number of cached vanity path entries only at startup. " +
+                            "Default is true")
+    private static final String PROP_MAX_CACHED_VANITY_PATHS_STARTUP = "resource.resolver.vanitypath.maxEntries.startup";
 
     private static final int DEFAULT_VANITY_BLOOM_FILTER_MAX_BYTES = 1024000;
     @Property(longValue = DEFAULT_VANITY_BLOOM_FILTER_MAX_BYTES,
@@ -235,6 +242,14 @@ public class ResourceResolverFactoryActivator implements Runnable {
                           + "is causing the resource resolver factory to restart, potentially cleaning up "
                           + "for memory leaks caused by objects hold from that resource provider.")
     private static final String PROP_PARANOID_PROVIDER_HANDLING = "resource.resolver.providerhandling.paranoid";
+
+    private static final boolean DEFAULT_LOG_RESOURCE_RESOLVER_CLOSING = false;
+    @Property(boolValue = DEFAULT_LOG_RESOURCE_RESOLVER_CLOSING,
+              label = "Log resource resolver closing",
+              description = "When enabled CRUD operations with a closed resource resolver will log a stack trace " +
+                  "with the point where the used resolver was closed. It's advisable to not enable this feature on " +
+                  "production systems.")
+    private static final String PROP_LOG_RESOURCE_RESOLVER_CLOSING = "resource.resolver.log.closing";
 
     /** Tracker for the resource decorators. */
     private final ResourceDecoratorTracker resourceDecoratorTracker = new ResourceDecoratorTracker();
@@ -284,12 +299,18 @@ public class ResourceResolverFactoryActivator implements Runnable {
 
     /** max number of cache vanity path entries */
     private long maxCachedVanityPathEntries = DEFAULT_MAX_CACHED_VANITY_PATHS;
+    
+    /** limit max number of cache vanity path entries only at startup*/
+    private boolean maxCachedVanityPathEntriesStartup = DEFAULT_MAX_CACHED_VANITY_PATHS_STARTUP;
 
     /** Maximum number of vanity bloom filter bytes */
     private int vanityBloomFilterMaxBytes = DEFAULT_VANITY_BLOOM_FILTER_MAX_BYTES;
 
     /** vanity paths will have precedence over existing /etc/map mapping? */
     private boolean vanityPathPrecedence = DEFAULT_VANITY_PATH_PRECEDENCE;
+
+    /** log the place where a resource resolver is closed */
+    private boolean logResourceResolverClosing = DEFAULT_LOG_RESOURCE_RESOLVER_CLOSING;
 
 
     /** Vanity path whitelist */
@@ -394,9 +415,17 @@ public class ResourceResolverFactoryActivator implements Runnable {
     public long getMaxCachedVanityPathEntries() {
         return this.maxCachedVanityPathEntries;
     }
+    
+    public boolean isMaxCachedVanityPathEntriesStartup() {
+        return this.maxCachedVanityPathEntriesStartup;
+    }
 
     public int getVanityBloomFilterMaxBytes() {
         return this.vanityBloomFilterMaxBytes;
+    }
+
+    public boolean shouldLogResourceResolverClosing() {
+        return logResourceResolverClosing;
     }
 
     // ---------- SCR Integration ---------------------------------------------
@@ -503,9 +532,12 @@ public class ResourceResolverFactoryActivator implements Runnable {
 
         this.enableOptimizeAliasResolution = PropertiesUtil.toBoolean(properties.get(PROP_ENABLE_OPTIMIZE_ALIAS_RESOLUTION), DEFAULT_ENABLE_OPTIMIZE_ALIAS_RESOLUTION);
         this.maxCachedVanityPathEntries = PropertiesUtil.toLong(properties.get(PROP_MAX_CACHED_VANITY_PATHS), DEFAULT_MAX_CACHED_VANITY_PATHS);
+        this.maxCachedVanityPathEntriesStartup = PropertiesUtil.toBoolean(properties.get(PROP_MAX_CACHED_VANITY_PATHS_STARTUP), DEFAULT_MAX_CACHED_VANITY_PATHS_STARTUP);
         this.vanityBloomFilterMaxBytes = PropertiesUtil.toInteger(properties.get(PROP_VANITY_BLOOM_FILTER_MAX_BYTES), DEFAULT_VANITY_BLOOM_FILTER_MAX_BYTES);
 
         this.vanityPathPrecedence = PropertiesUtil.toBoolean(properties.get(PROP_VANITY_PATH_PRECEDENCE), DEFAULT_VANITY_PATH_PRECEDENCE);
+        this.logResourceResolverClosing = PropertiesUtil.toBoolean(properties.get(PROP_LOG_RESOURCE_RESOLVER_CLOSING),
+            DEFAULT_LOG_RESOURCE_RESOLVER_CLOSING);
 
         final BundleContext bc = componentContext.getBundleContext();
 

@@ -45,6 +45,9 @@ import org.apache.sling.distribution.serialization.impl.ResourceSharedDistributi
 import org.apache.sling.distribution.serialization.impl.kryo.KryoJcrDistributionPackageBuilder;
 import org.apache.sling.distribution.serialization.impl.kryo.KryoResourceDistributionPackageBuilder;
 
+/**
+ * A package builder for Apache Jackrabbit FileVault based implementations.
+ */
 @Component(metatype = true,
         label = "Apache Sling Distribution Packaging - Vault Package Builder Factory",
         description = "OSGi configuration for vault package builders",
@@ -55,13 +58,11 @@ import org.apache.sling.distribution.serialization.impl.kryo.KryoResourceDistrib
 @Service(DistributionPackageBuilder.class)
 public class VaultDistributionPackageBuilderFactory implements DistributionPackageBuilder {
 
-
     /**
      * name of this package builder.
      */
     @Property(label = "Name", description = "The name of the package builder.")
     public static final String NAME = DistributionComponentConstants.PN_NAME;
-
 
 
     /**
@@ -96,6 +97,12 @@ public class VaultDistributionPackageBuilderFactory implements DistributionPacka
     @Property(label = "Package Roots", description = "The package roots to be used for created packages. (this is useful for assembling packages with an user that cannot read above the package root)")
     public static final String PACKAGE_ROOTS = "package.roots";
 
+    /**
+     * Package filters
+     */
+    @Property(label = "Package Filters", description = "The package path filters. Filter format: path|+include|-exclude", cardinality = 100)
+    public static final String PACKAGE_FILTERS = "package.filters";
+
 
     /**
      * Temp file folder
@@ -124,7 +131,9 @@ public class VaultDistributionPackageBuilderFactory implements DistributionPacka
         String aclHandlingString = SettingsUtils.removeEmptyEntry(PropertiesUtil.toString(config.get(ACL_HANDLING), null));
 
         String[] packageRoots = SettingsUtils.removeEmptyEntries(PropertiesUtil.toStringArray(config.get(PACKAGE_ROOTS), null));
-        String tempFsFolder =  SettingsUtils.removeEmptyEntry(PropertiesUtil.toString(config.get(TEMP_FS_FOLDER), null));
+        String[] packageFilters = SettingsUtils.removeEmptyEntries(PropertiesUtil.toStringArray(config.get(PACKAGE_FILTERS), null));
+
+        String tempFsFolder = SettingsUtils.removeEmptyEntry(PropertiesUtil.toString(config.get(TEMP_FS_FOLDER), null));
         String tempJcrFolder = SettingsUtils.removeEmptyEntry(PropertiesUtil.toString(config.get(TEMP_JCR_FOLDER), null));
 
         ImportMode importMode = null;
@@ -134,23 +143,19 @@ public class VaultDistributionPackageBuilderFactory implements DistributionPacka
 
         AccessControlHandling aclHandling = null;
         if (aclHandlingString != null) {
-            aclHandling= AccessControlHandling.valueOf(aclHandlingString.trim());
+            aclHandling = AccessControlHandling.valueOf(aclHandlingString.trim());
         }
 
         if ("filevlt".equals(type)) {
-            packageBuilder = new ResourceSharedDistributionPackageBuilder(new FileVaultDistributionPackageBuilder(name, packaging, importMode, aclHandling, packageRoots, tempFsFolder));
-        } else if ("jcrvlt".equals(type)) {
-            packageBuilder = new ResourceSharedDistributionPackageBuilder(new JcrVaultDistributionPackageBuilder(name, packaging, importMode, aclHandling, packageRoots, tempFsFolder, tempJcrFolder));
+            packageBuilder = new ResourceSharedDistributionPackageBuilder(new FileVaultDistributionPackageBuilder(name, packaging, importMode, aclHandling, packageRoots, packageFilters, tempFsFolder));
         } else {
-            packageBuilder = new ResourceSharedDistributionPackageBuilder(new KryoResourceDistributionPackageBuilder());
+            packageBuilder = new ResourceSharedDistributionPackageBuilder(new JcrVaultDistributionPackageBuilder(name, packaging, importMode, aclHandling, packageRoots, packageFilters, tempFsFolder, tempJcrFolder));
         }
     }
-
 
     public String getType() {
         return packageBuilder.getType();
     }
-
 
     public DistributionPackage createPackage(@Nonnull ResourceResolver resourceResolver, @Nonnull DistributionRequest request) throws DistributionPackageBuildingException {
         return packageBuilder.createPackage(resourceResolver, request);

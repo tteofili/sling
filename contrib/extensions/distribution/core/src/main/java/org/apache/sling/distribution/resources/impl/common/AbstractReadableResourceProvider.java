@@ -19,7 +19,6 @@
 
 package org.apache.sling.distribution.resources.impl.common;
 
-
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.servlet.http.HttpServletRequest;
@@ -34,11 +33,17 @@ import org.apache.sling.api.resource.Resource;
 import org.apache.sling.api.resource.ResourceProvider;
 import org.apache.sling.api.resource.ResourceResolver;
 
+/**
+ * a readable {@link ResourceProvider} for distribution.
+ */
 public abstract class AbstractReadableResourceProvider implements ResourceProvider {
 
-    protected static final String ADAPTABLE_PROPERTY_NAME = "adaptable";
+    protected static final String INTERNAL_ADAPTABLE = "internal:adaptable";
+
+    protected static final String INTERNAL_ITEMS_PROPERTIES = "internal:propertiesMap";
 
     protected static final String ITEMS = "items";
+
 
     protected static final String SLING_RESOURCE_TYPE = "sling:resourceType";
 
@@ -73,7 +78,8 @@ public abstract class AbstractReadableResourceProvider implements ResourceProvid
         Map<String, Object> properties = getResourceProperties(pathInfo);
 
         if (properties != null) {
-            Object adaptable = properties.remove(ADAPTABLE_PROPERTY_NAME);
+            Object adaptable = properties.remove(INTERNAL_ADAPTABLE);
+            properties.remove(INTERNAL_ITEMS_PROPERTIES);
 
             resource = buildMainResource(resourceResolver, pathInfo, properties, adaptable);
         }
@@ -88,8 +94,6 @@ public abstract class AbstractReadableResourceProvider implements ResourceProvid
                                Object... adapters) {
         return new SimpleReadableResource(resourceResolver, pathInfo.getResourcePath(), properties, adapters);
     }
-
-
 
 
     SimplePathInfo extractPathInfo(String path) {
@@ -133,6 +137,7 @@ public abstract class AbstractReadableResourceProvider implements ResourceProvid
 
         List<Resource> resourceList = new ArrayList<Resource>();
         Iterable<String> childrenList = getResourceChildren(pathInfo);
+        Map<String, Map<String, Object>> childrenProperties = new HashMap<String, Map<String, Object>>();
 
         if (childrenList == null) {
             Map<String, Object> properties = getResourceProperties(pathInfo);
@@ -142,12 +147,25 @@ public abstract class AbstractReadableResourceProvider implements ResourceProvid
                 String[] itemsArray = (String[]) properties.get(ITEMS);
                 childrenList = Arrays.asList(itemsArray);
             }
+
+            if (properties != null && properties.containsKey(INTERNAL_ITEMS_PROPERTIES)) {
+                childrenProperties = (Map) properties.get(INTERNAL_ITEMS_PROPERTIES);
+            }
         }
 
         if (childrenList != null) {
             for (String childResourceName : childrenList) {
-                Resource childResource = getResource(resourceResolver, path + "/" + childResourceName);
 
+                Resource childResource;
+                if (childrenProperties.containsKey(childResourceName)) {
+                    Map<String, Object> childProperties = childrenProperties.get(childResourceName);
+                    SimplePathInfo childPathInfo = extractPathInfo(path + "/" + childResourceName);
+                    childResource = buildMainResource(resourceResolver, childPathInfo, childProperties);
+
+                } else {
+                    childResource = getResource(resourceResolver, path + "/" + childResourceName);
+
+                }
                 resourceList.add(childResource);
             }
         }
@@ -157,6 +175,7 @@ public abstract class AbstractReadableResourceProvider implements ResourceProvid
 
 
     protected abstract Map<String, Object> getResourceProperties(SimplePathInfo pathInfo);
+
     protected abstract Iterable<String> getResourceChildren(SimplePathInfo pathInfo);
 
 }

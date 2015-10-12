@@ -18,7 +18,12 @@
  */
 package org.apache.sling.testing.mock.sling.servlet;
 
+import static org.apache.sling.testing.mock.sling.servlet.MockSlingHttpServletResponse.CHARSET_SEPARATOR;
+
 import java.io.BufferedReader;
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
 import java.net.URLEncoder;
@@ -66,6 +71,8 @@ import org.apache.sling.testing.mock.sling.MockSling;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.ServiceReference;
 
+import com.google.common.collect.ImmutableList;
+
 /**
  * Mock {@link SlingHttpServletRequest} implementation.
  */
@@ -86,6 +93,11 @@ public class MockSlingHttpServletRequest extends SlingAdaptable implements Sling
     private String method = HttpConstants.METHOD_GET;
     private final HeaderSupport headerSupport = new HeaderSupport();
     private final CookieSupport cookieSupport = new CookieSupport();
+    private String contentType;
+    private String characterEncoding;
+    private byte[] content;
+    private String remoteUser;
+    private MockRequestDispatcherFactory requestDispatcherFactory;
     
     private static final ResourceBundle EMPTY_RESOURCE_BUNDLE = new ListResourceBundle() {
         @Override
@@ -96,9 +108,20 @@ public class MockSlingHttpServletRequest extends SlingAdaptable implements Sling
 
     /**
      * Instantiate with default resource resolver
+     * @deprecated Please use {@link #MockSlingHttpServletRequest(BundleContext)}
+     *   and shutdown the bundle context after usage.
      */
+    @Deprecated
     public MockSlingHttpServletRequest() {
-        this(MockSling.newResourceResolver());
+        this(MockOsgi.newBundleContext());
+    }
+
+    /**
+     * Instantiate with default resource resolver
+     * @param bundleContext Bundle context
+     */
+    public MockSlingHttpServletRequest(BundleContext bundleContext) {
+        this(MockSling.newResourceResolver(bundleContext));
     }
 
     /**
@@ -463,38 +486,147 @@ public class MockSlingHttpServletRequest extends SlingAdaptable implements Sling
         }
         return resourceBundle;
     }
-    
-    // --- unsupported operations ---
-
-    @Override
-    public RequestDispatcher getRequestDispatcher(Resource dispatcherResource) {
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public RequestDispatcher getRequestDispatcher(String dispatcherPath, RequestDispatcherOptions options) {
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public RequestDispatcher getRequestDispatcher(Resource dispatcherResource, RequestDispatcherOptions options) {
-        throw new UnsupportedOperationException();
-    }
 
     @Override
     public RequestParameter getRequestParameter(String name) {
-        throw new UnsupportedOperationException();
+        String value = getParameter(name);
+        if (value != null) {
+            return new MockRequestParameter(name, value);
+        }
+        return null;
     }
 
     @Override
     public RequestParameterMap getRequestParameterMap() {
-        throw new UnsupportedOperationException();
+        MockRequestParameterMap map = new MockRequestParameterMap();
+        for (Map.Entry<String,String[]> entry : getParameterMap().entrySet()) {
+            map.put(entry.getKey(), getRequestParameters(entry.getKey()));
+        }
+        return map;
     }
 
     @Override
     public RequestParameter[] getRequestParameters(String name) {
-        throw new UnsupportedOperationException();
+        String[] values = getParameterValues(name);
+        if (values == null) {
+            return null;
+        }
+        RequestParameter[] requestParameters = new RequestParameter[values.length];
+        for (int i = 0; i < values.length; i++) {
+            requestParameters[i] = new MockRequestParameter(name, values[i]);
+        }
+        return requestParameters;
     }
+
+    // part of Sling API 2.7
+    public List<RequestParameter> getRequestParameterList() {
+        List<RequestParameter> params = new ArrayList<RequestParameter>();
+        for (RequestParameter[] requestParameters : getRequestParameterMap().values()) {
+            params.addAll(ImmutableList.copyOf(requestParameters));
+        }
+        return params;
+    }
+
+    @Override
+    public String getCharacterEncoding() {
+        return this.characterEncoding;
+    }
+
+    @Override
+    public void setCharacterEncoding(String charset) {
+        this.characterEncoding = charset;
+    }
+
+    @Override
+    public String getContentType() {
+        if (this.contentType == null) {
+            return null;
+        } else {
+            return this.contentType
+                    + (StringUtils.isNotBlank(characterEncoding) ? CHARSET_SEPARATOR + characterEncoding : "");
+        }
+    }
+    
+    public void setContentType(String type) {
+        this.contentType = type;
+        if (StringUtils.contains(this.contentType, CHARSET_SEPARATOR)) {
+            this.characterEncoding = StringUtils.substringAfter(this.contentType, CHARSET_SEPARATOR);
+            this.contentType = StringUtils.substringBefore(this.contentType, CHARSET_SEPARATOR);
+        }
+    }
+
+    @Override
+    public ServletInputStream getInputStream() {
+        if (content == null) {
+            return null;
+        }
+        return new ServletInputStream() {
+            private final InputStream is = new ByteArrayInputStream(content);
+            @Override
+            public int read() throws IOException {
+                return is.read();
+            }
+        };  
+    }
+
+    @Override
+    public int getContentLength() {
+        if (content == null) {
+            return 0;
+        }
+        return content.length;
+    }
+    
+    public void setContent(byte[] content) {
+        this.content = content;
+    }
+
+    @Override
+    public RequestDispatcher getRequestDispatcher(String path) {
+        if (requestDispatcherFactory == null) {
+            throw new IllegalStateException("Please provdide a MockRequestDispatcherFactory (setRequestDispatcherFactory).");
+        }
+        return requestDispatcherFactory.getRequestDispatcher(path,  null);
+    }
+
+    @Override
+    public RequestDispatcher getRequestDispatcher(String path, RequestDispatcherOptions options) {
+        if (requestDispatcherFactory == null) {
+            throw new IllegalStateException("Please provdide a MockRequestDispatcherFactory (setRequestDispatcherFactory).");
+        }
+        return requestDispatcherFactory.getRequestDispatcher(path,  options);
+    }
+
+    @Override
+    public RequestDispatcher getRequestDispatcher(Resource resource) {
+        if (requestDispatcherFactory == null) {
+            throw new IllegalStateException("Please provdide a MockRequestDispatcherFactory (setRequestDispatcherFactory).");
+        }
+        return requestDispatcherFactory.getRequestDispatcher(resource, null);
+    }
+
+    @Override
+    public RequestDispatcher getRequestDispatcher(Resource resource, RequestDispatcherOptions options) {
+        if (requestDispatcherFactory == null) {
+            throw new IllegalStateException("Please provdide a MockRequestDispatcherFactory (setRequestDispatcherFactory).");
+        }
+        return requestDispatcherFactory.getRequestDispatcher(resource, options);
+    }
+    
+    public void setRequestDispatcherFactory(MockRequestDispatcherFactory requestDispatcherFactory) {
+        this.requestDispatcherFactory = requestDispatcherFactory;
+    }
+
+    @Override
+    public String getRemoteUser() {
+        return remoteUser;
+    }
+
+    public void setRemoteUser(String remoteUser) {
+        this.remoteUser = remoteUser;
+    }
+
+    // --- unsupported operations ---
 
     @Override
     public RequestProgressTracker getRequestProgressTracker() {
@@ -523,11 +655,6 @@ public class MockSlingHttpServletRequest extends SlingAdaptable implements Sling
 
     @Override
     public String getPathTranslated() {
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public String getRemoteUser() {
         throw new UnsupportedOperationException();
     }
 
@@ -582,26 +709,6 @@ public class MockSlingHttpServletRequest extends SlingAdaptable implements Sling
     }
 
     @Override
-    public String getCharacterEncoding() {
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public int getContentLength() {
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public String getContentType() {
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public ServletInputStream getInputStream() {
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
     public String getLocalAddr() {
         throw new UnsupportedOperationException();
     }
@@ -648,16 +755,6 @@ public class MockSlingHttpServletRequest extends SlingAdaptable implements Sling
 
     @Override
     public int getRemotePort() {
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public RequestDispatcher getRequestDispatcher(String path) {
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public void setCharacterEncoding(String env) {
         throw new UnsupportedOperationException();
     }
 
@@ -718,11 +815,6 @@ public class MockSlingHttpServletRequest extends SlingAdaptable implements Sling
 
     @Override
     public DispatcherType getDispatcherType() {
-        throw new UnsupportedOperationException();
-    }
-
-    // part of Sling API 2.7
-    public List<RequestParameter> getRequestParameterList() {
         throw new UnsupportedOperationException();
     }
 

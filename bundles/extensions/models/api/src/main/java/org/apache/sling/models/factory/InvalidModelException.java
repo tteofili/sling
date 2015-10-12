@@ -16,13 +16,14 @@
  */
 package org.apache.sling.models.factory;
 
-import org.apache.sling.models.spi.ModelValidation;
+import aQute.bnd.annotation.ProviderType;
 
 /**
- * Thrown in case the given model type could not be validated through the {@link ModelValidation}.
+ * Thrown in case the given model type could not be validated through the model validation.
  * The actual validation error message is encapsulated
  * @see ModelFactory
  */
+@ProviderType
 public class InvalidModelException extends RuntimeException {
     private static final long serialVersionUID = 366657841414210438L;
 

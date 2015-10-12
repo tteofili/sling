@@ -38,7 +38,8 @@ public class SlingSpecificsSightlyIT {
     private static final String SLING_TEMPLATE_BAD_IDENTIFIER = "/sightly/template.bad-id.html";
     private static final String SLING_JS_USE = "/sightly/use.jsuse.html";
     private static final String SLING_JS_DEPENDENCY_RESOLUTION = "/sightly/use-sibling-dependency-resolution.html";
-    private static final String SLING_USE_INHERITANCE = "/sightly/useinheritance.html";
+    private static final String SLING_USE_INHERITANCE_WITHOVERLAY = "/sightly/useinheritance.html";
+    private static final String SLING_USE_INHERITANCE_WITHOUTOVERLAY = "/sightly/useinheritance.notoverlaid.html";
 
     @BeforeClass
     public static void init() {
@@ -51,6 +52,7 @@ public class SlingSpecificsSightlyIT {
         String url = launchpadURL + SLING_USE;
         String pageContent = client.getStringContent(url, 200);
         assertEquals("SUCCESS", HTMLExtractor.innerHTML(url, pageContent, "#reqmodel"));
+        assertEquals("SUCCESS", HTMLExtractor.innerHTML(url, pageContent, "#reqmodel-reqarg"));
         assertEquals("SUCCESS", HTMLExtractor.innerHTML(url, pageContent, "#resmodel"));
         
     }
@@ -61,6 +63,13 @@ public class SlingSpecificsSightlyIT {
         String pageContent = client.getStringContent(url, 200);
         assertEquals("SUCCESS", HTMLExtractor.innerHTML(url, pageContent, "#resadapt"));
         assertEquals("SUCCESS", HTMLExtractor.innerHTML(url, pageContent, "#reqadapt"));
+    }
+
+    @Test
+    public void testUseAPIWithOSGIService() {
+        String url = launchpadURL + SLING_USE;
+        String pageContent = client.getStringContent(url, 200);
+        assertEquals("Hello World!", HTMLExtractor.innerHTML(url, pageContent, "#osgi"));
     }
 
     @Test
@@ -117,13 +126,20 @@ public class SlingSpecificsSightlyIT {
     }
 
     @Test
-    public void testUseAPIInheritance() {
-        String url = launchpadURL + SLING_USE_INHERITANCE;
+    public void testUseAPIInheritanceOverlaying() {
+        String url = launchpadURL + SLING_USE_INHERITANCE_WITHOVERLAY;
         String pageContent = client.getStringContent(url, 200);
         assertEquals("child.javaobject", HTMLExtractor.innerHTML(url, pageContent, "#javaobj"));
         assertEquals("child.javascriptobject", HTMLExtractor.innerHTML(url, pageContent, "#javascriptobj"));
         assertEquals("child.ecmaobject", HTMLExtractor.innerHTML(url, pageContent, "#ecmaobj"));
         assertEquals("child.template", HTMLExtractor.innerHTML(url, pageContent, "#templateobj"));
+    }
+
+    @Test
+    public void testUseAPIInheritanceWithoutOverlay() {
+        String url = launchpadURL + SLING_USE_INHERITANCE_WITHOUTOVERLAY;
+        String pageContent = client.getStringContent(url, 200);
+        assertEquals("notoverlaid", HTMLExtractor.innerHTML(url, pageContent, "#notoverlaid"));
     }
 
 }

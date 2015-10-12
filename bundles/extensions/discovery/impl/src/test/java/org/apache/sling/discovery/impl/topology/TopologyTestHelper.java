@@ -146,6 +146,13 @@ public class TopologyTestHelper {
         return instance;
     }
 
+    public static Instance createInstance(Collection<Instance> instances, String discoveryResourcePath, String debugName,
+            boolean resetRepo, int heartbeatTimeout, int heartbeatInterval, int minEventDelay) throws Exception {
+        final Instance instance = Instance.newStandaloneInstance(discoveryResourcePath, debugName, resetRepo, heartbeatTimeout, heartbeatInterval, minEventDelay);
+        instances.add(instance);
+        return instance;
+    }
+
     public static TopologyViewImpl cloneTopologyView(TopologyViewImpl view,
             String newLeader) throws NoSuchFieldException {
         final TopologyViewImpl clone = cloneTopologyView(view);

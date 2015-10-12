@@ -70,10 +70,12 @@ import org.slf4j.LoggerFactory;
  */
 @Component(immediate = true, metatype = true, label = "%provider.name", description = "%provider.description")
 @Service({ResourceBundleProvider.class, EventHandler.class})
-@Property(name=EventConstants.EVENT_TOPIC, value="org/apache/sling/api/resource/Resource/*")
+@Property(name=EventConstants.EVENT_TOPIC, value="org/apache/sling/api/resource/Resource/*", propertyPrivate=true)
 public class JcrResourceBundleProvider implements ResourceBundleProvider, EventHandler {
 
     private static final boolean DEFAULT_PRELOAD_BUNDLES = false;
+
+    private static final int DEFAULT_INVALIDATION_DELAY = 5000;
 
     @Property(value = "")
     private static final String PROP_USER = "user";
@@ -87,6 +89,9 @@ public class JcrResourceBundleProvider implements ResourceBundleProvider, EventH
     @Property(boolValue = DEFAULT_PRELOAD_BUNDLES)
     private static final String PROP_PRELOAD_BUNDLES = "preload.bundles";
 
+    @Property(longValue = DEFAULT_INVALIDATION_DELAY)
+    private static final String PROP_INVALIDATION_DELAY = "invalidation.delay";
+
     @Reference
     private Scheduler scheduler;
 
@@ -96,8 +101,8 @@ public class JcrResourceBundleProvider implements ResourceBundleProvider, EventH
     /** default log */
     private final Logger log = LoggerFactory.getLogger(getClass());
 
-    @Reference(cardinality = ReferenceCardinality.OPTIONAL_UNARY, policy = ReferencePolicy.DYNAMIC)
-    private volatile ResourceResolverFactory resourceResolverFactory;
+    @Reference
+    private ResourceResolverFactory resourceResolverFactory;
 
     /**
      * The default Locale as configured with the <i>locale.default</i>
@@ -107,15 +112,8 @@ public class JcrResourceBundleProvider implements ResourceBundleProvider, EventH
     private Locale defaultLocale = Locale.ENGLISH;
 
     /**
-     * The credentials to access the repository or <code>null</code> to use
-     * access the repository as the anonymous user, which is the case if the
-     * <i>user</i> property is not set in the configuration.
-     */
-    private Map<String, Object> repoCredentials;
-
-    /**
      * The resource resolver used to access the resource bundles. This object is
-     * retrieved from the {@link #resourceResolverFactory} using the anonymous
+     * retrieved from the {@link #resourceResolverFactory} using the administrative
      * session or the session acquired using the {@link #repoCredentials}.
      */
     private ResourceResolver resourceResolver;
@@ -147,6 +145,8 @@ public class JcrResourceBundleProvider implements ResourceBundleProvider, EventH
     private Map<Key, ServiceRegistration> bundleServiceRegistrations;
 
     private boolean preloadBundles;
+
+    private long invalidationDelay;
 
     // ---------- ResourceBundleProvider ---------------------------------------
 
@@ -199,7 +199,7 @@ public class JcrResourceBundleProvider implements ResourceBundleProvider, EventH
                 log.debug(
                         "handleEvent: Detected change of cached language root '{}', removing all cached ResourceBundles",
                         path);
-                scheduleReloadBundles();
+                scheduleReloadBundles(true);
             } else {
                 // if it is only a change below a root path, only messages of one resource bundle can be affected!
                 for (final String root : languageRootPaths) {
@@ -220,7 +220,7 @@ public class JcrResourceBundleProvider implements ResourceBundleProvider, EventH
                 }
                 // may be a completely new dictionary
                 if (isDictionaryResource(path, event)) {
-                    scheduleReloadBundles();
+                    scheduleReloadBundles(true);
                 }
             }
         }
@@ -239,9 +239,8 @@ public class JcrResourceBundleProvider implements ResourceBundleProvider, EventH
             return true;
         }
         // get valuemap
-        ResourceResolver resolver = getResourceResolver();
-        JcrResourceBundle.refreshSession(resolver);
-        Resource resource = resolver.getResource(path);
+        resourceResolver.refresh();
+        Resource resource = resourceResolver.getResource(path);
         if (resource == null) {
             log.trace("Could not resource for '{}' for event {}", path, event);
             return false;
@@ -278,7 +277,7 @@ public class JcrResourceBundleProvider implements ResourceBundleProvider, EventH
         return false;
     }
 
-    private void scheduleReloadBundles() {
+    private void scheduleReloadBundles(boolean withDelay) {
         // cancel all reload individual bundle jobs!
         synchronized(scheduledJobNames) {
             for (String scheduledJobName : scheduledJobNames) {
@@ -286,8 +285,13 @@ public class JcrResourceBundleProvider implements ResourceBundleProvider, EventH
             }
         }
         scheduledJobNames.clear();
-        // defer this job for 3 seconds
-        ScheduleOptions options = scheduler.AT(new Date(System.currentTimeMillis() + 5000L));
+        // defer this job
+        final ScheduleOptions options;
+        if (withDelay) {
+            options = scheduler.AT(new Date(System.currentTimeMillis() + invalidationDelay));
+        } else {
+            options = scheduler.NOW();
+        }
         options.name("JcrResourceBundleProvider: reload all resource bundles");
         scheduler.schedule(new Runnable() {
             @Override
@@ -304,8 +308,8 @@ public class JcrResourceBundleProvider implements ResourceBundleProvider, EventH
         Locale locale = bundle.getLocale();
         final Key key = new Key(baseName, locale);
         
-        // defer this job for 3 seconds
-        ScheduleOptions options = scheduler.AT(new Date(System.currentTimeMillis() + 5000L));
+        // defer this job
+        ScheduleOptions options = scheduler.AT(new Date(System.currentTimeMillis() + invalidationDelay));
         final String jobName = "JcrResourceBundleProvider: reload bundle with key " + key.toString();
         scheduledJobNames.add(jobName);
         options.name(jobName);
@@ -359,10 +363,12 @@ public class JcrResourceBundleProvider implements ResourceBundleProvider, EventH
     /**
      * Activates and configures this component with the repository access
      * details and the default locale to use
+     * @throws LoginException 
      */
-    protected void activate(ComponentContext context) {
+    protected void activate(ComponentContext context) throws LoginException {
         Dictionary<?, ?> props = context.getProperties();
 
+        Map<String, Object> repoCredentials;
         String user = PropertiesUtil.toString(props.get(PROP_USER), null);
         if (user == null || user.length() == 0) {
             repoCredentials = null;
@@ -381,40 +387,21 @@ public class JcrResourceBundleProvider implements ResourceBundleProvider, EventH
 
         this.bundleContext = context.getBundleContext();
         this.bundleServiceRegistrations = new HashMap<Key, ServiceRegistration>();
-        if (this.resourceResolverFactory != null) {
-            scheduleReloadBundles();
+        invalidationDelay = PropertiesUtil.toLong(props.get(PROP_INVALIDATION_DELAY), DEFAULT_INVALIDATION_DELAY);
+        if (this.resourceResolverFactory != null) { // this is only null during test execution!
+            if (repoCredentials == null) {
+                resourceResolver = resourceResolverFactory.getAdministrativeResourceResolver(null);
+            } else {
+                resourceResolver = resourceResolverFactory.getResourceResolver(repoCredentials);
+            }
+            scheduleReloadBundles(false);
         }
+
     }
 
     protected void deactivate() {
         clearCache();
-    }
-
-    /**
-     * Binds a new <code>ResourceResolverFactory</code>. If we are already
-     * bound to another factory, we release that latter one first.
-     */
-    protected void bindResourceResolverFactory(
-            ResourceResolverFactory resourceResolverFactory) {
-        if (this.resourceResolverFactory != null) {
-            releaseRepository();
-        }
-        this.resourceResolverFactory = resourceResolverFactory;
-        if (this.bundleContext != null) {
-            preloadBundles();
-        }
-    }
-
-    /**
-     * Unbinds the <code>ResourceResolverFactory</code>. If we are bound to
-     * this factory, we release it.
-     */
-    protected void unbindResourceResolverFactory(
-            ResourceResolverFactory resourceResolverFactory) {
-        if (this.resourceResolverFactory == resourceResolverFactory) {
-            releaseRepository();
-            this.resourceResolverFactory = null;
-        }
+        resourceResolver.close();
     }
 
     // ---------- internal -----------------------------------------------------
@@ -485,15 +472,7 @@ public class JcrResourceBundleProvider implements ResourceBundleProvider, EventH
      *             is not available to access the resources.
      */
     private JcrResourceBundle createResourceBundle(String baseName, Locale locale) {
-
-        ResourceResolver resolver = getResourceResolver();
-        if (resolver == null) {
-            log.info("createResourceBundle: Missing Resource Resolver, cannot create Resource Bundle");
-            throw new MissingResourceException(
-                "ResourceResolver not available", getClass().getName(), "");
-        }
-
-        final JcrResourceBundle bundle = new JcrResourceBundle(locale, baseName, resolver);
+        final JcrResourceBundle bundle = new JcrResourceBundle(locale, baseName, resourceResolver);
 
         // set parent resource bundle
         Locale parentLocale = getParentLocale(locale);
@@ -552,50 +531,6 @@ public class JcrResourceBundleProvider implements ResourceBundleProvider, EventH
         return rootResourceBundle;
     }
 
-    /**
-     * Returns the resource resolver to access messages. This method logs into
-     * the repository and registers with the observation manager if not already
-     * done so. If unable to connect to the repository, <code>null</code> is
-     * returned.
-     *
-     * @return The <code>ResourceResolver</code> or <code>null</code> if
-     *         unable to login to the repository. <code>null</code> is also
-     *         returned if no <code>ResourceResolverFactory</code> or no
-     *         <code>Repository</code> is available.
-     */
-    private ResourceResolver getResourceResolver() {
-        if (resourceResolver == null) {
-            ResourceResolverFactory fac = this.resourceResolverFactory;
-            if (fac == null) {
-
-                log.error("getResourceResolver: ResourceResolverFactory is missing. Cannot create ResourceResolver");
-
-            } else {
-                ResourceResolver resolver = null;
-                try {
-                    if (repoCredentials == null) {
-                    	// TODO: use ServiceResourceResolver if available
-                        resolver = fac.getAdministrativeResourceResolver(null);
-                    } else {
-                        resolver = fac.getResourceResolver(repoCredentials);
-                    }
-
-                    resourceResolver = resolver;
-
-                } catch (LoginException le) {
-
-                    log.error(
-                        "getResourceResolver: Problem setting up ResourceResolver with Session",
-                        le);
-
-                }
-
-            }
-        }
-
-        return resourceResolver;
-    }
-
     private void clearCache() {
         resourceBundleCache.clear();
         languageRootPaths.clear();
@@ -610,7 +545,8 @@ public class JcrResourceBundleProvider implements ResourceBundleProvider, EventH
 
     private void preloadBundles() {
         if (preloadBundles) {
-            Iterator<Map<String, Object>> bundles = getResourceResolver().queryResources(
+            resourceResolver.refresh();
+            Iterator<Map<String, Object>> bundles = resourceResolver.queryResources(
                     JcrResourceBundle.QUERY_LANGUAGE_ROOTS, "xpath");
             Set<Key> usedKeys = new HashSet<Key>();
             while (bundles.hasNext()) {
@@ -626,27 +562,6 @@ public class JcrResourceBundleProvider implements ResourceBundleProvider, EventH
                         getResourceBundle(baseName, locale);
                     }
                 }
-            }
-        }
-    }
-
-    /**
-     * Logs out from the repository and clears the resource bundle cache.
-     */
-    private void releaseRepository() {
-        ResourceResolver resolver = this.resourceResolver;
-
-        this.resourceResolver = null;
-        clearCache();
-
-        if (resolver != null) {
-
-            try {
-                resolver.close();
-            } catch (Throwable t) {
-                log.info(
-                    "releaseRepository: Unexpected problem closing the ResourceResolver",
-                    t);
             }
         }
     }

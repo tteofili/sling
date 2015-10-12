@@ -18,6 +18,12 @@
  */
 package org.apache.sling.distribution.agent.impl;
 
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeSet;
+
 import org.apache.felix.scr.annotations.Activate;
 import org.apache.felix.scr.annotations.Component;
 import org.apache.felix.scr.annotations.ConfigurationPolicy;
@@ -41,6 +47,7 @@ import org.apache.sling.distribution.packaging.impl.exporter.LocalDistributionPa
 import org.apache.sling.distribution.packaging.impl.importer.RemoteDistributionPackageImporter;
 import org.apache.sling.distribution.queue.DistributionQueueProvider;
 import org.apache.sling.distribution.queue.impl.DistributionQueueDispatchingStrategy;
+import org.apache.sling.distribution.queue.impl.ErrorQueueDispatchingStrategy;
 import org.apache.sling.distribution.queue.impl.MultipleQueueDispatchingStrategy;
 import org.apache.sling.distribution.queue.impl.SingleQueueDispatchingStrategy;
 import org.apache.sling.distribution.queue.impl.jobhandling.JobHandlingDistributionQueueProvider;
@@ -53,12 +60,6 @@ import org.apache.sling.settings.SlingSettingsService;
 import org.osgi.framework.BundleContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
-import java.util.TreeSet;
 
 /**
  * An OSGi service factory for {@link org.apache.sling.distribution.agent.DistributionAgent}s which references already existing OSGi services.
@@ -94,7 +95,7 @@ public class ForwardDistributionAgentFactory extends AbstractDistributionAgentFa
     public static final String SERVICE_NAME = "serviceName";
 
     @Property(options = {
-            @PropertyOption(name = "debug", value = "debug"), @PropertyOption(name = "info", value = "info"),  @PropertyOption(name = "warn", value = "warn"),
+            @PropertyOption(name = "debug", value = "debug"), @PropertyOption(name = "info", value = "info"), @PropertyOption(name = "warn", value = "warn"),
             @PropertyOption(name = "error", value = "error")},
             value = "info",
             label = "Log Level", description = "The log level recorded in the transient log accessible via http."
@@ -125,6 +126,16 @@ public class ForwardDistributionAgentFactory extends AbstractDistributionAgentFa
     @Property(cardinality = 100, label = "Passive queues", description = "List of queues that should be disabled." +
             "These queues will gather all the packages until they are removed explicitly.")
     public static final String PASSIVE_QUEUES = "passiveQueues";
+
+    @Property(options = {
+            @PropertyOption(name = "none", value = "none"), @PropertyOption(name = "errorQueue", value = "errorQueue")},
+            value = "none",
+            label = "Retry Strategy", description = "The strategy to apply after a certain number of failed retries."
+    )
+    public static final String RETRY_STRATEGY = "retry.strategy";
+
+    @Property(intValue = 100, label = "Retry attempts", description = "The number of times to retry until the retry strategy is applied.")
+    public static final String RETRY_ATTEMPTS = "retry.attempts";
 
 
     @Property(name = "requestAuthorizationStrategy.target", label = "Request Authorization Strategy", description = "The target reference for the DistributionRequestAuthorizationStrategy used to authorize the access to distribution process," +
@@ -192,37 +203,53 @@ public class ForwardDistributionAgentFactory extends AbstractDistributionAgentFa
         boolean queueProcessingEnabled = PropertiesUtil.toBoolean(config.get(QUEUE_PROCESSING_ENABLED), true);
 
         String[] passiveQueues = PropertiesUtil.toStringArray(config.get(PASSIVE_QUEUES), new String[0]);
-        passiveQueues = SettingsUtils.removeEmptyEntries(passiveQueues);
-
+        passiveQueues = SettingsUtils.removeEmptyEntries(passiveQueues, new String[0]);
 
 
         DistributionPackageExporter packageExporter = new LocalDistributionPackageExporter(packageBuilder);
-        DistributionQueueProvider queueProvider =  new JobHandlingDistributionQueueProvider(agentName, jobManager, context);
+        DistributionQueueProvider queueProvider = new JobHandlingDistributionQueueProvider(agentName, jobManager, context);
 
-        DistributionQueueDispatchingStrategy dispatchingStrategy = null;
+        DistributionQueueDispatchingStrategy exportQueueStrategy = null;
+        DistributionQueueDispatchingStrategy importQueueStrategy = null;
+
         DistributionPackageImporter packageImporter = null;
         Map<String, String> importerEndpointsMap = SettingsUtils.toUriMap(config.get(IMPORTER_ENDPOINTS));
         boolean useMultipleQueues = PropertiesUtil.toBoolean(config.get(USE_MULTIPLE_QUEUES), false);
+        Set<String> processingQueues = new HashSet<String>();
+
 
         if (useMultipleQueues) {
             Set<String> queuesMap = new TreeSet<String>();
             queuesMap.addAll(importerEndpointsMap.keySet());
             queuesMap.addAll(Arrays.asList(passiveQueues));
 
+            processingQueues.addAll(importerEndpointsMap.keySet());
+            processingQueues.removeAll(Arrays.asList(passiveQueues));
+
             String[] queueNames = queuesMap.toArray(new String[0]);
-            dispatchingStrategy = new MultipleQueueDispatchingStrategy(queueNames);
+            exportQueueStrategy = new MultipleQueueDispatchingStrategy(queueNames);
             packageImporter = new RemoteDistributionPackageImporter(distributionLog, transportSecretProvider, importerEndpointsMap, TransportEndpointStrategyType.One);
         } else {
-            dispatchingStrategy = new SingleQueueDispatchingStrategy();
+            exportQueueStrategy = new SingleQueueDispatchingStrategy();
+            processingQueues.addAll(exportQueueStrategy.getQueueNames());
             packageImporter = new RemoteDistributionPackageImporter(distributionLog, transportSecretProvider, importerEndpointsMap, TransportEndpointStrategyType.All);
         }
 
-        DistributionRequestType[] allowedRequests = new DistributionRequestType[] { DistributionRequestType.ADD, DistributionRequestType.DELETE };
+        DistributionRequestType[] allowedRequests = new DistributionRequestType[]{DistributionRequestType.ADD, DistributionRequestType.DELETE};
 
 
-        return new SimpleDistributionAgent(agentName, queueProcessingEnabled, passiveQueues,
+        String retryStrategy = SettingsUtils.removeEmptyEntry(PropertiesUtil.toString(config.get(RETRY_STRATEGY), null));
+        int retryAttepts = PropertiesUtil.toInteger(config.get(RETRY_ATTEMPTS), 100);
+
+
+        if ("errorQueue".equals(retryStrategy)) {
+            importQueueStrategy = new ErrorQueueDispatchingStrategy(processingQueues.toArray(new String[0]));
+        }
+
+
+        return new SimpleDistributionAgent(agentName, queueProcessingEnabled, processingQueues,
                 serviceName, packageImporter, packageExporter, requestAuthorizationStrategy,
-                queueProvider, dispatchingStrategy, distributionEventFactory, resourceResolverFactory, distributionLog, allowedRequests, allowedRoots);
+                queueProvider, exportQueueStrategy, importQueueStrategy, distributionEventFactory, resourceResolverFactory, distributionLog, allowedRequests, allowedRoots, retryAttepts);
 
 
     }

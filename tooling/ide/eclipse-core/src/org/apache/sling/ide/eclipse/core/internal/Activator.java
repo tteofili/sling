@@ -26,6 +26,7 @@ import org.apache.sling.ide.filter.FilterLocator;
 import org.apache.sling.ide.log.Logger;
 import org.apache.sling.ide.osgi.OsgiClientFactory;
 import org.apache.sling.ide.serialization.SerializationManager;
+import org.apache.sling.ide.transport.BatcherFactory;
 import org.apache.sling.ide.transport.CommandExecutionProperties;
 import org.apache.sling.ide.transport.RepositoryFactory;
 import org.eclipse.core.runtime.Plugin;
@@ -59,6 +60,7 @@ public class Activator extends Plugin {
     private ServiceTracker<OsgiClientFactory, OsgiClientFactory> osgiClientFactory;
     private ServiceTracker<EmbeddedArtifactLocator, EmbeddedArtifactLocator> artifactLocator;
     private ServiceTracker<?, ?> tracer;
+    private ServiceTracker<BatcherFactory, BatcherFactory> batcherFactoryLocator;
 
     private ServiceRegistration<?> tracerRegistration;
 
@@ -68,33 +70,33 @@ public class Activator extends Plugin {
 
         tracerRegistration = PluginLoggerRegistrar.register(this);
 
-        eventAdmin = new ServiceTracker<EventAdmin, EventAdmin>(context, EventAdmin.class,
-                null);
+        eventAdmin = new ServiceTracker<>(context, EventAdmin.class, null);
         eventAdmin.open();
 
-        repositoryFactory = new ServiceTracker<RepositoryFactory, RepositoryFactory>(context, RepositoryFactory.class,
+        repositoryFactory = new ServiceTracker<>(context, RepositoryFactory.class,
                 null);
         repositoryFactory.open();
 
-        serializationManager = new ServiceTracker<SerializationManager, SerializationManager>(context,
-                SerializationManager.class, null);
+        serializationManager = new ServiceTracker<>(context, SerializationManager.class, null);
         serializationManager.open();
 
-        filterLocator = new ServiceTracker<FilterLocator, FilterLocator>(context, FilterLocator.class, null);
+        filterLocator = new ServiceTracker<>(context, FilterLocator.class, null);
         filterLocator.open();
 
-        osgiClientFactory = new ServiceTracker<OsgiClientFactory, OsgiClientFactory>(context, OsgiClientFactory.class,
+        osgiClientFactory = new ServiceTracker<>(context, OsgiClientFactory.class,
                 null);
         osgiClientFactory.open();
 
-        artifactLocator = new ServiceTracker<EmbeddedArtifactLocator, EmbeddedArtifactLocator>(context,
-                EmbeddedArtifactLocator.class, null);
+        artifactLocator = new ServiceTracker<>(context, EmbeddedArtifactLocator.class, null);
         artifactLocator.open();
 
         // ugh
         ServiceReference<Object> reference = (ServiceReference<Object>) tracerRegistration.getReference();
-        tracer = new ServiceTracker<Object, Object>(context, reference, null);
+        tracer = new ServiceTracker<>(context, reference, null);
         tracer.open();
+        
+        batcherFactoryLocator = new ServiceTracker<>(context, BatcherFactory.class, null);
+        batcherFactoryLocator.open();
 	}
 
 	/*
@@ -111,6 +113,7 @@ public class Activator extends Plugin {
         osgiClientFactory.close();
         artifactLocator.close();
         tracer.close();
+        batcherFactoryLocator.close();
 
         plugin = null;
 		super.stop(context);
@@ -151,12 +154,16 @@ public class Activator extends Plugin {
         return (Logger) ServiceUtil.getNotNull(tracer);
     }
     
+    public BatcherFactory getBatcherFactory() {
+        return (BatcherFactory) ServiceUtil.getNotNull(batcherFactoryLocator);
+    }
+    
     /**
      * @deprecated This should not be used directly to communicate with the client . There is no direct replacement
      */
     @Deprecated
     public void issueConsoleLog(String actionType, String path, String message) {
-        Map<String, Object> props = new HashMap<String, Object>();
+        Map<String, Object> props = new HashMap<>();
         props.put(CommandExecutionProperties.RESULT_TEXT, message);
         props.put(CommandExecutionProperties.ACTION_TYPE, actionType);
         props.put(CommandExecutionProperties.ACTION_TARGET, path);

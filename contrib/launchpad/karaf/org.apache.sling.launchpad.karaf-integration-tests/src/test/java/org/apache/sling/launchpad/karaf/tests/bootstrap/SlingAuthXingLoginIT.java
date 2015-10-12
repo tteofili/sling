@@ -39,9 +39,7 @@ public class SlingAuthXingLoginIT extends KarafTestSupport {
     @Configuration
     public Option[] configuration() {
         return OptionUtils.combine(baseConfiguration(),
-            withDerby(),
-            addBootFeature("sling-jcr-jackrabbit"),
-            addBootFeature("sling-auth-xing-login")
+            addSlingFeatures("sling-jcr-jackrabbit", "sling-auth-xing-login")
         );
     }
 

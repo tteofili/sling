@@ -30,8 +30,8 @@ import org.apache.felix.scr.annotations.Reference;
 import org.apache.felix.scr.annotations.Service;
 import org.apache.sling.api.resource.ResourceResolver;
 import org.apache.sling.commons.osgi.PropertiesUtil;
-import org.apache.sling.distribution.agent.DistributionAgent;
 import org.apache.sling.distribution.DistributionRequest;
+import org.apache.sling.distribution.agent.DistributionAgent;
 import org.apache.sling.distribution.component.impl.DistributionComponentConstants;
 import org.apache.sling.distribution.packaging.DistributionPackage;
 import org.apache.sling.distribution.packaging.DistributionPackageExportException;
@@ -74,13 +74,15 @@ public class AgentDistributionPackageExporterFactory implements DistributionPack
     public void activate(Map<String, Object> config) throws Exception {
 
         String queueName = PropertiesUtil.toString(config.get(QUEUE_NAME), "");
+        String name = PropertiesUtil.toString(config.get(NAME), "");
 
-        packageExporter = new AgentDistributionPackageExporter(queueName, agent, packageBuilderProvider);
+
+        packageExporter = new AgentDistributionPackageExporter(queueName, agent, packageBuilderProvider, name);
     }
 
     @Nonnull
     public List<DistributionPackage> exportPackages(@Nonnull ResourceResolver resourceResolver, @Nonnull DistributionRequest distributionRequest) throws DistributionPackageExportException {
-       return packageExporter.exportPackages(resourceResolver, distributionRequest);
+        return packageExporter.exportPackages(resourceResolver, distributionRequest);
     }
 
     public DistributionPackage getPackage(@Nonnull ResourceResolver resourceResolver, @Nonnull String distributionPackageId) {

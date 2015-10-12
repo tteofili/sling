@@ -20,12 +20,15 @@
 package org.apache.sling.distribution.impl;
 
 
-import org.apache.sling.distribution.DistributionRequestState;
-import org.apache.sling.distribution.DistributionResponse;
-
 import javax.annotation.Nonnull;
 import java.util.List;
 
+import org.apache.sling.distribution.DistributionRequestState;
+import org.apache.sling.distribution.DistributionResponse;
+
+/**
+ * A composite {@link SimpleDistributionResponse}.
+ */
 public class CompositeDistributionResponse extends SimpleDistributionResponse {
 
     private DistributionRequestState state;
@@ -51,7 +54,7 @@ public class CompositeDistributionResponse extends SimpleDistributionResponse {
 
     @Override
     public boolean isSuccessful() {
-        return !DistributionRequestState.DROPPED.equals(state);
+        return DistributionRequestState.ACCEPTED.equals(state) || DistributionRequestState.DISTRIBUTED.equals(state);
     }
 
     @Nonnull
@@ -75,16 +78,12 @@ public class CompositeDistributionResponse extends SimpleDistributionResponse {
     }
 
 
-
     /* Provide the aggregated state of two {@link org.apache.sling.distribution.DistributionRequestState}s */
     private DistributionRequestState aggregatedState(DistributionRequestState first, DistributionRequestState second) {
         DistributionRequestState aggregatedState;
         switch (second) {
             case DISTRIBUTED:
                 aggregatedState = first;
-                break;
-            case DROPPED:
-                aggregatedState = DistributionRequestState.DISTRIBUTED;
                 break;
             case ACCEPTED:
                 if (first.equals(DistributionRequestState.DISTRIBUTED)) {

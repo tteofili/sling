@@ -28,6 +28,7 @@ import org.apache.sling.distribution.DistributionRequest;
 import org.apache.sling.distribution.DistributionRequestType;
 import org.apache.sling.distribution.SimpleDistributionRequest;
 import org.apache.sling.distribution.packaging.DistributionPackage;
+import org.apache.sling.distribution.packaging.DistributionPackageInfo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -42,24 +43,13 @@ public class SimpleDistributionPackage extends AbstractDistributionPackage imple
     private final static String DELIM = "|";
     private final static String PATH_DELIM = ",";
 
-
-    private final String type;
-
-    private final String[] paths;
-
-    private final String id;
-
-    private final DistributionRequestType requestType;
-
-
     public SimpleDistributionPackage(DistributionRequest request, String type) {
-        this.type = type;
-        this.paths = request.getPaths();
-        this.requestType = request.getRequestType();
-        this.id = toIdString(request, type);
+        super(toIdString(request, type), type);
+        String[] paths = request.getPaths();
+        DistributionRequestType requestType = request.getRequestType();
 
-        this.getInfo().setPaths(paths);
-        this.getInfo().setRequestType(requestType);
+        this.getInfo().put(DistributionPackageInfo.PROPERTY_REQUEST_PATHS, paths);
+        this.getInfo().put(DistributionPackageInfo.PROPERTY_REQUEST_TYPE, requestType);
     }
 
     public static String toIdString(DistributionRequest request, String type) {
@@ -73,12 +63,10 @@ public class SimpleDistributionPackage extends AbstractDistributionPackage imple
 
         String[] paths = request.getPaths();
 
-        if (paths == null || paths.length == 0) {
-            // do nothing
-        } else {
+        if (paths != null && paths.length != 0) {
             for (int i = 0; i < paths.length; i++) {
                 b.append(paths[i]);
-                if (i < paths.length-1) {
+                if (i < paths.length - 1) {
                     b.append(PATH_DELIM);
                 }
             }
@@ -94,10 +82,9 @@ public class SimpleDistributionPackage extends AbstractDistributionPackage imple
 
         id = id.substring(PACKAGE_START.length());
 
-
         String[] parts = id.split(Pattern.quote(DELIM));
 
-        if (parts.length < 1 || parts.length > 2)  {
+        if (parts.length < 1 || parts.length > 2) {
             return null;
         }
 
@@ -109,7 +96,7 @@ public class SimpleDistributionPackage extends AbstractDistributionPackage imple
 
         SimpleDistributionPackage distributionPackage = null;
         if (distributionRequestType != null) {
-            String[] paths = pathsString == null ? null :  pathsString.split(PATH_DELIM);
+            String[] paths = pathsString == null ? null : pathsString.split(PATH_DELIM);
 
             DistributionRequest request = new SimpleDistributionRequest(distributionRequestType, paths);
             distributionPackage = new SimpleDistributionPackage(request, type);
@@ -120,18 +107,8 @@ public class SimpleDistributionPackage extends AbstractDistributionPackage imple
 
 
     @Nonnull
-    public String getType() {
-        return type;
-    }
-
-    @Nonnull
     public InputStream createInputStream() throws IOException {
-        return IOUtils.toInputStream(id, "UTF-8");
-    }
-
-    @Nonnull
-    public String getId() {
-        return id;
+        return IOUtils.toInputStream(getId(), "UTF-8");
     }
 
 
@@ -145,10 +122,10 @@ public class SimpleDistributionPackage extends AbstractDistributionPackage imple
 
     @Override
     public String toString() {
-        return id;
+        return getId();
     }
 
-    public static SimpleDistributionPackage fromStream(InputStream stream, String type)  {
+    public static SimpleDistributionPackage fromStream(InputStream stream, String type) {
 
         try {
             int size = SimpleDistributionPackage.PACKAGE_START.getBytes("UTF-8").length;

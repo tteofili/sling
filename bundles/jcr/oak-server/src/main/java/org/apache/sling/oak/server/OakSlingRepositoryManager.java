@@ -150,7 +150,7 @@ public class OakSlingRepositoryManager extends AbstractSlingRepositoryManager {
 
     @Property(
             value = DEFAULT_ADMIN_USER,
-            label = "Administator",
+            label = "Administrator",
             description = "The user name of the administrative user. This user"
                 + "name is used to implement the SlingRepository.loginAdministrative(String)"
                 + "method. It is intended for this user to provide full read/write access to repository.")
@@ -250,7 +250,10 @@ public class OakSlingRepositoryManager extends AbstractSlingRepositoryManager {
         }
 
         final ContentRepository contentRepository = oak.createContentRepository();
-        return new OsgiRepository(contentRepository, whiteboard, securityProvider, observationQueueLength, commitRateLimiter);
+        final boolean fastQueryResultSize = true;
+        return new OsgiRepository(
+                contentRepository, whiteboard, securityProvider, observationQueueLength, 
+                commitRateLimiter, fastQueryResultSize);
     }
 
     @Override
@@ -322,7 +325,7 @@ public class OakSlingRepositoryManager extends AbstractSlingRepositoryManager {
 
         @SuppressWarnings("unchecked")
         Dictionary<String, Object> properties = componentContext.getProperties();
-        final String defaultWorkspace = PropertiesUtil.toString(properties.get(PROPERTY_DEFAULT_WORKSPACE), "oak.sling");
+        final String defaultWorkspace = PropertiesUtil.toString(properties.get(PROPERTY_DEFAULT_WORKSPACE), "default");
         final boolean disableLoginAdministrative = !PropertiesUtil.toBoolean(
             properties.get(PROPERTY_LOGIN_ADMIN_ENABLED), DEFAULT_LOGIN_ADMIN_ENABLED);
 

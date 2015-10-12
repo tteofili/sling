@@ -38,6 +38,7 @@ import org.apache.sling.adapter.annotations.Adaptable;
 import org.apache.sling.adapter.annotations.Adapter;
 import org.apache.sling.api.SlingException;
 import org.apache.sling.api.adapter.SlingAdaptable;
+import org.apache.sling.api.resource.DynamicResourceProvider;
 import org.apache.sling.api.resource.LoginException;
 import org.apache.sling.api.resource.NonExistingResource;
 import org.apache.sling.api.resource.PersistenceException;
@@ -99,6 +100,8 @@ public class ResourceResolverImpl extends SlingAdaptable implements ResourceReso
     /** Resource resolver context. */
     private final ResourceResolverContext context;
 
+    private volatile Exception closedResolverException;
+
     /**
      * The resource resolver context.
      */
@@ -112,6 +115,7 @@ public class ResourceResolverImpl extends SlingAdaptable implements ResourceReso
     /**
      * @see org.apache.sling.api.resource.ResourceResolver#clone(Map)
      */
+    @Override
     public ResourceResolver clone(final Map<String, Object> authenticationInfo)
             throws LoginException {
         // ensure resolver is still live
@@ -138,6 +142,7 @@ public class ResourceResolverImpl extends SlingAdaptable implements ResourceReso
     /**
      * @see org.apache.sling.api.resource.ResourceResolver#isLive()
      */
+    @Override
     public boolean isLive() {
         return !this.isClosed.get() && this.context.isLive() && this.factory.isLive();
     }
@@ -145,21 +150,31 @@ public class ResourceResolverImpl extends SlingAdaptable implements ResourceReso
     /**
      * @see org.apache.sling.api.resource.ResourceResolver#close()
      */
+    @Override
     public void close() {
+        if (factory.shouldLogResourceResolverClosing()) {
+            closedResolverException = new Exception("Stack Trace");
+        }
         if ( this.isClosed.compareAndSet(false, true)) {
             this.factory.unregister(this, this.context);
         }
     }
 
     /**
-     * Check if the resource resolver is already closed.
+     * Check if the resource resolver is already closed or the factory which created this resolver is no longer live.
      *
      * @throws IllegalStateException
-     *             If the resolver is already closed
+     *             If the resolver is already closed or the factory is no longer live.
      */
     private void checkClosed() {
         if (this.isClosed.get()) {
+            if (closedResolverException != null) {
+                logger.error("The ResourceResolver has already been closed.", closedResolverException);
+            }
             throw new IllegalStateException("Resource resolver is already closed.");
+        }
+        if (!this.factory.isLive()) {
+            throw new IllegalStateException("Resource resolver factory which created this resolver is no longer active.");
         }
     }
 
@@ -168,6 +183,7 @@ public class ResourceResolverImpl extends SlingAdaptable implements ResourceReso
     /**
      * @see org.apache.sling.api.resource.ResourceResolver#getAttributeNames()
      */
+    @Override
     public Iterator<String> getAttributeNames() {
         checkClosed();
         return this.factory.getRootProviderEntry().getAttributeNames(this.context, this);
@@ -176,6 +192,7 @@ public class ResourceResolverImpl extends SlingAdaptable implements ResourceReso
     /**
      * @see org.apache.sling.api.resource.ResourceResolver#getAttribute(String)
      */
+    @Override
     public Object getAttribute(final String name) {
         checkClosed();
         if (name == null) {
@@ -190,6 +207,7 @@ public class ResourceResolverImpl extends SlingAdaptable implements ResourceReso
     /**
      * @see org.apache.sling.api.resource.ResourceResolver#resolve(java.lang.String)
      */
+    @Override
     public Resource resolve(final String path) {
         checkClosed();
 
@@ -200,6 +218,7 @@ public class ResourceResolverImpl extends SlingAdaptable implements ResourceReso
     /**
      * @see org.apache.sling.api.resource.ResourceResolver#resolve(javax.servlet.http.HttpServletRequest)
      */
+    @Override
     @SuppressWarnings("javadoc")
     public Resource resolve(final HttpServletRequest request) {
         checkClosed();
@@ -213,6 +232,7 @@ public class ResourceResolverImpl extends SlingAdaptable implements ResourceReso
      * @see org.apache.sling.api.resource.ResourceResolver#resolve(javax.servlet.http.HttpServletRequest,
      *      java.lang.String)
      */
+    @Override
     public Resource resolve(final HttpServletRequest request, String path) {
         checkClosed();
 
@@ -363,6 +383,7 @@ public class ResourceResolverImpl extends SlingAdaptable implements ResourceReso
      *
      * @see org.apache.sling.api.resource.ResourceResolver#map(java.lang.String)
      */
+    @Override
     public String map(final String resourcePath) {
         checkClosed();
         return map(null, resourcePath);
@@ -376,6 +397,7 @@ public class ResourceResolverImpl extends SlingAdaptable implements ResourceReso
      * @see org.apache.sling.api.resource.ResourceResolver#map(javax.servlet.http.HttpServletRequest,
      *      java.lang.String)
      */
+    @Override
     public String map(final HttpServletRequest request, final String resourcePath) {
         checkClosed();
 
@@ -575,6 +597,7 @@ public class ResourceResolverImpl extends SlingAdaptable implements ResourceReso
     /**
      * @see org.apache.sling.api.resource.ResourceResolver#getSearchPath()
      */
+    @Override
     public String[] getSearchPath() {
         checkClosed();
         return factory.getSearchPath().clone();
@@ -585,6 +608,7 @@ public class ResourceResolverImpl extends SlingAdaptable implements ResourceReso
     /**
      * @see org.apache.sling.api.resource.ResourceResolver#getResource(java.lang.String)
      */
+    @Override
     public Resource getResource(String path) {
         checkClosed();
         final Resource result = this.getResourceInternal(path);
@@ -595,6 +619,7 @@ public class ResourceResolverImpl extends SlingAdaptable implements ResourceReso
      * @see org.apache.sling.api.resource.ResourceResolver#getResource(org.apache.sling.api.resource.Resource,
      *      java.lang.String)
      */
+    @Override
     public Resource getResource(final Resource base, final String path) {
         checkClosed();
 
@@ -658,6 +683,7 @@ public class ResourceResolverImpl extends SlingAdaptable implements ResourceReso
     /**
      * @see org.apache.sling.api.resource.ResourceResolver#listChildren(org.apache.sling.api.resource.Resource)
      */
+    @Override
     public Iterator<Resource> listChildren(final Resource parent) {
         checkClosed();
 
@@ -671,9 +697,11 @@ public class ResourceResolverImpl extends SlingAdaptable implements ResourceReso
     /**
      * @see org.apache.sling.api.resource.Resource#getChildren()
      */
+    @Override
     public Iterable<Resource> getChildren(final Resource parent) {
         return new Iterable<Resource>() {
 
+            @Override
             public Iterator<Resource> iterator() {
                 return listChildren(parent);
             }
@@ -688,6 +716,7 @@ public class ResourceResolverImpl extends SlingAdaptable implements ResourceReso
      * @see org.apache.sling.api.resource.ResourceResolver#findResources(java.lang.String,
      *      java.lang.String)
      */
+    @Override
     public Iterator<Resource> findResources(final String query, final String language) throws SlingException {
         checkClosed();
 
@@ -700,6 +729,7 @@ public class ResourceResolverImpl extends SlingAdaptable implements ResourceReso
      * @see org.apache.sling.api.resource.ResourceResolver#queryResources(java.lang.String,
      *      java.lang.String)
      */
+    @Override
     public Iterator<Map<String, Object>> queryResources(final String query, final String language)
             throws SlingException {
         checkClosed();
@@ -711,6 +741,7 @@ public class ResourceResolverImpl extends SlingAdaptable implements ResourceReso
     /**
      * @see org.apache.sling.api.resource.ResourceResolver#getUserID()
      */
+    @Override
     public String getUserID() {
         checkClosed();
 
@@ -1095,6 +1126,7 @@ public class ResourceResolverImpl extends SlingAdaptable implements ResourceReso
     /**
      * @see org.apache.sling.api.resource.ResourceResolver#delete(org.apache.sling.api.resource.Resource)
      */
+    @Override
     public void delete(final Resource resource)
             throws PersistenceException {
         // check if the resource is non existing - throws NPE if resource is null as stated in the API
@@ -1109,6 +1141,7 @@ public class ResourceResolverImpl extends SlingAdaptable implements ResourceReso
     /**
      * @see org.apache.sling.api.resource.ResourceResolver#create(org.apache.sling.api.resource.Resource, java.lang.String, Map)
      */
+    @Override
     public Resource create(final Resource parent, final String name, final Map<String, Object> properties)
             throws PersistenceException {
         // if parent or name is null, we get an NPE as stated in the API
@@ -1136,6 +1169,7 @@ public class ResourceResolverImpl extends SlingAdaptable implements ResourceReso
     /**
      * @see org.apache.sling.api.resource.ResourceResolver#revert()
      */
+    @Override
     public void revert() {
         this.context.revert(this);
     }
@@ -1143,6 +1177,7 @@ public class ResourceResolverImpl extends SlingAdaptable implements ResourceReso
     /**
      * @see org.apache.sling.api.resource.ResourceResolver#commit()
      */
+    @Override
     public void commit() throws PersistenceException {
         this.context.commit(this);
     }
@@ -1150,6 +1185,7 @@ public class ResourceResolverImpl extends SlingAdaptable implements ResourceReso
     /**
      * @see org.apache.sling.api.resource.ResourceResolver#hasChanges()
      */
+    @Override
     public boolean hasChanges() {
         return this.context.hasChanges(this);
     }
@@ -1157,13 +1193,15 @@ public class ResourceResolverImpl extends SlingAdaptable implements ResourceReso
     /**
      * @see org.apache.sling.api.resource.ResourceResolver#hasChildren()
      */
-	public boolean hasChildren(Resource resource) {
+	@Override
+    public boolean hasChildren(Resource resource) {
 		return listChildren(resource).hasNext();
 	}
 
     /**
      * @see org.apache.sling.api.resource.ResourceResolver#getParentResourceType(org.apache.sling.api.resource.Resource)
      */
+    @Override
     public String getParentResourceType(final Resource resource) {
         String resourceSuperType = null;
         if ( resource != null ) {
@@ -1178,6 +1216,7 @@ public class ResourceResolverImpl extends SlingAdaptable implements ResourceReso
     /**
      * @see org.apache.sling.api.resource.ResourceResolver#getParentResourceType(java.lang.String)
      */
+    @Override
     public String getParentResourceType(final String resourceType) {
         return this.context.getParentResourceType(this.factory, this, resourceType);
     }
@@ -1185,6 +1224,7 @@ public class ResourceResolverImpl extends SlingAdaptable implements ResourceReso
     /**
      * @see org.apache.sling.api.resource.ResourceResolver#isResourceType(org.apache.sling.api.resource.Resource, java.lang.String)
      */
+    @Override
     public boolean isResourceType(final Resource resource, final String resourceType) {
         boolean result = false;
         if ( resource != null && resourceType != null ) {
@@ -1211,7 +1251,24 @@ public class ResourceResolverImpl extends SlingAdaptable implements ResourceReso
     /**
      * @see org.apache.sling.api.resource.ResourceResolver#refresh()
      */
+    @Override
     public void refresh() {
         this.context.refresh();
+    }
+
+    @Override
+    public Resource getParent(final Resource child) {
+        // TODO Auto-generated method stub
+        return this.getResource(ResourceUtil.getParent(child.getPath()));
+    }
+
+    @Override
+    public void copy(final String srcAbsPath, final String destAbsPath) throws PersistenceException {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void move(final String srcAbsPath, final String destAbsPath) throws PersistenceException {
+        throw new UnsupportedOperationException();
     }
 }

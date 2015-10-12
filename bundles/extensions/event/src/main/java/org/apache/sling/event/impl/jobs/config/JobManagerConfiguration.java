@@ -147,9 +147,9 @@ public class JobManagerConfiguration implements TopologyEventListener {
     /** The base path for locks - ending with a slash. */
     private String locksPathWithSlash;
 
-    private long backgroundLoadDelay;
+    private volatile long backgroundLoadDelay;
 
-    private boolean disabledDistribution;
+    private volatile boolean disabledDistribution;
 
     private String storedCancelledJobsPath;
 
@@ -456,7 +456,7 @@ public class JobManagerConfiguration implements TopologyEventListener {
     public void queueConfigurationChanged() {
         final TopologyCapabilities caps = this.topologyCapabilities;
         if ( caps != null && this.isActive() ) {
-            this.startProcessing(Type.PROPERTIES_CHANGED, caps, true);
+            this.startProcessing(Type.PROPERTIES_CHANGED, caps, true, true);
         }
     }
 
@@ -485,7 +485,9 @@ public class JobManagerConfiguration implements TopologyEventListener {
      * @param newCaps The new capabilities
      * @param isConfigChange If a configuration change occured.
      */
-    private void startProcessing(final Type eventType, final TopologyCapabilities newCaps, final boolean isConfigChange) {
+    private void startProcessing(final Type eventType, final TopologyCapabilities newCaps,
+            final boolean isConfigChange,
+            final boolean runMaintenanceTasks) {
         logger.debug("Starting job processing...");
         // create new capabilities and update view
         this.topologyCapabilities = newCaps;
@@ -499,9 +501,11 @@ public class JobManagerConfiguration implements TopologyEventListener {
             rt.run();
         }
 
-        // we run the checker task twice, now and shortly after the topology has changed.
         final CheckTopologyTask mt = new CheckTopologyTask(this);
-        mt.fullRun(!isConfigChange, isConfigChange);
+        if ( runMaintenanceTasks ) {
+            // we run the checker task twice, now and shortly after the topology has changed.
+            mt.fullRun(!isConfigChange, isConfigChange);
+        }
 
         if ( eventType == Type.TOPOLOGY_INIT ) {
             notifiyListeners();
@@ -512,10 +516,13 @@ public class JobManagerConfiguration implements TopologyEventListener {
             if ( local != null ) {
                 local.schedule(new Runnable() {
 
-                        @Override
-                        public void run() {
-                            if ( newCaps.isLeader() && newCaps.isActive() ) {
-                                mt.assignUnassignedJobs();
+                    @Override
+                    public void run() {
+                        if ( newCaps == topologyCapabilities ) {
+                            if ( runMaintenanceTasks ) {
+                                if ( newCaps.isLeader() && newCaps.isActive() ) {
+                                    mt.assignUnassignedJobs();
+                                }
                             }
                             // start listeners
                             if ( newCaps.isActive() ) {
@@ -524,7 +531,8 @@ public class JobManagerConfiguration implements TopologyEventListener {
                                 }
                             }
                         }
-                    }, local.AT(new Date(System.currentTimeMillis() + this.backgroundLoadDelay * 1000)));
+                    }
+                }, local.AT(new Date(System.currentTimeMillis() + this.backgroundLoadDelay * 1000)));
             }
         }
         logger.debug("Job processing started");
@@ -543,12 +551,13 @@ public class JobManagerConfiguration implements TopologyEventListener {
     public void handleTopologyEvent(final TopologyEvent event) {
         this.logger.debug("Received topology event {}", event);
 
+        boolean runMaintenanceTasks = true;
         // check if there is a change of properties which doesn't affect us
         if ( event.getType() == Type.PROPERTIES_CHANGED ) {
             final Map<String, String> newAllInstances = TopologyCapabilities.getAllInstancesMap(event.getNewView());
             if ( this.topologyCapabilities != null && this.topologyCapabilities.isSame(newAllInstances) ) {
-                logger.debug("No changes in capabilities - ignoring event");
-                return;
+                logger.debug("No changes in capabilities - restarting without maintenance tasks");
+                runMaintenanceTasks = false;
             }
         }
 
@@ -569,7 +578,7 @@ public class JobManagerConfiguration implements TopologyEventListener {
 
                 this.stopProcessing();
 
-                this.startProcessing(eventType, new TopologyCapabilities(event.getNewView(), this), false);
+                this.startProcessing(eventType, new TopologyCapabilities(event.getNewView(), this), false, runMaintenanceTasks);
             }
 
         }

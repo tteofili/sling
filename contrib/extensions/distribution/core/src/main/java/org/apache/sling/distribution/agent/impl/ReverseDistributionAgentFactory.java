@@ -18,6 +18,10 @@
  */
 package org.apache.sling.distribution.agent.impl;
 
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
+
 import org.apache.felix.scr.annotations.Activate;
 import org.apache.felix.scr.annotations.Component;
 import org.apache.felix.scr.annotations.ConfigurationPolicy;
@@ -53,8 +57,6 @@ import org.osgi.framework.BundleContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Map;
-
 /**
  * An OSGi service factory for {@link org.apache.sling.distribution.agent.DistributionAgent}s which references already existing OSGi services.
  */
@@ -89,7 +91,7 @@ public class ReverseDistributionAgentFactory extends AbstractDistributionAgentFa
     public static final String SERVICE_NAME = "serviceName";
 
     @Property(options = {
-            @PropertyOption(name = "debug", value = "debug"), @PropertyOption(name = "info", value = "info"),  @PropertyOption(name = "warn", value = "warn"),
+            @PropertyOption(name = "debug", value = "debug"), @PropertyOption(name = "info", value = "info"), @PropertyOption(name = "warn", value = "warn"),
             @PropertyOption(name = "error", value = "error")},
             value = "info",
             label = "Log Level", description = "The log level recorded in the transient log accessible via http."
@@ -99,10 +101,6 @@ public class ReverseDistributionAgentFactory extends AbstractDistributionAgentFa
 
     @Property(boolValue = true, label = "Queue Processing Enabled", description = "Whether or not the distribution agent should process packages in the queues.")
     public static final String QUEUE_PROCESSING_ENABLED = "queue.processing.enabled";
-
-    @Property(cardinality = 100, label = "Passive queues", description = "List of queues that should be disabled." +
-            "These queues will gather all the packages until they are removed explicitly.")
-    public static final String PASSIVE_QUEUES = "passiveQueues";
 
     /**
      * endpoints property
@@ -178,9 +176,6 @@ public class ReverseDistributionAgentFactory extends AbstractDistributionAgentFa
         String serviceName = PropertiesUtil.toString(config.get(SERVICE_NAME), null);
         boolean queueProcessingEnabled = PropertiesUtil.toBoolean(config.get(QUEUE_PROCESSING_ENABLED), true);
 
-        String[] passiveQueues = PropertiesUtil.toStringArray(config.get(PASSIVE_QUEUES), new String[0]);
-        passiveQueues = SettingsUtils.removeEmptyEntries(passiveQueues);
-
 
         String[] exporterEndpoints = PropertiesUtil.toStringArray(config.get(EXPORTER_ENDPOINTS), new String[0]);
         exporterEndpoints = SettingsUtils.removeEmptyEntries(exporterEndpoints);
@@ -192,15 +187,19 @@ public class ReverseDistributionAgentFactory extends AbstractDistributionAgentFa
         DistributionPackageExporter packageExporter = new RemoteDistributionPackageExporter(distributionLog, packageBuilder, transportSecretProvider, exporterEndpoints,
                 TransportEndpointStrategyType.All, pullItems);
         DistributionPackageImporter packageImporter = new LocalDistributionPackageImporter(packageBuilder);
-        DistributionQueueProvider queueProvider =  new JobHandlingDistributionQueueProvider(agentName, jobManager, context);
+        DistributionQueueProvider queueProvider = new JobHandlingDistributionQueueProvider(agentName, jobManager, context);
 
-        DistributionQueueDispatchingStrategy dispatchingStrategy = new SingleQueueDispatchingStrategy();
-        DistributionRequestType[] allowedRequests = new DistributionRequestType[] { DistributionRequestType.PULL };
+        DistributionQueueDispatchingStrategy exportQueueStrategy = new SingleQueueDispatchingStrategy();
+        DistributionQueueDispatchingStrategy importQueueStrategy = null;
+
+        DistributionRequestType[] allowedRequests = new DistributionRequestType[]{DistributionRequestType.PULL};
+        Set<String> processingQueues = new HashSet<String>();
+        processingQueues.addAll(exportQueueStrategy.getQueueNames());
 
 
-        return new SimpleDistributionAgent(agentName, queueProcessingEnabled, passiveQueues,
+        return new SimpleDistributionAgent(agentName, queueProcessingEnabled, processingQueues,
                 serviceName, packageImporter, packageExporter, requestAuthorizationStrategy,
-                queueProvider, dispatchingStrategy, distributionEventFactory, resourceResolverFactory, distributionLog, allowedRequests, null);
+                queueProvider, exportQueueStrategy, importQueueStrategy, distributionEventFactory, resourceResolverFactory, distributionLog, allowedRequests, null, 0);
 
 
     }

@@ -21,7 +21,6 @@ package org.apache.sling.validation.impl;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 
@@ -29,6 +28,7 @@ import javax.annotation.CheckForNull;
 import javax.annotation.Nonnull;
 import javax.jcr.RepositoryException;
 
+import org.apache.commons.collections.Predicate;
 import org.apache.jackrabbit.JcrConstants;
 import org.apache.sling.api.resource.LoginException;
 import org.apache.sling.api.resource.ModifiableValueMap;
@@ -104,10 +104,11 @@ public class ValidationServiceImplTest {
     public void testValidateNeverCalledWithNullValues() throws Exception {
         Validator<String> myValidator = new Validator<String>() {
             @Override
-            public String validate(@Nonnull String data, @Nonnull ValueMap valueMap, @Nonnull ValueMap arguments)
+            public String validate(@Nonnull String data, @Nonnull ValueMap valueMap, Resource resource, @Nonnull ValueMap arguments)
                     throws SlingValidationException {
                 Assert.assertNotNull("data parameter for validate should never be null", data);
                 Assert.assertNotNull("valueMap parameter for validate should never be null", valueMap);
+                Assert.assertNull("resource cannot be set if validate was called only with a value map", resource);
                 Assert.assertNotNull("arguments parameter for validate should never be null", arguments);
                 return null;
             }
@@ -119,6 +120,7 @@ public class ValidationServiceImplTest {
         HashMap<String, Object> hashMap = new HashMap<String, Object>();
         hashMap.put("field1", "1");
         ValidationResult vr = validationService.validate(new ValueMapDecorator(hashMap), vm);
+        Assert.assertThat(vr.getFailureMessages().entrySet(), Matchers.empty());
         Assert.assertTrue(vr.isValid());
     }
 
@@ -150,6 +152,7 @@ public class ValidationServiceImplTest {
         HashMap<String, Object> hashMap = new HashMap<String, Object>();
         hashMap.put("field2", "1");
         ValidationResult vr = validationService.validate(new ValueMapDecorator(hashMap), vm);
+        Assert.assertThat(vr.getFailureMessages().entrySet(), Matchers.empty());
         Assert.assertTrue(vr.isValid());
     }
 
@@ -240,6 +243,7 @@ public class ValidationServiceImplTest {
                 JcrConstants.NT_UNSTRUCTURED, JcrConstants.NT_UNSTRUCTURED, true);
 
         ValidationResult vr = validationService.validate(testResource, vm);
+        Assert.assertThat(vr.getFailureMessages().entrySet(), Matchers.empty());
         Assert.assertTrue(vr.isValid());
     }
 
@@ -265,7 +269,35 @@ public class ValidationServiceImplTest {
         rr.create(resourceChild, "grandchild", properties);
 
         ValidationResult vr = validationService.validate(testResource, vm);
+        Assert.assertThat(vr.getFailureMessages().entrySet(), Matchers.empty());
         Assert.assertTrue(vr.isValid());
+    }
+
+    @Test
+    public void testResourceWithValidatorLeveragingTheResource() throws Exception {
+        Validator<String> extendedValidator = new Validator<String>() {
+            @Override
+            @CheckForNull
+            public String validate(String data, ValueMap valueMap, Resource resource, ValueMap arguments)
+                    throws SlingValidationException {
+                Assert.assertThat(resource.getPath(), Matchers.equalTo("/content/validation/1/resource"));
+                return null;
+            }
+            
+        };
+        propertyBuilder.validator(extendedValidator); // accept any digits
+        modelBuilder.resourceProperty(propertyBuilder.build("field1"));
+        ValidationModel vm = modelBuilder.build("sometype");
+
+        // create a resource
+        ResourceResolver rr = context.resourceResolver();
+        Map<String, Object> properties = new HashMap<String, Object>();
+        properties.put("field1", "1");
+        Resource testResource = ResourceUtil.getOrCreateResource(rr,
+                "/content/validation/1/resource", properties, JcrConstants.NT_UNSTRUCTURED, true);
+        ValidationResult vr = validationService.validate(testResource, vm);
+        // until we upgrade to a newer version of hamcrest we must use this workaround (https://github.com/hamcrest/JavaHamcrest/issues/35)
+        Assert.assertThat(vr.getFailureMessages().entrySet(), Matchers.empty());
     }
 
     @Test
@@ -361,7 +393,7 @@ public class ValidationServiceImplTest {
     }
 
     @Test()
-    public void testValidateAllResourceTypesInResource() throws Exception {
+    public void testValidateResourceRecursively() throws Exception {
         modelBuilder.resourceProperty(propertyBuilder.build("field1"));
         final ValidationModel vm1 = modelBuilder.build("resourcetype1");
         modelBuilder = new ValidationModelBuilder();
@@ -372,7 +404,7 @@ public class ValidationServiceImplTest {
         validationService.modelRetriever = new ValidationModelRetriever() {
 
             @Override
-            public @CheckForNull ValidationModel getModel(@Nonnull String resourceType, String resourcePath) {
+            public @CheckForNull ValidationModel getModel(@Nonnull String resourceType, String resourcePath, boolean considerResourceSuperTypeModels) {
                 if (resourceType.equals("resourcetype1")) {
                     return vm1;
                 } else if (resourceType.equals("resourcetype2")) {
@@ -404,8 +436,18 @@ public class ValidationServiceImplTest {
         properties.put(JcrResourceConstants.SLING_RESOURCE_TYPE_PROPERTY, "resourcetype3");
         rr.create(testResource, "child3", properties);
 
-        ValidationResult vr = validationService.validateAllResourceTypesInResource(testResource, true,
-                new HashSet<String>(Arrays.asList(JcrConstants.NT_UNSTRUCTURED, "resourcetype3")));
+        Predicate ignoreResourceType3Filter = new Predicate() {
+            @Override
+            public boolean evaluate(Object object) {
+                Resource resource = (Resource) object;
+                if ("resourcetype3".equals(resource.getResourceType())) {
+                    return false;
+                }
+                return true;
+            }
+        };
+        
+        ValidationResult vr = validationService.validateResourceRecursively(testResource, true, ignoreResourceType3Filter, false);
         Assert.assertFalse("resource should have been considered invalid", vr.isValid());
         Assert.assertThat(vr.getFailureMessages(),
                 Matchers.hasEntry("field1", Arrays.asList("Missing required property.")));
@@ -415,11 +457,11 @@ public class ValidationServiceImplTest {
     }
 
     @Test(expected = IllegalArgumentException.class)
-    public void testValidateAllResourceTypesInResourceWithMissingValidationModel() throws Exception {
+    public void testValidateResourceRecursivelyWithMissingValidationModel() throws Exception {
         // set model retriever which never retrieves anything
         validationService.modelRetriever = new ValidationModelRetriever() {
             @Override
-            public @CheckForNull ValidationModel getModel(@Nonnull String resourceType, String resourcePath) {
+            public @CheckForNull ValidationModel getModel(@Nonnull String resourceType, String resourcePath, boolean considerResourceSuperTypeModels) {
                 return null;
             }
         };
@@ -429,16 +471,15 @@ public class ValidationServiceImplTest {
         Resource testResource = ResourceUtil.getOrCreateResource(rr, "/content/validation/1/resource", "resourcetype1",
                 JcrConstants.NT_UNSTRUCTURED, true);
 
-        ValidationResult vr = validationService.validateAllResourceTypesInResource(testResource, true,
-                Collections.singleton(JcrConstants.NT_UNSTRUCTURED));
+        ValidationResult vr = validationService.validateResourceRecursively(testResource, true, null, false);
     }
 
     @Test()
-    public void testValidateAllResourceTypesInResourceWithMissingValidatorAndNoEnforcement() throws Exception {
+    public void testValidateResourceRecursivelyWithMissingValidatorAndNoEnforcement() throws Exception {
         // set model retriever which never retrieves anything
         validationService.modelRetriever = new ValidationModelRetriever() {
             @Override
-            public @CheckForNull ValidationModel getModel(@Nonnull String resourceType, String resourcePath) {
+            public @CheckForNull ValidationModel getModel(@Nonnull String resourceType, String resourcePath, boolean considerResourceSuperTypeModels) {
                 return null;
             }
         };
@@ -448,8 +489,7 @@ public class ValidationServiceImplTest {
         Resource testResource = ResourceUtil.getOrCreateResource(rr, "/content/validation/1/resource", "resourcetype1",
                 JcrConstants.NT_UNSTRUCTURED, true);
 
-        ValidationResult vr = validationService.validateAllResourceTypesInResource(testResource, false,
-                Collections.singleton(JcrConstants.NT_UNSTRUCTURED));
+        ValidationResult vr = validationService.validateResourceRecursively(testResource, false, null, false);
         Assert.assertTrue(vr.isValid());
     }
 

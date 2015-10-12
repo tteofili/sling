@@ -18,6 +18,9 @@
  */
 package org.apache.sling.distribution.trigger.impl;
 
+import javax.annotation.Nonnull;
+import java.util.Map;
+
 import org.apache.felix.scr.annotations.Activate;
 import org.apache.felix.scr.annotations.Component;
 import org.apache.felix.scr.annotations.ConfigurationPolicy;
@@ -26,6 +29,7 @@ import org.apache.felix.scr.annotations.Property;
 import org.apache.felix.scr.annotations.Reference;
 import org.apache.felix.scr.annotations.Service;
 import org.apache.sling.commons.osgi.PropertiesUtil;
+import org.apache.sling.commons.scheduler.Scheduler;
 import org.apache.sling.distribution.component.impl.DistributionComponentConstants;
 import org.apache.sling.distribution.component.impl.SettingsUtils;
 import org.apache.sling.distribution.trigger.DistributionRequestHandler;
@@ -33,9 +37,6 @@ import org.apache.sling.distribution.trigger.DistributionTrigger;
 import org.apache.sling.distribution.trigger.DistributionTriggerException;
 import org.apache.sling.jcr.api.SlingRepository;
 import org.osgi.framework.BundleContext;
-
-import javax.annotation.Nonnull;
-import java.util.Map;
 
 @Component(metatype = true,
         label = "Apache Sling Distribution Trigger - Jcr Event Triggers Factory",
@@ -69,11 +70,13 @@ public class JcrEventDistributionTriggerFactory implements DistributionTrigger {
     public static final String SERVICE_NAME = "serviceName";
 
 
-
     JcrEventDistributionTrigger trigger;
 
     @Reference
     private SlingRepository repository;
+
+    @Reference
+    private Scheduler scheduler;
 
 
     @Activate
@@ -84,7 +87,7 @@ public class JcrEventDistributionTriggerFactory implements DistributionTrigger {
         ignoredPathsPatterns = SettingsUtils.removeEmptyEntries(ignoredPathsPatterns);
 
 
-        trigger =  new JcrEventDistributionTrigger(repository, path, serviceName, ignoredPathsPatterns);
+        trigger = new JcrEventDistributionTrigger(repository, scheduler, path, serviceName, ignoredPathsPatterns);
         trigger.enable();
     }
 

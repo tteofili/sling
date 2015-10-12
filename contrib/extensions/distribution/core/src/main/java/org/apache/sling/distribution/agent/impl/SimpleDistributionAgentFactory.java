@@ -18,7 +18,9 @@
  */
 package org.apache.sling.distribution.agent.impl;
 
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 import org.apache.felix.scr.annotations.Activate;
 import org.apache.felix.scr.annotations.Component;
@@ -32,13 +34,12 @@ import org.apache.felix.scr.annotations.ReferencePolicy;
 import org.apache.sling.api.resource.ResourceResolverFactory;
 import org.apache.sling.commons.osgi.PropertiesUtil;
 import org.apache.sling.distribution.component.impl.DistributionComponentConstants;
-import org.apache.sling.distribution.component.impl.SettingsUtils;
 import org.apache.sling.distribution.event.impl.DistributionEventFactory;
 import org.apache.sling.distribution.log.impl.DefaultDistributionLog;
 import org.apache.sling.distribution.packaging.DistributionPackageExporter;
 import org.apache.sling.distribution.packaging.DistributionPackageImporter;
-import org.apache.sling.distribution.queue.impl.DistributionQueueDispatchingStrategy;
 import org.apache.sling.distribution.queue.DistributionQueueProvider;
+import org.apache.sling.distribution.queue.impl.DistributionQueueDispatchingStrategy;
 import org.apache.sling.distribution.queue.impl.SingleQueueDispatchingStrategy;
 import org.apache.sling.distribution.queue.impl.jobhandling.JobHandlingDistributionQueueProvider;
 import org.apache.sling.distribution.trigger.DistributionTrigger;
@@ -83,7 +84,7 @@ public class SimpleDistributionAgentFactory extends AbstractDistributionAgentFac
     public static final String SERVICE_NAME = "serviceName";
 
     @Property(options = {
-            @PropertyOption(name = "debug", value = "debug"), @PropertyOption(name = "info", value = "info"),  @PropertyOption(name = "warn", value = "warn"),
+            @PropertyOption(name = "debug", value = "debug"), @PropertyOption(name = "info", value = "info"), @PropertyOption(name = "warn", value = "warn"),
             @PropertyOption(name = "error", value = "error")},
             value = "info",
             label = "Log Level", description = "The log level recorded in the transient log accessible via http."
@@ -93,10 +94,6 @@ public class SimpleDistributionAgentFactory extends AbstractDistributionAgentFac
 
     @Property(boolValue = true, label = "Queue Processing Enabled", description = "Whether or not the distribution agent should process packages in the queues.")
     public static final String QUEUE_PROCESSING_ENABLED = "queue.processing.enabled";
-
-    @Property(cardinality = 100, label = "Passive queues", description = "List of queues that should be disabled." +
-            "These queues will gather all the packages until they are removed explicitly.")
-    public static final String PASSIVE_QUEUES = "passiveQueues";
 
 
     @Property(name = "packageExporter.target", label = "Exporter", description = "The target reference for the DistributionPackageExporter used to receive (export) the distribution packages," +
@@ -142,7 +139,7 @@ public class SimpleDistributionAgentFactory extends AbstractDistributionAgentFac
     }
 
     protected void bindDistributionTrigger(DistributionTrigger distributionTrigger, Map<String, Object> config) {
-       super.bindDistributionTrigger(distributionTrigger, config);
+        super.bindDistributionTrigger(distributionTrigger, config);
 
     }
 
@@ -160,14 +157,18 @@ public class SimpleDistributionAgentFactory extends AbstractDistributionAgentFac
         String serviceName = PropertiesUtil.toString(config.get(SERVICE_NAME), null);
 
         boolean queueProcessingEnabled = PropertiesUtil.toBoolean(config.get(QUEUE_PROCESSING_ENABLED), true);
-        String[] passiveQueues = PropertiesUtil.toStringArray(config.get(PASSIVE_QUEUES), new String[0]);
-        passiveQueues = SettingsUtils.removeEmptyEntries(passiveQueues);
 
-        DistributionQueueProvider queueProvider =  new JobHandlingDistributionQueueProvider(agentName, jobManager, context);
-        DistributionQueueDispatchingStrategy dispatchingStrategy = new SingleQueueDispatchingStrategy();
-        return new SimpleDistributionAgent(agentName, queueProcessingEnabled, passiveQueues,
+        DistributionQueueProvider queueProvider = new JobHandlingDistributionQueueProvider(agentName, jobManager, context);
+        DistributionQueueDispatchingStrategy exportQueueStrategy = new SingleQueueDispatchingStrategy();
+        DistributionQueueDispatchingStrategy importQueueStrategy = null;
+
+        Set<String> processingQueues = new HashSet<String>();
+        processingQueues.addAll(exportQueueStrategy.getQueueNames());
+
+
+        return new SimpleDistributionAgent(agentName, queueProcessingEnabled, processingQueues,
                 serviceName, packageImporter, packageExporter, requestAuthorizationStrategy,
-                queueProvider, dispatchingStrategy, distributionEventFactory, resourceResolverFactory, distributionLog, null, null);
+                queueProvider, exportQueueStrategy, importQueueStrategy, distributionEventFactory, resourceResolverFactory, distributionLog, null, null, 0);
 
     }
 }

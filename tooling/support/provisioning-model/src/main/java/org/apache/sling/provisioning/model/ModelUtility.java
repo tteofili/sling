@@ -16,21 +16,15 @@
  */
 package org.apache.sling.provisioning.model;
 
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.io.LineNumberReader;
-import java.io.StringReader;
+import static org.apache.sling.provisioning.model.ModelResolveUtility.getProcessedConfiguration;
+import static org.apache.sling.provisioning.model.ModelResolveUtility.resolveArtifactVersion;
+
 import java.util.Arrays;
-import java.util.Dictionary;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
-import java.util.Properties;
 import java.util.Set;
-
-import org.apache.felix.cm.file.ConfigurationHandler;
-
 
 /**
  * Merge two models
@@ -177,12 +171,12 @@ public abstract class ModelUtility {
                     copyConfigurationProperties(baseConfig, mergeConfig);
                 } else {
                     final Configuration newConfig = new Configuration(baseConfig.getPid(), baseConfig.getFactoryPid());
-                    getProcessedConfiguration(null, newConfig, baseConfig, null);
+                    getProcessedConfiguration(null, newConfig, baseConfig, false, null);
                     clearConfiguration(baseConfig);
                     copyConfigurationProperties(baseConfig, newConfig);
 
                     clearConfiguration(newConfig);
-                    getProcessedConfiguration(null, newConfig, mergeConfig, null);
+                    getProcessedConfiguration(null, newConfig, mergeConfig, false, null);
 
                     if ( baseConfig.isSpecial() ) {
                         final String baseValue = baseConfig.getProperties().get(baseConfig.getPid()).toString();
@@ -207,7 +201,7 @@ public abstract class ModelUtility {
                     copyConfigurationProperties(baseConfig, mergeConfig);
                 } else {
                     final Configuration newMergeConfig = new Configuration(mergeConfig.getPid(), mergeConfig.getFactoryPid());
-                    getProcessedConfiguration(null, newMergeConfig, mergeConfig, null);
+                    getProcessedConfiguration(null, newMergeConfig, mergeConfig, false, null);
 
                     if ( baseConfig.isSpecial() ) {
                         final String baseValue = baseConfig.getProperties().get(baseConfig.getPid()).toString();
@@ -267,120 +261,85 @@ public abstract class ModelUtility {
     }
 
     /**
+     * Optional artifact dependency version resolver
+     */
+    public interface ArtifactVersionResolver {
+
+        /**
+         * Setting a version for an artifact dependency in a Sling Provisioning file is optional.
+         * By default an artifact without a defined version gets "LATEST" as version.
+         * By defining an DependencyVersionResolver it is possible to plugin in an external dependency resolver
+         * which decides which version to use if no version is given in the provisioning file.
+         * If an exact version is given in the provisioning file this is always used.
+         * @param artifact Artifact without version (version is set to LATEST)
+         * @return New version, or null if the version should not be changed
+         */
+        String resolve(final Artifact artifact);
+    }
+    
+    /**
+     * Parameter builder class for {@link ModelUtility#getEffectiveModel(Model, ResolverOptions)} method.
+     */
+    public static final class ResolverOptions {
+        
+        private VariableResolver variableResolver;
+        private ArtifactVersionResolver artifactVersionResolver;
+        
+        public VariableResolver getVariableResolver() {
+            return variableResolver;
+        }
+        
+        public ResolverOptions variableResolver(VariableResolver variableResolver) {
+            this.variableResolver = variableResolver;
+            return this;
+        }
+        
+        public ArtifactVersionResolver getArtifactVersionResolver() {
+            return artifactVersionResolver;
+        }
+        
+        public ResolverOptions artifactVersionResolver(ArtifactVersionResolver dependencyVersionResolver) {
+            this.artifactVersionResolver = dependencyVersionResolver;
+            return this;
+        }
+        
+    }
+
+    /**
      * Replace all variables in the model and return a new model with the replaced values.
      * @param model The base model.
      * @param resolver Optional variable resolver.
      * @return The model with replaced variables.
      * @throws IllegalArgumentException If a variable can't be replaced or configuration properties can't be parsed
+     * @deprecated Use {@link #getEffectiveModel(Model)} or {@link #getEffectiveModel(Model, ResolverOptions)} instead
      */
+    @Deprecated
     public static Model getEffectiveModel(final Model model, final VariableResolver resolver) {
-        final Model result = new Model();
-        result.setLocation(model.getLocation());
-
-        for(final Feature feature : model.getFeatures()) {
-            final Feature newFeature = result.getOrCreateFeature(feature.getName());
-            newFeature.setComment(feature.getComment());
-            newFeature.setLocation(feature.getLocation());
-
-            newFeature.getVariables().setComment(feature.getVariables().getComment());
-            newFeature.getVariables().setLocation(feature.getVariables().getLocation());
-            newFeature.getVariables().putAll(feature.getVariables());
-
-            for(final RunMode runMode : feature.getRunModes()) {
-                final RunMode newRunMode = newFeature.getOrCreateRunMode(runMode.getNames());
-                newRunMode.setLocation(runMode.getLocation());
-
-                for(final ArtifactGroup group : runMode.getArtifactGroups()) {
-                    final ArtifactGroup newGroup = newRunMode.getOrCreateArtifactGroup(group.getStartLevel());
-                    newGroup.setComment(group.getComment());
-                    newGroup.setLocation(group.getLocation());
-
-                    for(final Artifact artifact : group) {
-                        final Artifact newArtifact = new Artifact(replace(newFeature, artifact.getGroupId(), resolver),
-                                replace(newFeature, artifact.getArtifactId(), resolver),
-                                replace(newFeature, artifact.getVersion(), resolver),
-                                replace(newFeature, artifact.getClassifier(), resolver),
-                                replace(newFeature, artifact.getType(), resolver));
-                        newArtifact.setComment(artifact.getComment());
-                        newArtifact.setLocation(artifact.getLocation());
-
-                        newGroup.add(newArtifact);
-                    }
-                }
-
-                newRunMode.getConfigurations().setComment(runMode.getConfigurations().getComment());
-                newRunMode.getConfigurations().setLocation(runMode.getConfigurations().getLocation());
-                for(final Configuration config : runMode.getConfigurations()) {
-                    final Configuration newConfig = newRunMode.getOrCreateConfiguration(config.getPid(), config.getFactoryPid());
-
-                    getProcessedConfiguration(newFeature, newConfig, config, resolver);
-                }
-
-                newRunMode.getSettings().setComment(runMode.getSettings().getComment());
-                newRunMode.getSettings().setLocation(runMode.getSettings().getLocation());
-                for(final Map.Entry<String, String> entry : runMode.getSettings() ) {
-                    newRunMode.getSettings().put(entry.getKey(), replace(newFeature, entry.getValue(),
-                            new VariableResolver() {
-
-                                @Override
-                                public String resolve(final Feature feature, final String name) {
-                                    if ( "sling.home".equals(name) ) {
-                                        return "${sling.home}";
-                                    }
-                                    if ( resolver != null ) {
-                                        return resolver.resolve(newFeature, name);
-                                    }
-                                    return newFeature.getVariables().get(name);
-                                }
-                            }));
-                }
-            }
-
-        }
-        return result;
+        return getEffectiveModel(model, new ResolverOptions().variableResolver(resolver));
     }
-
+    
     /**
-     * Replace properties in the string.
-     *
-     * @param feature The feature
-     * @param v The variable name
-     * @param resolver Optional resolver
-     * @result The value of the variable
-     * @throws IllegalArgumentException If variable can't be found.
+     * Replace all variables in the model and return a new model with the replaced values.
+     * @param model The base model.
+     * @return The model with replaced variables.
+     * @throws IllegalArgumentException If a variable can't be replaced or configuration properties can't be parsed
+     * @since 1.3
      */
-    static String replace(final Feature feature, final String v, final VariableResolver resolver) {
-        if ( v == null ) {
-            return null;
-        }
-        String msg = v;
-        // check for variables
-        int pos = -1;
-        int start = 0;
-        while ( ( pos = msg.indexOf('$', start) ) != -1 ) {
-            boolean escapedVariable = (pos > 0 && msg.charAt(pos - 1) == '\\');
-            if ( msg.length() > pos && msg.charAt(pos + 1) == '{' && (pos == 0 || msg.charAt(pos - 1) != '$') ) {
-                final int endPos = msg.indexOf('}', pos);
-                if ( endPos != -1 ) {
-                    final String name = msg.substring(pos + 2, endPos);
-                    final String value;
-                    if (escapedVariable) {
-                        value = "\\${" + name + "}";
-                    } else if ( resolver != null ) {
-                        value = resolver.resolve(feature, name);
-                    } else {
-                        value = feature.getVariables().get(name);
-                    }
-                    if ( value == null ) {
-                        throw new IllegalArgumentException("Unknown variable: " + name);
-                    }
-                    int startPos = escapedVariable ? pos - 1 : pos;
-                    msg = msg.substring(0, startPos) + value + msg.substring(endPos + 1);
-                }
-            }
-            start = pos + 1;
-        }
-        return msg;
+    public static Model getEffectiveModel(final Model model) {
+        return getEffectiveModel(model, new ResolverOptions());
+    }
+    
+    /**
+     * Replace all variables in the model and return a new model with the replaced values.
+     * @param model The base model.
+     * @param options Resolver options.
+     * @return The model with replaced variables.
+     * @throws IllegalArgumentException If a variable can't be replaced or configuration properties can't be parsed
+     * @since 1.3
+     */
+    public static Model getEffectiveModel(final Model model, final ResolverOptions options) {
+        ModelProcessor processor = new EffectiveModelProcessor(options);
+        return processor.process(model);
     }
 
     /**
@@ -457,88 +416,93 @@ public abstract class ModelUtility {
         }
         return errors;
     }
-
-    private static void getProcessedConfiguration(
-            final Feature feature,
-            final Configuration newConfig,
-            final Configuration config,
-            final VariableResolver resolver) {
-        newConfig.setComment(config.getComment());
-        newConfig.setLocation(config.getLocation());
-
-        // check for raw configuration
-        String rawConfig = (String)config.getProperties().get(ModelConstants.CFG_UNPROCESSED);
-        if ( rawConfig != null ) {
-            if ( resolver != null ) {
-                rawConfig = replace(feature, rawConfig, resolver);
+    
+    /**
+     * Applies a set of variables to the given model.
+     * All variables that are referenced anywhere within the model are detected and passed to the given variable resolver.
+     * The variable resolver may look up variables on it's own, or fallback to the variables already defined for the feature.
+     * All resolved variable values are collected and put to the "variables" section of the resulting model.
+     * @param model Original model
+     * @param resolver Variable resolver
+     * @return Model with updated "variables" section.
+     * @throws IllegalArgumentException If a variable can't be replaced or configuration properties can't be parsed
+     * @since 1.3
+     */
+    public static Model applyVariables(final Model model, final VariableResolver resolver) {
+        
+        // define delegating resolver that collects all variable names and value per feature
+        final Map<String,Map<String,String>> collectedVars = new HashMap<String, Map<String,String>>();
+        VariableResolver variableCollector = new VariableResolver() {
+            @Override
+            public String resolve(Feature feature, String name) {
+                String value = resolver.resolve(feature, name);
+                if (value != null) {
+                    Map<String,String> featureVars = collectedVars.get(feature.getName());
+                    if (featureVars == null) {
+                        featureVars = new HashMap<String, String>();
+                        collectedVars.put(feature.getName(), featureVars);
+                    }
+                    featureVars.put(name, value);
+                }
+                return value;
             }
-            if ( config.isSpecial() ) {
-                newConfig.getProperties().put(config.getPid(), rawConfig);
-            } else {
-                final String format = (String)config.getProperties().get(ModelConstants.CFG_UNPROCESSED_FORMAT);
-
-                if ( ModelConstants.CFG_FORMAT_PROPERTIES.equals(format) ) {
-                    // properties
-                    final Properties props = new Properties();
-                    try {
-                        props.load(new StringReader(rawConfig));
-                    } catch ( final IOException ioe) {
-                        throw new IllegalArgumentException("Unable to read configuration properties.", ioe);
-                    }
-                    final Enumeration<Object> i = props.keys();
-                    while ( i.hasMoreElements() ) {
-                        final String key = (String)i.nextElement();
-                        newConfig.getProperties().put(key, props.get(key));
-                    }
-                } else {
-                    // Apache Felix CA format
-                    // the raw format might have comments, we have to remove them first
-                    final StringBuilder sb = new StringBuilder();
-                    try {
-                        final LineNumberReader lnr = new LineNumberReader(new StringReader(rawConfig));
-                        String line = null;
-                        while ((line = lnr.readLine()) != null ) {
-                            line = line.trim();
-                            if ( line.isEmpty() || line.startsWith("#")) {
-                                continue;
-                            }
-                            sb.append(line);
-                            sb.append('\n');
-                        }
-                    } catch ( final IOException ioe) {
-                        throw new IllegalArgumentException("Unable to read configuration properties: " + config, ioe);
-                    }
-
-                    ByteArrayInputStream bais = null;
-                    try {
-                        bais = new ByteArrayInputStream(sb.toString().getBytes("UTF-8"));
-                        @SuppressWarnings("unchecked")
-                        final Dictionary<String, Object> props = ConfigurationHandler.read(bais);
-                        final Enumeration<String> i = props.keys();
-                        while ( i.hasMoreElements() ) {
-                            final String key = i.nextElement();
-                            newConfig.getProperties().put(key, props.get(key));
-                        }
-                    } catch ( final IOException ioe) {
-                        throw new IllegalArgumentException("Unable to read configuration properties: " + config, ioe);
-                    } finally {
-                        if ( bais != null ) {
-                            try {
-                                bais.close();
-                            } catch ( final IOException ignore ) {
-                                // ignore
-                            }
-                        }
+        };
+        
+        // use effective model processor to collect variables, but drop the resulting model
+        new EffectiveModelProcessor(new ResolverOptions().variableResolver(variableCollector)).process(model);
+        
+        // define a processor that updates the "variables" sections in the features
+        ModelProcessor variablesUpdater = new ModelProcessor() {
+            @Override
+            protected KeyValueMap<String> processVariables(KeyValueMap<String> variables, Feature newFeature) {
+                KeyValueMap<String> newVariables = new KeyValueMap<String>();
+                Map<String,String> featureVars = collectedVars.get(newFeature.getName());
+                if (featureVars != null) {
+                    for (Map.Entry<String, String> entry : featureVars.entrySet()) {
+                        newVariables.put(entry.getKey(), entry.getValue());
                     }
                 }
+                return newVariables;
             }
-        } else {
-            // simply copy
-            final Enumeration<String> i = config.getProperties().keys();
-            while ( i.hasMoreElements() ) {
-                final String key = i.nextElement();
-                newConfig.getProperties().put(key, config.getProperties().get(key));
-            }
-        }
+        };
+        
+        // return model with replaced "variables" sections
+        return variablesUpdater.process(model);
     }
+
+    /**
+     * Resolves artifact versions that are no set explicitly in the provisioning file via the given resolver (version = "LATEST").
+     * If the resolver does not resolve to a version "LATEST" is left in the model.
+     * The resolver may decide to raise an IllegalArgumentException in this case if unresolved dependencies are no allowed.
+     * @param model Original model
+     * @param resolver Artifact version resolver
+     * @return Model with updated artifact versions
+     * @throws IllegalArgumentException If the provider does not allow unresolved version and a version could not be resolved
+     * @since 1.3
+     */
+    public static Model applyArtifactVersions(final Model model, final ArtifactVersionResolver resolver) {
+        
+        // define a processor that updates the versions of artifacts
+        ModelProcessor versionUpdater = new ModelProcessor() {
+            @Override
+            protected Artifact processArtifact(Artifact artifact, Feature newFeature, RunMode newRunMode) {
+                String newVersion = resolveArtifactVersion(
+                        artifact.getGroupId(),
+                        artifact.getArtifactId(),
+                        artifact.getVersion(),
+                        artifact.getClassifier(),
+                        artifact.getType(),
+                        resolver);
+                return new Artifact(artifact.getGroupId(),
+                        artifact.getArtifactId(),
+                        newVersion,
+                        artifact.getClassifier(),
+                        artifact.getType());
+            }
+        };
+        
+        // return model with updated version artifacts
+        return versionUpdater.process(model);
+    }
+
 }

@@ -24,7 +24,7 @@
     <parent>
         <groupId>org.apache</groupId>
         <artifactId>apache</artifactId>
-        <version>8</version>
+        <version>17</version>
     </parent>
 
     <groupId>org.apache.sling</groupId>
@@ -84,6 +84,7 @@
         <module>parent</module>
 
         <!-- Tooling Support -->
+        <module>tooling/support/install</module>
         <module>tooling/support/provisioning-model</module>
         <!-- The Maven Plugins and Archeyptes-->
         <module>tooling/maven/adapter-annotations</module>

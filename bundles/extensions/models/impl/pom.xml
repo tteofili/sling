@@ -22,18 +22,16 @@
     <parent>
         <groupId>org.apache.sling</groupId>
         <artifactId>sling</artifactId>
-        <version>22</version>
-        <relativePath/>
+        <version>25</version>
+        <relativePath />
     </parent>
     <groupId>org.apache.sling</groupId>
     <artifactId>org.apache.sling.models.impl</artifactId>
     <packaging>bundle</packaging>
-    <version>1.1.1-SNAPSHOT</version>
+    <version>1.2.3-SNAPSHOT</version>
     <name>Apache Sling Models Implementation</name>
     <description>Apache Sling Models Implementation</description>
-    <properties>
-        <sling.java.version>6</sling.java.version>
-    </properties>
+
     <scm>
         <connection>scm:svn:http://svn.apache.org/repos/asf/sling/trunk/bundles/extensions/models/impl</connection>
         <developerConnection> scm:svn:https://svn.apache.org/repos/asf/sling/trunk/bundles/extensions/models/impl</developerConnection>
@@ -65,7 +63,7 @@
         <dependency>
             <groupId>org.apache.sling</groupId>
             <artifactId>org.apache.sling.models.api</artifactId>
-            <version>1.1.1-SNAPSHOT</version>
+            <version>1.2.3-SNAPSHOT</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
@@ -110,6 +108,12 @@
             <artifactId>javax.inject</artifactId>
             <version>1</version>
             <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.sling</groupId>
+            <artifactId>org.apache.sling.testing.osgi-mock</artifactId>
+            <version>1.5.0</version>
+            <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.mockito</groupId>

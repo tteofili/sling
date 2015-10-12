@@ -28,8 +28,10 @@ import org.apache.sling.api.SlingHttpServletResponse;
 import org.apache.sling.api.resource.ResourceResolver;
 import org.apache.sling.api.servlets.SlingAllMethodsServlet;
 import org.apache.sling.distribution.packaging.DistributionPackage;
+import org.apache.sling.distribution.packaging.DistributionPackageInfo;
 import org.apache.sling.distribution.packaging.impl.DistributionPackageUtils;
 import org.apache.sling.distribution.queue.DistributionQueue;
+import org.apache.sling.distribution.queue.DistributionQueueEntry;
 import org.apache.sling.distribution.queue.DistributionQueueItem;
 import org.apache.sling.distribution.resources.DistributionResourceTypes;
 import org.apache.sling.distribution.serialization.DistributionPackageBuilder;
@@ -45,10 +47,8 @@ public class DistributionAgentQueueServlet extends SlingAllMethodsServlet {
 
     private final Logger log = LoggerFactory.getLogger(getClass());
 
-
     @Reference
     DistributionPackageBuilderProvider packageBuilderProvider;
-
 
     @Override
     protected void doPost(SlingHttpServletRequest request, SlingHttpServletResponse response)
@@ -67,14 +67,12 @@ public class DistributionAgentQueueServlet extends SlingAllMethodsServlet {
 
             if (idParam != null) {
                 deleteItems(resourceResolver, queue, idParam);
-            }
-            else {
+            } else {
                 int limit = 1;
                 try {
                     limit = Integer.parseInt(limitParam);
-                }
-                catch (NumberFormatException ex) {
-
+                } catch (NumberFormatException ex) {
+                    log.warn("limit param malformed : "+limitParam, ex);
                 }
                 deleteItems(resourceResolver, queue, limit);
             }
@@ -82,22 +80,24 @@ public class DistributionAgentQueueServlet extends SlingAllMethodsServlet {
     }
 
     protected void deleteItems(ResourceResolver resourceResolver, DistributionQueue queue, int limit) {
-       for(DistributionQueueItem item : queue.getItems(0, limit)) {
-            deleteItem(resourceResolver, queue, item);
-       }
-    }
-
-    protected void deleteItems(ResourceResolver resourceResolver, DistributionQueue queue, String[] ids) {
-        for(String id : ids) {
-            DistributionQueueItem item = queue.getItem(id);
+        for (DistributionQueueEntry item : queue.getItems(0, limit)) {
             deleteItem(resourceResolver, queue, item);
         }
     }
 
-    protected void deleteItem(ResourceResolver resourceResolver, DistributionQueue queue, DistributionQueueItem item) {
+    protected void deleteItems(ResourceResolver resourceResolver, DistributionQueue queue, String[] ids) {
+        for (String id : ids) {
+            DistributionQueueEntry item = queue.getItem(id);
+            deleteItem(resourceResolver, queue, item);
+        }
+    }
+
+    protected void deleteItem(ResourceResolver resourceResolver, DistributionQueue queue, DistributionQueueEntry entry) {
+        DistributionQueueItem item = entry.getItem();
         String id = item.getId();
         queue.remove(id);
-        String type = item.getType();
+        DistributionPackageInfo info = DistributionPackageUtils.fromQueueItem(item);
+        String type = info.getType();
 
         DistributionPackageBuilder packageBuilder = packageBuilderProvider.getPackageBuilder(type);
 

@@ -35,6 +35,7 @@ public class FileDistributionPackage extends AbstractDistributionPackage {
     private final String type;
 
     public FileDistributionPackage(@Nonnull File file, @Nonnull String type) {
+        super(file.getAbsolutePath(), type);
         this.file = file;
         this.type = type;
     }

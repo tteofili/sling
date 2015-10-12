@@ -20,8 +20,10 @@ package org.apache.sling.testing.resourceresolver;
 
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -119,6 +121,9 @@ public class SlingCrudResourceResolverTest {
         assertEquals(DOUBLE_VALUE, props.get("node1/doubleProp", Double.class), 0.0001);
         assertEquals(BOOLEAN_VALUE, props.get("node1/booleanProp", Boolean.class));
         assertEquals(STRING_VALUE, props.get("node1/node11/stringProp11", String.class));
+
+        assertTrue(STRING_VALUE, props.containsKey("node1/stringProp"));
+        assertFalse(STRING_VALUE, props.containsKey("node1/unknownProp"));
     }
 
     @Test
@@ -173,6 +178,19 @@ public class SlingCrudResourceResolverTest {
         assertEquals(2, children.size());
         assertEquals("node11", children.get(0).getName());
         assertEquals("node12", children.get(1).getName());
+    }
+
+    @Test
+    public void testListChildren_RootNode() throws IOException {
+        Resource resource1 = resourceResolver.getResource("/");
+
+        List<Resource> children = Lists.newArrayList(resource1.listChildren());
+        assertEquals(1, children.size());
+        assertEquals("test", children.get(0).getName());
+
+        children = Lists.newArrayList(resource1.getChildren());
+        assertEquals(1, children.size());
+        assertEquals("test", children.get(0).getName());
     }
 
     @Test

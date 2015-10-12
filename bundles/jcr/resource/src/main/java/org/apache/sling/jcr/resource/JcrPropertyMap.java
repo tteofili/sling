@@ -89,6 +89,8 @@ public class JcrPropertyMap
 
     /**
      * Get the node.
+     *
+     * @return the node
      */
     protected Node getNode() {
         return node;
@@ -226,6 +228,7 @@ public class JcrPropertyMap
     /**
      * Return the path of the current node.
      *
+     * @return the path
      * @throws IllegalStateException If a repository exception occurs
      * @deprecated
      */
@@ -243,7 +246,7 @@ public class JcrPropertyMap
     /**
      * Put a single property into the cache
      * @param prop
-     * @return
+     * @return the cached property
      * @throws IllegalArgumentException if a repository exception occurs
      */
     private JcrPropertyMapCacheEntry cacheProperty(final Property prop) {
@@ -334,8 +337,9 @@ public class JcrPropertyMap
             return cachedValued;
         }
 
+        final String key;
         try {
-            final String key = escapeKeyName(name);
+            key = escapeKeyName(name);
             if (node.hasProperty(key)) {
                 final Property prop = node.getProperty(key);
                 return cacheProperty(prop);
@@ -348,7 +352,7 @@ public class JcrPropertyMap
             // for compatibility with older versions we use the (wrong) ISO9075 path
             // encoding
             final String oldKey = ISO9075.encodePath(name);
-            if (node.hasProperty(oldKey)) {
+            if (!oldKey.equals(key) && node.hasProperty(oldKey)) {
                 final Property prop = node.getProperty(oldKey);
                 return cacheProperty(prop);
             }
@@ -364,8 +368,9 @@ public class JcrPropertyMap
      * Handles key name escaping by taking into consideration if it contains a
      * registered prefix
      *
-     * @param key
+     * @param key the key to escape
      * @return escaped key name
+     * @throws RepositoryException if the repository's namespaced prefixes cannot be retrieved
      */
     protected String escapeKeyName(final String key) throws RepositoryException {
         final int indexOfPrefix = key.indexOf(':');
@@ -385,8 +390,11 @@ public class JcrPropertyMap
     }
 
     /**
-    * Read namespace prefixes and store as member variable to minimize number of JCR API calls
-    */
+     * Read namespace prefixes and store as member variable to minimize number of JCR API calls
+     *
+     * @return the namespace prefixes
+     * @throws RepositoryException  if the namespace prefixes cannot be retrieved
+     */
     protected String[] getNamespacePrefixes() throws RepositoryException {
         if (this.namespacePrefixes == null) {
             this.namespacePrefixes = getNode().getSession().getNamespacePrefixes();

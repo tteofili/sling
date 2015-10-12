@@ -84,7 +84,10 @@ import aQute.bnd.annotation.ProviderType;
  * Resource Resolver using any of the factory methods and ends with calling the
  * {@link #close()} method. It is very important to call the {@link #close()}
  * method once the resource resolver is not used any more to ensure any system
- * resources are properly cleaned up.
+ * resources are properly cleaned up. 
+ * 
+ * A Resource Resolver may also be closed implicitly if the {@link ResourceResolverFactory}
+ * which was used to create this resolver is no longer active.
  * <p>
  * To check whether a Resource Resolver can still be used, the {@link #isLive()}
  * method can be called.
@@ -542,8 +545,12 @@ public interface ResourceResolver extends Adaptable, Closeable {
      * called, the resource resolver is considered unusable and will throw
      * exceptions if still used - with the exception of this method, which
      * can be called several times with no ill effects.
+     * 
+     * A resource may also be closed implicitly in case when the {@link ResourceResolverFactory}
+     * which was used to create this resolver is no longer active.
      *
      * @since 2.1 (Sling API Bundle 2.1.0)
+     * @see ResourceResolver Resource Resolver (section lifecycle)
      */
     @Override
     void close();
@@ -668,15 +675,16 @@ public interface ResourceResolver extends Adaptable, Closeable {
 
     /**
      * Returns the super type of the given resource type. This method converts
-     * the resource type to a resource path and checks the corresponding resource.
+     * the resource type to a resource path and checks the corresponding resource
+     * (considering the search path).
      * If the resource exists, the {@link Resource#getResourceSuperType()} method
      * is called.
      *
      * @param resourceType The resource type whose super type is to be returned.
-     * @return the super type of the <code>resourceType</code> or
-     *         <code>null</code> if the resource type does not exist or returns
-     *         <code>null</code> for its super type. It also returns
-     *         <code>null</code> if <code>resourceType> is null.
+     * @return the super type of the {@code resourceType} or
+     *         {@code null} if the resource given by the resource type does not exist or 
+     *         if it returns {@code null} for its super type. It also returns
+     *         {@code null} if {@code resourceType} is null.
      * @throws IllegalStateException if this resource resolver has already been
      *             {@link #close() closed}.
      * @since 2.3 (Sling API Bundle 2.4.0)

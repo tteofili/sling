@@ -23,6 +23,7 @@ import java.util.Set;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 
+import org.apache.sling.api.adapter.AdapterFactory;
 import org.apache.sling.api.resource.LoginException;
 import org.apache.sling.api.resource.Resource;
 import org.apache.sling.api.resource.ResourceResolver;
@@ -56,6 +57,8 @@ import org.osgi.framework.ServiceReference;
 
 import aQute.bnd.annotation.ConsumerType;
 
+import com.google.common.base.Function;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 
 /**
@@ -77,6 +80,7 @@ public class SlingContextImpl extends OsgiContextImpl {
     protected SlingScriptHelper slingScriptHelper;
     protected ContentLoader contentLoader;
     protected ContentBuilder contentBuilder;
+    protected UniqueRoot uniqueRoot;
 
     /**
      * @param resourceResolverType Resource resolver type
@@ -108,9 +112,6 @@ public class SlingContextImpl extends OsgiContextImpl {
      */
     protected void registerDefaultServices() {
 
-        // resource resolver factory
-        registerService(ResourceResolverFactory.class, this.resourceResolverFactory);
-        
         // adapter factories
         registerInjectActivateService(new ModelAdapterFactory());
 
@@ -136,8 +137,9 @@ public class SlingContextImpl extends OsgiContextImpl {
      * Teardown actions after test method execution
      */
     protected void tearDown() {
-
+        
         if (this.resourceResolver != null) {
+            
             // revert potential unsaved changes in resource resolver/JCR session
             this.resourceResolver.revert();
             Session session = this.resourceResolver.adaptTo(Session.class);
@@ -148,17 +150,25 @@ public class SlingContextImpl extends OsgiContextImpl {
                     // ignore
                 }
             }
+            
+            // remove unique roots
+            if (this.uniqueRoot != null) {
+                this.uniqueRoot.cleanUp();
+            }
+            
+            // close resource resolver
+            this.resourceResolver.close();
         }
 
-        this.componentContext = null;
+        MockSling.clearAdapterManagerBundleContext();
+        
         this.resourceResolver = null;
         this.request = null;
         this.response = null;
         this.slingScriptHelper = null;
         this.contentLoader = null;
         this.contentBuilder = null;
-
-        MockSling.clearAdapterManagerBundleContext();
+        this.uniqueRoot = null;
         
         super.tearDown();
     }
@@ -303,6 +313,64 @@ public class SlingContextImpl extends OsgiContextImpl {
             MockSlingSettingService slingSettings = (MockSlingSettingService) bundleContext().getService(ref);
             slingSettings.setRunModes(newRunModes);
         }
+    }
+    
+    /**
+     * Create unique root paths for unit tests (and clean them up after the test run automatically).
+     * @return Unique root path helper
+     */
+    public UniqueRoot uniqueRoot() {
+        if (uniqueRoot == null) {
+            uniqueRoot = new UniqueRoot(this);
+        }
+        return uniqueRoot;
+    }
+    
+    /**
+     * Create a Sling AdapterFactory on the fly which can adapt from <code>adaptableClass</code>
+     * to <code>adapterClass</code> and just returns the given value as result.
+     * @param adaptableClass Class to adapt from
+     * @param adapterClass Class to adapt to
+     * @param adapter Object which is always returned for this adaption.
+     * @param <T1> Adaptable type
+     * @param <T2> Adapter type
+     */
+    public final <T1, T2> void registerAdapter(final Class<T1> adaptableClass, final Class<T2> adapterClass,
+            final T2 adapter) {
+        registerAdapter(adaptableClass, adapterClass, new Function<T1, T2>() {
+            @Override
+            public T2 apply(T1 input) {
+                return adapter;
+            }
+        });
+    }
+
+    /**
+     * Create a Sling AdapterFactory on the fly which can adapt from <code>adaptableClass</code>
+     * to <code>adapterClass</code> and delegates the adapter mapping to the given <code>adaptHandler</code> function.
+     * @param adaptableClass Class to adapt from
+     * @param adapterClass Class to adapt to
+     * @param adaptHandler Function to handle the adaption
+     * @param <T1> Adaptable type
+     * @param <T2> Adapter type
+     */
+    public final <T1, T2> void registerAdapter(final Class<T1> adaptableClass, final Class<T2> adapterClass,
+            final Function<T1,T2> adaptHandler) {
+        AdapterFactory adapterFactory = new AdapterFactory() {
+            @SuppressWarnings("unchecked")
+            @Override
+            public <AdapterType> AdapterType getAdapter(Object adaptable, Class<AdapterType> type) {
+                return (AdapterType)adaptHandler.apply((T1)adaptable);
+            }
+        };
+        registerService(AdapterFactory.class, adapterFactory, ImmutableMap.<String, Object>builder()
+                .put(AdapterFactory.ADAPTABLE_CLASSES, new String[] {
+                    adaptableClass.getName()
+                })
+                .put(AdapterFactory.ADAPTER_CLASSES, new String[] {
+                    adapterClass.getName()
+                })
+                .build());
     }
 
 }

@@ -25,6 +25,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -38,15 +39,19 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.ResourceBundle;
 
+import javax.servlet.RequestDispatcher;
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpSession;
 
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.CharEncoding;
+import org.apache.sling.api.request.RequestDispatcherOptions;
 import org.apache.sling.api.resource.Resource;
 import org.apache.sling.api.resource.ResourceResolver;
 import org.apache.sling.api.servlets.HttpConstants;
 import org.apache.sling.i18n.ResourceBundleProvider;
 import org.apache.sling.testing.mock.osgi.MockOsgi;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -69,6 +74,11 @@ public class MockSlingHttpServletRequestTest {
     public void setUp() throws Exception {
         request = new MockSlingHttpServletRequest(resourceResolver, bundleContext);
     }
+    
+    @After
+    public void tearDown() {
+        MockOsgi.shutdown(bundleContext);
+    }
 
     @Test
     public void testResourceResolver() {
@@ -77,7 +87,7 @@ public class MockSlingHttpServletRequestTest {
 
     @Test
     public void testDefaultResourceResolver() {
-        assertNotNull(new MockSlingHttpServletRequest().getResourceResolver());
+        assertNotNull(new MockSlingHttpServletRequest(bundleContext).getResourceResolver());
     }
 
     @Test
@@ -250,4 +260,79 @@ public class MockSlingHttpServletRequestTest {
         assertFalse(bundle2.getKeys().hasMoreElements());
     }
 
+    @Test
+    public void testRequestParameter() throws Exception {
+        request.setQueryString("param1=123&param2=" + URLEncoder.encode("äöüß€!:!", CharEncoding.UTF_8)
+                + "&param3=a&param3=b");
+
+        assertEquals(3, request.getRequestParameterMap().size());
+        assertEquals(4, request.getRequestParameterList().size());
+        assertEquals("123", request.getRequestParameter("param1").getString());
+        assertEquals("äöüß€!:!", request.getRequestParameter("param2").getString());
+        assertEquals("a",request.getRequestParameters("param3")[0].getString());
+        assertEquals("b",request.getRequestParameters("param3")[1].getString());
+
+        assertNull(request.getRequestParameter("unknown"));
+        assertNull(request.getRequestParameters("unknown"));
+    }
+
+    @Test
+    public void testContentTypeCharset() throws Exception {
+        assertNull(request.getContentType());
+        assertNull(request.getCharacterEncoding());
+
+        request.setContentType("image/gif");
+        assertEquals("image/gif", request.getContentType());
+        assertNull(request.getCharacterEncoding());
+        
+        request.setContentType("text/plain;charset=UTF-8");
+        assertEquals("text/plain;charset=UTF-8", request.getContentType());
+        assertEquals(CharEncoding.UTF_8, request.getCharacterEncoding());
+        
+        request.setCharacterEncoding(CharEncoding.ISO_8859_1);
+        assertEquals("text/plain;charset=ISO-8859-1", request.getContentType());
+        assertEquals(CharEncoding.ISO_8859_1, request.getCharacterEncoding());
+    }
+
+    @Test
+    public void testContent() throws Exception {
+        assertEquals(0, request.getContentLength());
+        assertNull(request.getInputStream());
+        
+        byte[] data = new byte[] { 0x01,0x02,0x03 };
+        request.setContent(data);
+
+        assertEquals(data.length, request.getContentLength());
+        assertArrayEquals(data, IOUtils.toByteArray(request.getInputStream()));
+    }
+
+    @Test
+    public void testGetRequestDispatcher() {
+        MockRequestDispatcherFactory requestDispatcherFactory = mock(MockRequestDispatcherFactory.class);
+        RequestDispatcher requestDispatcher = mock(RequestDispatcher.class);
+        when(requestDispatcherFactory.getRequestDispatcher(any(Resource.class), any(RequestDispatcherOptions.class))).thenReturn(requestDispatcher);
+        when(requestDispatcherFactory.getRequestDispatcher(any(String.class), any(RequestDispatcherOptions.class))).thenReturn(requestDispatcher);
+        
+        request.setRequestDispatcherFactory(requestDispatcherFactory);
+        
+        assertSame(requestDispatcher, request.getRequestDispatcher("/path"));
+        assertSame(requestDispatcher, request.getRequestDispatcher("/path", new RequestDispatcherOptions()));
+        assertSame(requestDispatcher, request.getRequestDispatcher(resource));
+        assertSame(requestDispatcher, request.getRequestDispatcher(resource, new RequestDispatcherOptions()));
+    }
+    
+    @Test(expected = IllegalStateException.class)
+    public void testGetRequestDispatcherWithoutFactory() {
+        request.getRequestDispatcher("/path");
+    }
+    
+    @Test
+    public void testGetRemoteUserN() {
+        
+        assertNull(null, request.getRemoteUser());
+        
+        request.setRemoteUser("admin");
+        assertEquals("admin", request.getRemoteUser());
+    }
+    
 }
