@@ -63,7 +63,7 @@ public class AvroDistributionPackageBuilder implements DistributionPackageBuilde
         DatumWriter<AvroShallowResource> datumWriter = new SpecificDatumWriter<AvroShallowResource>(AvroShallowResource.class);
         this.dataFileWriter = new DataFileWriter<AvroShallowResource>(datumWriter);
         try {
-            schema = new Schema.Parser().parse(new File(getClass().getResource("/shallowresource.avsc").getFile()));
+            schema = new Schema.Parser().parse(getClass().getResourceAsStream("/shallowresource.avsc"));
         } catch (IOException e) {
             // do nothing
         }
@@ -97,7 +97,7 @@ public class AvroDistributionPackageBuilder implements DistributionPackageBuilde
             dataFileWriter.close();
             distributionPackage = new FileDistributionPackage(file, getType());
         } catch (Exception e) {
-            // do nothing
+            throw new DistributionPackageBuildingException(e);
         }
         return distributionPackage;
     }
@@ -152,13 +152,19 @@ public class AvroDistributionPackageBuilder implements DistributionPackageBuilde
                 Collection<AvroShallowResource> avroShallowResources = readAvroResources(f);
                 for (AvroShallowResource r : avroShallowResources) {
                     String path = r.getPath().toString();
+                    String name = path.substring(path.lastIndexOf('/') + 1);
                     String parent = path.substring(0, path.lastIndexOf('/'));
                     Map<String, Object> map = new HashMap<String, Object>();
                     Map<CharSequence, CharSequence> valueMap = r.getValueMap();
                     for (Map.Entry<CharSequence, CharSequence> entry : valueMap.entrySet()) {
                         map.put(entry.getKey().toString(), entry.getValue().toString());
                     }
-                    Resource createdResource = resourceResolver.create(resourceResolver.getResource(parent), path, map);
+                    Resource existingResource = resourceResolver.getResource(path);
+                    if (existingResource != null) {
+                        resourceResolver.delete(existingResource);
+                    }
+                    Resource createdResource = resourceResolver.create(resourceResolver.getResource(parent), name, map);
+                    log.info("created resource {}", createdResource);
                 }
                 resourceResolver.commit();
             } catch (Exception e) {
