@@ -83,7 +83,7 @@ public class AvroDistributionPackageBuilder implements DistributionPackageBuilde
             String path = request.getPaths()[0];
             Resource resource = resourceResolver.getResource(path);
 
-            AvroShallowResource avroShallowResource = getAvroShallowResource(path, resource);
+            AvroShallowResource avroShallowResource = getAvroShallowResource(request, path, resource);
 
             File file = File.createTempFile("dp-" + System.nanoTime(), ".avro");
             dataFileWriter.create(schema, file);
@@ -96,7 +96,7 @@ public class AvroDistributionPackageBuilder implements DistributionPackageBuilde
         return distributionPackage;
     }
 
-    private AvroShallowResource getAvroShallowResource(String path, Resource resource) {
+    private AvroShallowResource getAvroShallowResource(DistributionRequest request, String path, Resource resource) {
         AvroShallowResource avroShallowResource = new AvroShallowResource();
         avroShallowResource.setName("avro_" + System.nanoTime());
         avroShallowResource.setPath(path);
@@ -109,7 +109,10 @@ public class AvroDistributionPackageBuilder implements DistributionPackageBuilde
         avroShallowResource.setValueMap(map);
         List<AvroShallowResource> children = new LinkedList<AvroShallowResource>();
         for (Resource child : resource.getChildren()) {
-            children.add(getAvroShallowResource(child.getPath(), child));
+            String childPath = child.getPath();
+            if (request.isDeep(childPath)) {
+                children.add(getAvroShallowResource(request, childPath, child));
+            }
         }
         avroShallowResource.setChildren(children);
         return avroShallowResource;
