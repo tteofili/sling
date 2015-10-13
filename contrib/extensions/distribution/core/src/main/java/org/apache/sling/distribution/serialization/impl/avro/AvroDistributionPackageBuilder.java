@@ -27,6 +27,7 @@ import java.io.OutputStream;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 
 import org.apache.avro.Schema;
@@ -37,6 +38,7 @@ import org.apache.avro.io.DatumWriter;
 import org.apache.avro.specific.SpecificDatumReader;
 import org.apache.avro.specific.SpecificDatumWriter;
 import org.apache.commons.io.IOUtils;
+import org.apache.sling.api.resource.PersistenceException;
 import org.apache.sling.api.resource.Resource;
 import org.apache.sling.api.resource.ResourceResolver;
 import org.apache.sling.api.resource.ValueMap;
@@ -78,19 +80,11 @@ public class AvroDistributionPackageBuilder implements DistributionPackageBuilde
     public DistributionPackage createPackage(@Nonnull ResourceResolver resourceResolver, @Nonnull DistributionRequest request) throws DistributionPackageBuildingException {
         DistributionPackage distributionPackage = null;
         try {
-
-            AvroShallowResource avroShallowResource = new AvroShallowResource();
-            avroShallowResource.setName("avro_" + System.nanoTime());
             String path = request.getPaths()[0];
-            avroShallowResource.setPath(path);
             Resource resource = resourceResolver.getResource(path);
-            avroShallowResource.setResourceType(resource.getResourceType());
-            ValueMap valueMap = resource.getValueMap();
-            Map<CharSequence, CharSequence> map = new HashMap<CharSequence, CharSequence>();
-            for (Map.Entry<String, Object> entry : valueMap.entrySet()) {
-                map.put(entry.getKey(), entry.getValue().toString());
-            }
-            avroShallowResource.setValueMap(map);
+
+            AvroShallowResource avroShallowResource = getAvroShallowResource(path, resource);
+
             File file = File.createTempFile("dp-" + System.nanoTime(), ".avro");
             dataFileWriter.create(schema, file);
             dataFileWriter.append(avroShallowResource);
@@ -100,6 +94,25 @@ public class AvroDistributionPackageBuilder implements DistributionPackageBuilde
             throw new DistributionPackageBuildingException(e);
         }
         return distributionPackage;
+    }
+
+    private AvroShallowResource getAvroShallowResource(String path, Resource resource) {
+        AvroShallowResource avroShallowResource = new AvroShallowResource();
+        avroShallowResource.setName("avro_" + System.nanoTime());
+        avroShallowResource.setPath(path);
+        avroShallowResource.setResourceType(resource.getResourceType());
+        ValueMap valueMap = resource.getValueMap();
+        Map<CharSequence, CharSequence> map = new HashMap<CharSequence, CharSequence>();
+        for (Map.Entry<String, Object> entry : valueMap.entrySet()) {
+            map.put(entry.getKey(), entry.getValue().toString());
+        }
+        avroShallowResource.setValueMap(map);
+        List<AvroShallowResource> children = new LinkedList<AvroShallowResource>();
+        for (Resource child : resource.getChildren()) {
+            children.add(getAvroShallowResource(child.getPath(), child));
+        }
+        avroShallowResource.setChildren(children);
+        return avroShallowResource;
     }
 
     @Override
@@ -151,20 +164,7 @@ public class AvroDistributionPackageBuilder implements DistributionPackageBuilde
                 File f = new File(filePath);
                 Collection<AvroShallowResource> avroShallowResources = readAvroResources(f);
                 for (AvroShallowResource r : avroShallowResources) {
-                    String path = r.getPath().toString();
-                    String name = path.substring(path.lastIndexOf('/') + 1);
-                    String parent = path.substring(0, path.lastIndexOf('/'));
-                    Map<String, Object> map = new HashMap<String, Object>();
-                    Map<CharSequence, CharSequence> valueMap = r.getValueMap();
-                    for (Map.Entry<CharSequence, CharSequence> entry : valueMap.entrySet()) {
-                        map.put(entry.getKey().toString(), entry.getValue().toString());
-                    }
-                    Resource existingResource = resourceResolver.getResource(path);
-                    if (existingResource != null) {
-                        resourceResolver.delete(existingResource);
-                    }
-                    Resource createdResource = resourceResolver.create(resourceResolver.getResource(parent), name, map);
-                    log.info("created resource {}", createdResource);
+                    persistResource(resourceResolver, r);
                 }
                 resourceResolver.commit();
             } catch (Exception e) {
@@ -173,6 +173,28 @@ public class AvroDistributionPackageBuilder implements DistributionPackageBuilde
             return true;
         } else {
             return false;
+        }
+    }
+
+    private void persistResource(@Nonnull ResourceResolver resourceResolver, AvroShallowResource r) throws PersistenceException {
+        String path = r.getPath().toString();
+        String name = path.substring(path.lastIndexOf('/') + 1);
+        String substring = path.substring(0, path.lastIndexOf('/'));
+        String parentPath = substring.length() == 0 ? "/" : substring;
+        Map<String, Object> map = new HashMap<String, Object>();
+        Map<CharSequence, CharSequence> valueMap = r.getValueMap();
+        for (Map.Entry<CharSequence, CharSequence> entry : valueMap.entrySet()) {
+            map.put(entry.getKey().toString(), entry.getValue().toString());
+        }
+        Resource existingResource = resourceResolver.getResource(path);
+        if (existingResource != null) {
+            resourceResolver.delete(existingResource);
+        }
+        Resource parent = resourceResolver.getResource(parentPath);
+        Resource createdResource = resourceResolver.create(parent, name, map);
+        log.info("created resource {}", createdResource);
+        for (AvroShallowResource child : r.getChildren()) {
+            persistResource(createdResource.getResourceResolver(), child);
         }
     }
 }

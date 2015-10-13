@@ -5,6 +5,7 @@
     {"name": "name", "type": "string"},
     {"name": "valueMap",  "type": {"type": "map", "values": "string"}},
     {"name": "path", "type": ["string", "null"]},
+    {"name": "children", "type": {"type": "array", "items": "AvroShallowResource"}},
     {"name": "resourceType", "type": ["string", "null"]}
   ]
 }

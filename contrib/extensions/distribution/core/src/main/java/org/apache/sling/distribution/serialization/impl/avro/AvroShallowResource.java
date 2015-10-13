@@ -20,11 +20,12 @@ package org.apache.sling.distribution.serialization.impl.avro;
 @SuppressWarnings("all")
 @org.apache.avro.specific.AvroGenerated
 public class AvroShallowResource extends org.apache.avro.specific.SpecificRecordBase implements org.apache.avro.specific.SpecificRecord {
-  public static final org.apache.avro.Schema SCHEMA$ = new org.apache.avro.Schema.Parser().parse("{\"type\":\"record\",\"name\":\"AvroShallowResource\",\"namespace\":\"org.apache.sling.distribution.serialization.impl.avro\",\"fields\":[{\"name\":\"name\",\"type\":\"string\"},{\"name\":\"valueMap\",\"type\":{\"type\":\"map\",\"values\":\"string\"}},{\"name\":\"path\",\"type\":[\"string\",\"null\"]},{\"name\":\"resourceType\",\"type\":[\"string\",\"null\"]}]}");
+  public static final org.apache.avro.Schema SCHEMA$ = new org.apache.avro.Schema.Parser().parse("{\"type\":\"record\",\"name\":\"AvroShallowResource\",\"namespace\":\"org.apache.sling.distribution.serialization.impl.avro\",\"fields\":[{\"name\":\"name\",\"type\":\"string\"},{\"name\":\"valueMap\",\"type\":{\"type\":\"map\",\"values\":\"string\"}},{\"name\":\"path\",\"type\":[\"string\",\"null\"]},{\"name\":\"children\",\"type\":[{\"type\":\"array\",\"items\":\"AvroShallowResource\"},\"null\"]},{\"name\":\"resourceType\",\"type\":[\"string\",\"null\"]}]}");
   public static org.apache.avro.Schema getClassSchema() { return SCHEMA$; }
   @Deprecated public java.lang.CharSequence name;
   @Deprecated public java.util.Map<java.lang.CharSequence,java.lang.CharSequence> valueMap;
   @Deprecated public java.lang.CharSequence path;
+  @Deprecated public java.util.List<org.apache.sling.distribution.serialization.impl.avro.AvroShallowResource> children;
   @Deprecated public java.lang.CharSequence resourceType;
 
   /**
@@ -37,10 +38,11 @@ public class AvroShallowResource extends org.apache.avro.specific.SpecificRecord
   /**
    * All-args constructor.
    */
-  public AvroShallowResource(java.lang.CharSequence name, java.util.Map<java.lang.CharSequence,java.lang.CharSequence> valueMap, java.lang.CharSequence path, java.lang.CharSequence resourceType) {
+  public AvroShallowResource(java.lang.CharSequence name, java.util.Map<java.lang.CharSequence,java.lang.CharSequence> valueMap, java.lang.CharSequence path, java.util.List<org.apache.sling.distribution.serialization.impl.avro.AvroShallowResource> children, java.lang.CharSequence resourceType) {
     this.name = name;
     this.valueMap = valueMap;
     this.path = path;
+    this.children = children;
     this.resourceType = resourceType;
   }
 
@@ -51,7 +53,8 @@ public class AvroShallowResource extends org.apache.avro.specific.SpecificRecord
     case 0: return name;
     case 1: return valueMap;
     case 2: return path;
-    case 3: return resourceType;
+    case 3: return children;
+    case 4: return resourceType;
     default: throw new org.apache.avro.AvroRuntimeException("Bad index");
     }
   }
@@ -62,7 +65,8 @@ public class AvroShallowResource extends org.apache.avro.specific.SpecificRecord
     case 0: name = (java.lang.CharSequence)value$; break;
     case 1: valueMap = (java.util.Map<java.lang.CharSequence,java.lang.CharSequence>)value$; break;
     case 2: path = (java.lang.CharSequence)value$; break;
-    case 3: resourceType = (java.lang.CharSequence)value$; break;
+    case 3: children = (java.util.List<org.apache.sling.distribution.serialization.impl.avro.AvroShallowResource>)value$; break;
+    case 4: resourceType = (java.lang.CharSequence)value$; break;
     default: throw new org.apache.avro.AvroRuntimeException("Bad index");
     }
   }
@@ -113,6 +117,21 @@ public class AvroShallowResource extends org.apache.avro.specific.SpecificRecord
   }
 
   /**
+   * Gets the value of the 'children' field.
+   */
+  public java.util.List<org.apache.sling.distribution.serialization.impl.avro.AvroShallowResource> getChildren() {
+    return children;
+  }
+
+  /**
+   * Sets the value of the 'children' field.
+   * @param value the value to set.
+   */
+  public void setChildren(java.util.List<org.apache.sling.distribution.serialization.impl.avro.AvroShallowResource> value) {
+    this.children = value;
+  }
+
+  /**
    * Gets the value of the 'resourceType' field.
    */
   public java.lang.CharSequence getResourceType() {
@@ -151,6 +170,7 @@ public class AvroShallowResource extends org.apache.avro.specific.SpecificRecord
     private java.lang.CharSequence name;
     private java.util.Map<java.lang.CharSequence,java.lang.CharSequence> valueMap;
     private java.lang.CharSequence path;
+    private java.util.List<org.apache.sling.distribution.serialization.impl.avro.AvroShallowResource> children;
     private java.lang.CharSequence resourceType;
 
     /** Creates a new Builder */
@@ -173,9 +193,13 @@ public class AvroShallowResource extends org.apache.avro.specific.SpecificRecord
         this.path = data().deepCopy(fields()[2].schema(), other.path);
         fieldSetFlags()[2] = true;
       }
-      if (isValidValue(fields()[3], other.resourceType)) {
-        this.resourceType = data().deepCopy(fields()[3].schema(), other.resourceType);
+      if (isValidValue(fields()[3], other.children)) {
+        this.children = data().deepCopy(fields()[3].schema(), other.children);
         fieldSetFlags()[3] = true;
+      }
+      if (isValidValue(fields()[4], other.resourceType)) {
+        this.resourceType = data().deepCopy(fields()[4].schema(), other.resourceType);
+        fieldSetFlags()[4] = true;
       }
     }
     
@@ -194,9 +218,13 @@ public class AvroShallowResource extends org.apache.avro.specific.SpecificRecord
         this.path = data().deepCopy(fields()[2].schema(), other.path);
         fieldSetFlags()[2] = true;
       }
-      if (isValidValue(fields()[3], other.resourceType)) {
-        this.resourceType = data().deepCopy(fields()[3].schema(), other.resourceType);
+      if (isValidValue(fields()[3], other.children)) {
+        this.children = data().deepCopy(fields()[3].schema(), other.children);
         fieldSetFlags()[3] = true;
+      }
+      if (isValidValue(fields()[4], other.resourceType)) {
+        this.resourceType = data().deepCopy(fields()[4].schema(), other.resourceType);
+        fieldSetFlags()[4] = true;
       }
     }
 
@@ -275,6 +303,31 @@ public class AvroShallowResource extends org.apache.avro.specific.SpecificRecord
       return this;
     }
 
+    /** Gets the value of the 'children' field */
+    public java.util.List<org.apache.sling.distribution.serialization.impl.avro.AvroShallowResource> getChildren() {
+      return children;
+    }
+    
+    /** Sets the value of the 'children' field */
+    public org.apache.sling.distribution.serialization.impl.avro.AvroShallowResource.Builder setChildren(java.util.List<org.apache.sling.distribution.serialization.impl.avro.AvroShallowResource> value) {
+      validate(fields()[3], value);
+      this.children = value;
+      fieldSetFlags()[3] = true;
+      return this; 
+    }
+    
+    /** Checks whether the 'children' field has been set */
+    public boolean hasChildren() {
+      return fieldSetFlags()[3];
+    }
+    
+    /** Clears the value of the 'children' field */
+    public org.apache.sling.distribution.serialization.impl.avro.AvroShallowResource.Builder clearChildren() {
+      children = null;
+      fieldSetFlags()[3] = false;
+      return this;
+    }
+
     /** Gets the value of the 'resourceType' field */
     public java.lang.CharSequence getResourceType() {
       return resourceType;
@@ -282,21 +335,21 @@ public class AvroShallowResource extends org.apache.avro.specific.SpecificRecord
     
     /** Sets the value of the 'resourceType' field */
     public org.apache.sling.distribution.serialization.impl.avro.AvroShallowResource.Builder setResourceType(java.lang.CharSequence value) {
-      validate(fields()[3], value);
+      validate(fields()[4], value);
       this.resourceType = value;
-      fieldSetFlags()[3] = true;
+      fieldSetFlags()[4] = true;
       return this; 
     }
     
     /** Checks whether the 'resourceType' field has been set */
     public boolean hasResourceType() {
-      return fieldSetFlags()[3];
+      return fieldSetFlags()[4];
     }
     
     /** Clears the value of the 'resourceType' field */
     public org.apache.sling.distribution.serialization.impl.avro.AvroShallowResource.Builder clearResourceType() {
       resourceType = null;
-      fieldSetFlags()[3] = false;
+      fieldSetFlags()[4] = false;
       return this;
     }
 
@@ -307,7 +360,8 @@ public class AvroShallowResource extends org.apache.avro.specific.SpecificRecord
         record.name = fieldSetFlags()[0] ? this.name : (java.lang.CharSequence) defaultValue(fields()[0]);
         record.valueMap = fieldSetFlags()[1] ? this.valueMap : (java.util.Map<java.lang.CharSequence,java.lang.CharSequence>) defaultValue(fields()[1]);
         record.path = fieldSetFlags()[2] ? this.path : (java.lang.CharSequence) defaultValue(fields()[2]);
-        record.resourceType = fieldSetFlags()[3] ? this.resourceType : (java.lang.CharSequence) defaultValue(fields()[3]);
+        record.children = fieldSetFlags()[3] ? this.children : (java.util.List<org.apache.sling.distribution.serialization.impl.avro.AvroShallowResource>) defaultValue(fields()[3]);
+        record.resourceType = fieldSetFlags()[4] ? this.resourceType : (java.lang.CharSequence) defaultValue(fields()[4]);
         return record;
       } catch (Exception e) {
         throw new org.apache.avro.AvroRuntimeException(e);
