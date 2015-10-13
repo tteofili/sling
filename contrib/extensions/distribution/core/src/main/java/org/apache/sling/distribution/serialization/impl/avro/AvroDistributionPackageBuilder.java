@@ -23,6 +23,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -45,11 +46,15 @@ import org.apache.sling.distribution.serialization.DistributionPackageBuilder;
 import org.apache.sling.distribution.serialization.DistributionPackageBuildingException;
 import org.apache.sling.distribution.serialization.DistributionPackageReadingException;
 import org.apache.sling.distribution.serialization.impl.FileDistributionPackage;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Avro based {@link DistributionPackageBuilder}
  */
 public class AvroDistributionPackageBuilder implements DistributionPackageBuilder {
+
+    private final Logger log = LoggerFactory.getLogger(getClass());
 
     private DataFileWriter<AvroShallowResource> dataFileWriter;
     private Schema schema;
@@ -99,17 +104,17 @@ public class AvroDistributionPackageBuilder implements DistributionPackageBuilde
 
     @Override
     public DistributionPackage readPackage(@Nonnull ResourceResolver resourceResolver, @Nonnull InputStream stream) throws DistributionPackageReadingException {
-        DistributionPackage distributionPackage = null;
         try {
-            File file = File.createTempFile("dp-" + System.nanoTime(), ".avro");;
-            IOUtils.copy(stream, new FileOutputStream(file));
-            readAvroResources(file);
-            distributionPackage = new FileDistributionPackage(file, getType());
+            File file = File.createTempFile("dp_" + System.nanoTime(), ".avro");
+            OutputStream output = new FileOutputStream(file);
+            int copied = IOUtils.copy(stream, output);
 
+            log.debug("copied {} bytes", copied);
+
+            return new FileDistributionPackage(file, getType());
         } catch (Exception e) {
-            // do nothing
+            throw new DistributionPackageReadingException(e);
         }
-        return distributionPackage;
     }
 
     private Collection<AvroShallowResource> readAvroResources(File file) throws IOException {
@@ -142,7 +147,7 @@ public class AvroDistributionPackageBuilder implements DistributionPackageBuilde
     public boolean installPackage(@Nonnull ResourceResolver resourceResolver, @Nonnull DistributionPackage distributionPackage) throws DistributionPackageReadingException {
         if (distributionPackage instanceof FileDistributionPackage) {
             try {
-                String filePath = ((FileDistributionPackage) distributionPackage).getId();
+                String filePath = distributionPackage.getId();
                 File f = new File(filePath);
                 Collection<AvroShallowResource> avroShallowResources = readAvroResources(f);
                 for (AvroShallowResource r : avroShallowResources) {

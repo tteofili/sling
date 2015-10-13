@@ -20,10 +20,15 @@ package org.apache.sling.distribution.serialization.impl.kryo;
 
 import javax.annotation.Nonnull;
 
+import java.io.File;
+import java.io.InputStream;
+
 import org.apache.sling.api.resource.ResourceResolver;
 import org.apache.sling.distribution.DistributionRequest;
 import org.apache.sling.distribution.DistributionRequestType;
 import org.apache.sling.distribution.packaging.DistributionPackage;
+import org.apache.sling.distribution.serialization.impl.FileDistributionPackage;
+import org.apache.sling.distribution.serialization.impl.avro.AvroDistributionPackageBuilder;
 import org.apache.sling.testing.resourceresolver.MockHelper;
 import org.apache.sling.testing.resourceresolver.MockResourceResolverFactory;
 import org.junit.Before;
@@ -96,16 +101,27 @@ public class KryoResourceDistributionPackageBuilderTest {
 
     @Test
     public void testReadPackage() throws Exception {
-
+        KryoResourceDistributionPackageBuilder kryoResourceDistributionPackageBuilder = new KryoResourceDistributionPackageBuilder();
+        InputStream stream = getClass().getResourceAsStream("/kryo/dp.kryo");
+        DistributionPackage distributionPackage = kryoResourceDistributionPackageBuilder.readPackage(resourceResolver, stream);
+        assertNotNull(distributionPackage);
     }
 
     @Test
     public void testGetPackage() throws Exception {
-
+        KryoResourceDistributionPackageBuilder kryoResourceDistributionPackageBuilder = new KryoResourceDistributionPackageBuilder();
+        InputStream stream = getClass().getResourceAsStream("/kryo/dp.kryo");
+        DistributionPackage distributionPackage = kryoResourceDistributionPackageBuilder.getPackage(resourceResolver, getClass().getResource("/kryo/dp.kryo").getFile());
+        assertNotNull(distributionPackage);
     }
 
     @Test
     public void testInstallPackage() throws Exception {
+        AvroDistributionPackageBuilder avroDistributionPackageBuilder = new AvroDistributionPackageBuilder();
+        File file = new File(getClass().getResource("/kryo/dp.kryo").getFile());
+        DistributionPackage distributionPackage = new FileDistributionPackage(file, "kryo");
+        boolean succes = avroDistributionPackageBuilder.installPackage(resourceResolver, distributionPackage);
+        assertTrue(succes);
 
     }
 }
