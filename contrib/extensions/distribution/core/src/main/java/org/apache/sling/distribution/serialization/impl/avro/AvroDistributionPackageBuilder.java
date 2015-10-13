@@ -24,6 +24,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -104,7 +105,14 @@ public class AvroDistributionPackageBuilder implements DistributionPackageBuilde
         ValueMap valueMap = resource.getValueMap();
         Map<CharSequence, CharSequence> map = new HashMap<CharSequence, CharSequence>();
         for (Map.Entry<String, Object> entry : valueMap.entrySet()) {
-            map.put(entry.getKey(), entry.getValue().toString());
+            Object value = entry.getValue();
+            String string;
+            if (value instanceof Object[]) {
+                string = Arrays.toString((Object[]) value);
+            } else {
+                string = value.toString();
+            }
+            map.put(entry.getKey(), string);
         }
         avroShallowResource.setValueMap(map);
         List<AvroShallowResource> children = new LinkedList<AvroShallowResource>();
@@ -187,7 +195,11 @@ public class AvroDistributionPackageBuilder implements DistributionPackageBuilde
         Map<String, Object> map = new HashMap<String, Object>();
         Map<CharSequence, CharSequence> valueMap = r.getValueMap();
         for (Map.Entry<CharSequence, CharSequence> entry : valueMap.entrySet()) {
-            map.put(entry.getKey().toString(), entry.getValue().toString());
+            Object value = entry.getValue();
+            if (isArray(value)) {
+                value = getArray(value);
+            }
+            map.put(entry.getKey().toString(), value);
         }
         Resource existingResource = resourceResolver.getResource(path);
         if (existingResource != null) {
@@ -199,5 +211,18 @@ public class AvroDistributionPackageBuilder implements DistributionPackageBuilde
         for (AvroShallowResource child : r.getChildren()) {
             persistResource(createdResource.getResourceResolver(), child);
         }
+    }
+
+    private Object[] getArray(Object value) {
+        String toString = value.toString();
+        if (toString.length() <= 2) {
+            return new String[]{""};
+        } else {
+            return toString.substring(1, toString.length()-1).split(",");
+        }
+    }
+
+    private boolean isArray(Object value) {
+        return value != null && value.toString().startsWith("[") && value.toString().endsWith("]");
     }
 }
