@@ -7,7 +7,7 @@
 
     "requestAuthorizationStrategy.target" : "(name=privilegeRead)",
 
-    "packageBuilder.target": "(name=vlt)",
+    "packageBuilder.target": "(name=resourceavro)",
 
     "transportSecretProvider.target" : "(name=publishAdmin)",
 

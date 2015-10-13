@@ -42,6 +42,8 @@ import org.apache.sling.distribution.packaging.impl.importer.RemoteDistributionP
 import org.apache.sling.distribution.queue.DistributionQueueProvider;
 import org.apache.sling.distribution.queue.impl.DistributionQueueDispatchingStrategy;
 import org.apache.sling.distribution.serialization.DistributionPackageBuilder;
+import org.apache.sling.distribution.serialization.impl.avro.AvroDistributionPackageBuilder;
+import org.apache.sling.distribution.serialization.impl.avro.AvroDistributionPackageBuilderFactory;
 import org.apache.sling.distribution.serialization.impl.vlt.VaultDistributionPackageBuilderFactory;
 import org.apache.sling.distribution.transport.DistributionTransportSecretProvider;
 import org.apache.sling.distribution.transport.impl.UserCredentialsDistributionTransportSecretProvider;
@@ -99,6 +101,7 @@ public enum DistributionComponentKind {
 
         registerFactory(DistributionComponentKind.PACKAGE_BUILDER, "filevlt", VaultDistributionPackageBuilderFactory.class);
         registerFactory(DistributionComponentKind.PACKAGE_BUILDER, "jcrvlt", VaultDistributionPackageBuilderFactory.class);
+        registerFactory(DistributionComponentKind.PACKAGE_BUILDER, AvroDistributionPackageBuilderFactory.RESOURCEAVRO, AvroDistributionPackageBuilderFactory.class);
 
         registerFactory(DistributionComponentKind.REQUEST_AUTHORIZATION, "privilege", PrivilegeDistributionRequestAuthorizationStrategy.class);
 
