@@ -104,23 +104,23 @@
                         <Export-Package>
                             org.apache.sling.distribution.util
                         </Export-Package>
-                        <Embed-Dependency>httpasyncclient,kryo,reflectasm,minlog,asm,objenesis</Embed-Dependency>
+                        <Embed-Dependency>httpasyncclient,kryo,reflectasm,minlog,asm,objenesis,avro,avro-ipc,
+                            jackson-core-asl,
+                            jackson-mapper-asl,
+                            paranamer,
+                            commons-compress</Embed-Dependency>
                         <Embed-Transitive>true</Embed-Transitive>
                         <Import-Package>
-                            <!--org.apache.lucene.*;resolution:=optional,-->
-                            <!--com.carrotsearch.*;resolution:=optional,-->
-                            <!--com.googlecode.*;resolution:=optional,-->
-                            <!--com.vividsolutions.jts.*;resolution:=optional,-->
-                            <!--com.sun.*;resolution:=optional,-->
-                            <!--jline;resolution:=optional,-->
-                            <!--org.apache.hadoop.*;resolution:=optional,-->
-                            <!--org.apache.regexp.*;resolution:=optional,-->
-                            <!--org.apache.log4j.*;resolution:=optional,-->
-                            <!--org.jboss.netty.*;resolution:=optional,-->
-                            <!--org.restlet.*;resolution:=optional,-->
-                            <!--org.joda.time.*;resolution:=optional,-->
-                            <!--org.eclipse.*;resolution:=optional,-->
-                            sun.*;resolution:=optional,
+                            !sun.*,
+                            !org.joda.time.*,
+                            !org.tukaani.xz,
+                            !org.xerial.snappy,
+                            !sun.misc,
+                            !javax.inject,
+                            !org.apache.velocity.*,
+                            !org.jboss.netty.*,
+                            !org.mortbay.jetty.*,
+                            !org.mortbay.resource.*,
                             *
                         </Import-Package>
                     </instructions>
@@ -301,6 +301,36 @@
             <groupId>org.apache.avro</groupId>
             <artifactId>avro</artifactId>
             <version>1.7.7</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.avro</groupId>
+            <artifactId>avro-ipc</artifactId>
+            <version>1.7.7</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.codehaus.jackson</groupId>
+            <artifactId>jackson-core-asl</artifactId>
+            <version>1.9.13</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.codehaus.jackson</groupId>
+            <artifactId>jackson-mapper-asl</artifactId>
+            <version>1.9.13</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.thoughtworks.paranamer</groupId>
+            <artifactId>paranamer</artifactId>
+            <version>2.3</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-compress</artifactId>
+            <version>1.4.1</version>
+            <scope>provided</scope>
         </dependency>
         <!-- kryo -->
         <dependency>

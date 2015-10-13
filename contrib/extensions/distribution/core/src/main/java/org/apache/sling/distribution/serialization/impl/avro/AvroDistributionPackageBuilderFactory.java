@@ -44,6 +44,8 @@ import org.apache.sling.distribution.serialization.DistributionPackageReadingExc
 import org.apache.sling.distribution.serialization.impl.ResourceSharedDistributionPackageBuilder;
 import org.apache.sling.distribution.serialization.impl.vlt.FileVaultDistributionPackageBuilder;
 import org.apache.sling.distribution.serialization.impl.vlt.JcrVaultDistributionPackageBuilder;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Factory for {@link DistributionPackageBuilder}s based on Apache Avro.
@@ -64,7 +66,6 @@ public class AvroDistributionPackageBuilderFactory implements DistributionPackag
     @Property(label = "Name", description = "The name of the package builder.")
     public static final String NAME = DistributionComponentConstants.PN_NAME;
 
-
     public static final String JCRAVRO = "jcravro";
 
     public static final String RESOURCEAVRO = "resourceavro";
@@ -77,7 +78,7 @@ public class AvroDistributionPackageBuilderFactory implements DistributionPackag
                     value = "Avro JCR packages"
             ),
             @PropertyOption(name = RESOURCEAVRO,
-                    value = "Avro resource packages"
+                    value = "Avro Resource packages"
             )},
             value = RESOURCEAVRO, label = "type", description = "The type of this package builder")
     public static final String TYPE = DistributionComponentConstants.PN_TYPE;
@@ -90,16 +91,20 @@ public class AvroDistributionPackageBuilderFactory implements DistributionPackag
 
     private DistributionPackageBuilder packageBuilder;
 
+    private final Logger log = LoggerFactory.getLogger(getClass());
 
     @Activate
     public void activate(Map<String, Object> config) {
 
-        String name = PropertiesUtil.toString(config.get(NAME), null);
         String type = PropertiesUtil.toString(config.get(TYPE), null);
+        log.info("starting avro package builder of type {}", type);
+
+        String name = PropertiesUtil.toString(config.get(NAME), null);
         String tempFsFolder = SettingsUtils.removeEmptyEntry(PropertiesUtil.toString(config.get(TEMP_FS_FOLDER), null));
 
         if (RESOURCEAVRO.equals(type)) {
             packageBuilder = new ResourceSharedDistributionPackageBuilder(new AvroDistributionPackageBuilder());
+            log.info("started avro resource package builder");
         } else {
             packageBuilder = null;
         }
