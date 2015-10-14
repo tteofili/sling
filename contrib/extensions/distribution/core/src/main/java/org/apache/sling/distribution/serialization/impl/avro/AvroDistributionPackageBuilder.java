@@ -25,7 +25,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.GregorianCalendar;
@@ -79,7 +78,7 @@ public class AvroDistributionPackageBuilder implements DistributionPackageBuilde
 
     @Override
     public String getType() {
-        return "avro";
+        return AvroDistributionPackageBuilderFactory.RESOURCEAVRO;
     }
 
     @Override
@@ -163,7 +162,6 @@ public class AvroDistributionPackageBuilder implements DistributionPackageBuilde
 // many items.
             avroResource = dataFileReader.next(avroResource);
             avroResources.add(avroResource);
-            System.out.println(avroResource);
         }
         return avroResources;
     }
