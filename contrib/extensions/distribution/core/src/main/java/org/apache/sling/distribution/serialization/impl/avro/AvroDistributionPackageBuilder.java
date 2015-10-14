@@ -27,11 +27,14 @@ import java.io.OutputStream;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.GregorianCalendar;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.apache.avro.Schema;
 import org.apache.avro.file.DataFileReader;
@@ -43,6 +46,7 @@ import org.apache.avro.specific.SpecificDatumReader;
 import org.apache.avro.specific.SpecificDatumWriter;
 import org.apache.avro.util.Utf8;
 import org.apache.commons.io.IOUtils;
+import org.apache.jackrabbit.JcrConstants;
 import org.apache.sling.api.resource.PersistenceException;
 import org.apache.sling.api.resource.Resource;
 import org.apache.sling.api.resource.ResourceResolver;
@@ -66,6 +70,8 @@ public class AvroDistributionPackageBuilder implements DistributionPackageBuilde
     private DataFileWriter<AvroShallowResource> dataFileWriter;
     private Schema schema;
 
+    private final Set<String> ignoredProperties;
+
     public AvroDistributionPackageBuilder() {
         DatumWriter<AvroShallowResource> datumWriter = new SpecificDatumWriter<AvroShallowResource>(AvroShallowResource.class);
         this.dataFileWriter = new DataFileWriter<AvroShallowResource>(datumWriter);
@@ -74,6 +80,17 @@ public class AvroDistributionPackageBuilder implements DistributionPackageBuilde
         } catch (IOException e) {
             // do nothing
         }
+        Set<String> iProps = new HashSet<String>();
+        iProps.add(JcrConstants.JCR_FROZENMIXINTYPES);
+        iProps.add(JcrConstants.JCR_FROZENPRIMARYTYPE);
+        iProps.add(JcrConstants.JCR_FROZENUUID);
+        iProps.add(JcrConstants.JCR_VERSIONHISTORY);
+        iProps.add(JcrConstants.JCR_BASEVERSION);
+        iProps.add(JcrConstants.JCR_PREDECESSORS);
+        iProps.add(JcrConstants.JCR_SUCCESSORS);
+        iProps.add(JcrConstants.JCR_ISCHECKEDOUT);
+        iProps.add(JcrConstants.JCR_UUID);
+        ignoredProperties = Collections.unmodifiableSet(iProps);
     }
 
     @Override
@@ -115,14 +132,16 @@ public class AvroDistributionPackageBuilder implements DistributionPackageBuilde
         ValueMap valueMap = resource.getValueMap();
         Map<CharSequence, Object> map = new HashMap<CharSequence, Object>();
         for (Map.Entry<String, Object> entry : valueMap.entrySet()) {
-            Object value = entry.getValue();
-            if (value instanceof GregorianCalendar) {
-                value = new SimpleDateFormat().format(((GregorianCalendar) value).getTime());
-            } else if (value instanceof Object[]) {
-                Object[] ar = (Object[]) value;
-                value = Arrays.asList(ar);
+            if (!ignoredProperties.contains(entry.getKey())) {
+                Object value = entry.getValue();
+                if (value instanceof GregorianCalendar) {
+                    value = new SimpleDateFormat().format(((GregorianCalendar) value).getTime());
+                } else if (value instanceof Object[]) {
+                    Object[] ar = (Object[]) value;
+                    value = Arrays.asList(ar);
+                }
+                map.put(entry.getKey(), value);
             }
-            map.put(entry.getKey(), value);
         }
         avroShallowResource.setValueMap(map);
         List<AvroShallowResource> children = new LinkedList<AvroShallowResource>();
@@ -224,11 +243,25 @@ public class AvroDistributionPackageBuilder implements DistributionPackageBuilde
             resourceResolver.delete(existingResource);
         }
         Resource parent = resourceResolver.getResource(parentPath);
+        if (parent == null) {
+            parent = createParent(resourceResolver, parentPath);
+        }
         Resource createdResource = resourceResolver.create(parent, name, map);
         log.info("created resource {}", createdResource);
         for (AvroShallowResource child : r.getChildren()) {
             persistResource(createdResource.getResourceResolver(), child);
         }
+    }
+
+    private Resource createParent(ResourceResolver resourceResolver, String path) throws PersistenceException {
+        String parentPath = path.substring(0, path.lastIndexOf('/'));
+        String name = path.substring(path.lastIndexOf('/') + 1);
+        Resource parentResource = resourceResolver.getResource(parentPath);
+        if (parentResource == null) {
+            parentResource = createParent(resourceResolver, parentPath);
+        }
+        Map<String, Object> properties = new HashMap<String, Object>();
+        return resourceResolver.create(parentResource, name, properties);
     }
 
 }
