@@ -106,7 +106,7 @@ public class AvroDistributionPackageBuilderFactory implements DistributionPackag
             packageBuilder = new ResourceSharedDistributionPackageBuilder(new AvroDistributionPackageBuilder());
             log.info("started avro resource package builder");
         } else {
-            packageBuilder = null;
+            throw new RuntimeException(type + " package builder not supported with Avro");
         }
     }
 
