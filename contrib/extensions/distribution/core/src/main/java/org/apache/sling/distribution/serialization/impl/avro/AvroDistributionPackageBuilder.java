@@ -24,6 +24,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.ByteBuffer;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.Collection;
@@ -124,7 +125,7 @@ public class AvroDistributionPackageBuilder implements DistributionPackageBuilde
         return distributionPackage;
     }
 
-    private AvroShallowResource getAvroShallowResource(DistributionRequest request, String path, Resource resource) {
+    private AvroShallowResource getAvroShallowResource(DistributionRequest request, String path, Resource resource) throws IOException {
         AvroShallowResource avroShallowResource = new AvroShallowResource();
         avroShallowResource.setName("avro_" + System.nanoTime());
         avroShallowResource.setPath(path);
@@ -139,6 +140,8 @@ public class AvroDistributionPackageBuilder implements DistributionPackageBuilde
                 } else if (value instanceof Object[]) {
                     Object[] ar = (Object[]) value;
                     value = Arrays.asList(ar);
+                } else if (value instanceof InputStream) {
+                    value = ByteBuffer.wrap(IOUtils.toByteArray(((InputStream) value)));
                 }
                 map.put(entry.getKey(), value);
             }
