@@ -73,6 +73,8 @@ public class LocalDistributionPackageImporter implements DistributionPackageImpo
         try {
             distributionPackage = packageBuilder.readPackage(resourceResolver, stream);
 
+            log.info("package {} read successfully", distributionPackage);
+
             boolean success = packageBuilder.installPackage(resourceResolver, distributionPackage);
 
             if (!success) {
@@ -81,7 +83,7 @@ public class LocalDistributionPackageImporter implements DistributionPackageImpo
 
             return distributionPackage.getInfo();
         } catch (DistributionPackageReadingException e) {
-            throw new DistributionPackageImportException("cannot read a package from the given stream", e);
+            throw new DistributionPackageImportException("cannot install a package from the given stream", e);
         } finally {
             DistributionPackageUtils.deleteSafely(distributionPackage);
         }

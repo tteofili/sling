@@ -24,8 +24,11 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.GregorianCalendar;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -34,10 +37,12 @@ import java.util.Map;
 import org.apache.avro.Schema;
 import org.apache.avro.file.DataFileReader;
 import org.apache.avro.file.DataFileWriter;
+import org.apache.avro.generic.GenericData;
 import org.apache.avro.io.DatumReader;
 import org.apache.avro.io.DatumWriter;
 import org.apache.avro.specific.SpecificDatumReader;
 import org.apache.avro.specific.SpecificDatumWriter;
+import org.apache.avro.util.Utf8;
 import org.apache.commons.io.IOUtils;
 import org.apache.sling.api.resource.PersistenceException;
 import org.apache.sling.api.resource.Resource;
@@ -79,7 +84,7 @@ public class AvroDistributionPackageBuilder implements DistributionPackageBuilde
 
     @Override
     public DistributionPackage createPackage(@Nonnull ResourceResolver resourceResolver, @Nonnull DistributionRequest request) throws DistributionPackageBuildingException {
-        DistributionPackage distributionPackage = null;
+        DistributionPackage distributionPackage;
         try {
             String path = request.getPaths()[0];
             Resource resource = resourceResolver.getResource(path);
@@ -89,10 +94,16 @@ public class AvroDistributionPackageBuilder implements DistributionPackageBuilde
             File file = File.createTempFile("dp-" + System.nanoTime(), ".avro");
             dataFileWriter.create(schema, file);
             dataFileWriter.append(avroShallowResource);
-            dataFileWriter.close();
+
             distributionPackage = new FileDistributionPackage(file, getType());
         } catch (Exception e) {
             throw new DistributionPackageBuildingException(e);
+        } finally {
+            try {
+                dataFileWriter.close();
+            } catch (IOException e) {
+                // do nothing
+            }
         }
         return distributionPackage;
     }
@@ -103,22 +114,22 @@ public class AvroDistributionPackageBuilder implements DistributionPackageBuilde
         avroShallowResource.setPath(path);
         avroShallowResource.setResourceType(resource.getResourceType());
         ValueMap valueMap = resource.getValueMap();
-        Map<CharSequence, CharSequence> map = new HashMap<CharSequence, CharSequence>();
+        Map<CharSequence, Object> map = new HashMap<CharSequence, Object>();
         for (Map.Entry<String, Object> entry : valueMap.entrySet()) {
             Object value = entry.getValue();
-            String string;
-            if (value instanceof Object[]) {
-                string = Arrays.toString((Object[]) value);
-            } else {
-                string = value.toString();
+            if (value instanceof GregorianCalendar) {
+                value = new SimpleDateFormat().format(((GregorianCalendar) value).getTime());
+            } else if (value instanceof Object[]) {
+                Object[] ar = (Object[]) value;
+                value = Arrays.asList(ar);
             }
-            map.put(entry.getKey(), string);
+            map.put(entry.getKey(), value);
         }
         avroShallowResource.setValueMap(map);
         List<AvroShallowResource> children = new LinkedList<AvroShallowResource>();
-        for (Resource child : resource.getChildren()) {
-            String childPath = child.getPath();
-            if (request.isDeep(childPath)) {
+        if (request.isDeep(path)) {
+            for (Resource child : resource.getChildren()) {
+                String childPath = child.getPath();
                 children.add(getAvroShallowResource(request, childPath, child));
             }
         }
@@ -193,11 +204,20 @@ public class AvroDistributionPackageBuilder implements DistributionPackageBuilde
         String substring = path.substring(0, path.lastIndexOf('/'));
         String parentPath = substring.length() == 0 ? "/" : substring;
         Map<String, Object> map = new HashMap<String, Object>();
-        Map<CharSequence, CharSequence> valueMap = r.getValueMap();
-        for (Map.Entry<CharSequence, CharSequence> entry : valueMap.entrySet()) {
+        Map<CharSequence, Object> valueMap = r.getValueMap();
+        for (Map.Entry<CharSequence, Object> entry : valueMap.entrySet()) {
             Object value = entry.getValue();
-            if (isArray(value)) {
-                value = getArray(value);
+            if (value instanceof GenericData.Array) {
+                GenericData.Array array = (GenericData.Array) value;
+                String[] s = new String[array.size()];
+                for (int i = 0; i < s.length; i++) {
+                    Object gd = array.get(i);
+                    s[i] = gd.toString();
+                }
+                value = s;
+            }
+            if (value instanceof Utf8) {
+                value = value.toString();
             }
             map.put(entry.getKey().toString(), value);
         }
@@ -213,16 +233,4 @@ public class AvroDistributionPackageBuilder implements DistributionPackageBuilde
         }
     }
 
-    private Object[] getArray(Object value) {
-        String toString = value.toString();
-        if (toString.length() <= 2) {
-            return new String[]{""};
-        } else {
-            return toString.substring(1, toString.length()-1).split(",");
-        }
-    }
-
-    private boolean isArray(Object value) {
-        return value != null && value.toString().startsWith("[") && value.toString().endsWith("]");
-    }
 }
