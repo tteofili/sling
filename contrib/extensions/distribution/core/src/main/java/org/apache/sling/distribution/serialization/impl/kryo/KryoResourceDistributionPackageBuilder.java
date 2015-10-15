@@ -18,17 +18,22 @@
  */
 package org.apache.sling.distribution.serialization.impl.kryo;
 
+import javax.annotation.Nonnull;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Map;
-import javax.annotation.Nonnull;
 
+import com.esotericsoftware.kryo.Kryo;
+import com.esotericsoftware.kryo.Registration;
+import com.esotericsoftware.kryo.Serializer;
+import com.esotericsoftware.kryo.io.Input;
+import com.esotericsoftware.kryo.io.Output;
 import org.apache.commons.io.IOUtils;
+import org.apache.sling.api.resource.PersistenceException;
 import org.apache.sling.api.resource.Resource;
 import org.apache.sling.api.resource.ResourceResolver;
 import org.apache.sling.api.resource.SyntheticResource;
@@ -40,15 +45,9 @@ import org.apache.sling.distribution.serialization.DistributionPackageBuilder;
 import org.apache.sling.distribution.serialization.DistributionPackageBuildingException;
 import org.apache.sling.distribution.serialization.DistributionPackageReadingException;
 import org.apache.sling.distribution.serialization.impl.FileDistributionPackage;
-import org.objenesis.strategy.SerializingInstantiatorStrategy;
 import org.objenesis.strategy.StdInstantiatorStrategy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import com.esotericsoftware.kryo.Kryo;
-import com.esotericsoftware.kryo.Serializer;
-import com.esotericsoftware.kryo.io.Input;
-import com.esotericsoftware.kryo.io.Output;
 
 /**
  * A {@link org.apache.sling.distribution.serialization.DistributionPackageBuilder}
@@ -66,9 +65,11 @@ public class KryoResourceDistributionPackageBuilder implements DistributionPacka
 
     public KryoResourceDistributionPackageBuilder() {
         kryo.setInstantiatorStrategy(new Kryo.DefaultInstantiatorStrategy(new StdInstantiatorStrategy()));
-        kryo.register(Resource.class, new ResourceSerializer());
-        kryo.register(ValueMap.class, new ValueMapSerializer());
         kryo.addDefaultSerializer(Resource.class, new ResourceSerializer());
+//        kryo.setReferences(false);
+//        kryo.addDefaultSerializer(ValueMap.class, new ValueMapSerializer());
+//        kryo.register(Resource.class, new ResourceSerializer(), 1);
+//        kryo.register(ValueMap.class, new ValueMapSerializer(), 2);
     }
 
     public DistributionPackage createPackage(@Nonnull ResourceResolver resourceResolver, @Nonnull DistributionRequest request) throws DistributionPackageBuildingException {
@@ -82,6 +83,11 @@ public class KryoResourceDistributionPackageBuilder implements DistributionPacka
                 Resource resource = resourceResolver.getResource(p);
                 if (resource != null) {
                     resources.add(resource);
+                    for (Resource child : resource.getChildren()) {
+                        if (request.isDeep(child.getPath())) {
+                            resources.add(child);
+                        }
+                    }
                 }
             }
             kryo.writeObject(output, resources);
@@ -125,23 +131,41 @@ public class KryoResourceDistributionPackageBuilder implements DistributionPacka
             LinkedList<Resource> resources = (LinkedList<Resource>) kryo.readObject(input, LinkedList.class);
             input.close();
             for (Resource resource : resources) {
-                String path = resource.getPath().trim();
-                String name = path.substring(path.lastIndexOf('/') + 1);
-                String substring = path.substring(0, path.lastIndexOf('/'));
-                String parentPath = substring.length() == 0 ? "/" : substring;
-                Resource parentResource = resourceResolver.getResource(parentPath);
-                Resource existingResource = resourceResolver.getResource(path);
-                if (existingResource != null) {
-                    resourceResolver.delete(existingResource);
-                }
-                Resource createdResource = resourceResolver.create(parentResource, name, resource.getValueMap());
-                log.info("installed resource {}", createdResource);
+                persistResource(resourceResolver, resource);
             }
             resourceResolver.commit();
         } catch (Exception e) {
             throw new DistributionPackageReadingException(e);
         }
         return true;
+    }
+
+    private void persistResource(@Nonnull ResourceResolver resourceResolver, Resource resource) throws PersistenceException {
+        String path = resource.getPath().trim();
+        String name = path.substring(path.lastIndexOf('/') + 1);
+        String substring = path.substring(0, path.lastIndexOf('/'));
+        String parentPath = substring.length() == 0 ? "/" : substring;
+        Resource existingResource = resourceResolver.getResource(path);
+        if (existingResource != null) {
+            resourceResolver.delete(existingResource);
+        }
+        Resource parent = resourceResolver.getResource(parentPath);
+        if (parent == null) {
+            parent = createParent(resourceResolver, parentPath);
+        }
+        Resource createdResource = resourceResolver.create(parent, name, resource.getValueMap());
+        log.info("created resource {}", createdResource);
+    }
+
+    private Resource createParent(ResourceResolver resourceResolver, String path) throws PersistenceException {
+        String parentPath = path.substring(0, path.lastIndexOf('/'));
+        String name = path.substring(path.lastIndexOf('/') + 1);
+        Resource parentResource = resourceResolver.getResource(parentPath);
+        if (parentResource == null) {
+            parentResource = createParent(resourceResolver, parentPath);
+        }
+        Map<String, Object> properties = new HashMap<String, Object>();
+        return resourceResolver.create(parentResource, name, properties);
     }
 
     private class ResourceSerializer extends Serializer<Resource> {
@@ -152,35 +176,31 @@ public class KryoResourceDistributionPackageBuilder implements DistributionPacka
         public void write(Kryo kryo, Output output, Resource resource) {
             ValueMap valueMap = resource.getValueMap();
 
-            output.writeInt(valueMap.size());
             output.writeString(resource.getPath());
             output.writeString(resource.getResourceType());
 
+            HashMap map = new HashMap<String, Object>();
             for (Map.Entry<String, Object> entry : valueMap.entrySet()) {
-                output.writeString(entry.getKey());
-                output.writeString(entry.getValue().toString());
+                map.put(entry.getKey(), entry.getValue());
             }
+
+            kryo.writeObjectOrNull(output, map, HashMap.class);
         }
 
         @Override
         public Resource read(Kryo kryo, Input input, Class<Resource> type) {
-            int len = input.readInt(true);
-            final Map<String, Object> map = new HashMap<String, Object>();
 
             String path = input.readString();
             String resourceType = input.readString();
 
-            for (int i = 0; i < len; i++) {
-                String key = input.readString();
-                String value = input.readString();
-                map.put(key,value);
-            }
+            final HashMap map = kryo.readObjectOrNull(input, HashMap.class);
 
             return new SyntheticResource(resourceResolver, path, resourceType){
                 @Override
                 public ValueMap getValueMap() {
                     return new ValueMapDecorator(map);
                 }
+
             };
         }
 
@@ -200,11 +220,10 @@ public class KryoResourceDistributionPackageBuilder implements DistributionPacka
 
         @Override
         public ValueMap read(Kryo kryo, Input input, Class<ValueMap> type) {
-            int len = input.readInt(true);
             final Map<String, Object> map = new HashMap<String, Object>();
 
-            for (int i = 0; i < len; i++) {
-                String key = input.readString();
+            String key;
+            while ((key = input.readString()) != null) {
                 String value = input.readString();
                 map.put(key,value);
             }
