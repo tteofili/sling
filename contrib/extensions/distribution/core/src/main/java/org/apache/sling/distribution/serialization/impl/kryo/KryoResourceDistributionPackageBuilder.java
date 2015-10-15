@@ -78,12 +78,7 @@ public class KryoResourceDistributionPackageBuilder implements DistributionPacka
             for (String p : paths) {
                 Resource resource = resourceResolver.getResource(p);
                 if (resource != null) {
-                    resources.add(resource);
-                    for (Resource child : resource.getChildren()) {
-                        if (request.isDeep(child.getPath())) {
-                            resources.add(child);
-                        }
-                    }
+                    addResource(request, resources, resource);
                 }
             }
             kryo.writeObject(output, resources);
@@ -94,6 +89,15 @@ public class KryoResourceDistributionPackageBuilder implements DistributionPacka
             throw new DistributionPackageBuildingException(e);
         }
         return distributionPackage;
+    }
+
+    private void addResource(@Nonnull DistributionRequest request, LinkedList<Resource> resources, Resource resource) {
+        resources.add(resource);
+        for (Resource child : resource.getChildren()) {
+            if (request.isDeep(child.getPath())) {
+                addResource(request, resources, child);
+            }
+        }
     }
 
     public DistributionPackage readPackage(@Nonnull ResourceResolver resourceResolver, @Nonnull InputStream stream) throws DistributionPackageReadingException {
