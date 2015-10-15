@@ -103,14 +103,16 @@ public class AvroDistributionPackageBuilder implements DistributionPackageBuilde
     public DistributionPackage createPackage(@Nonnull ResourceResolver resourceResolver, @Nonnull DistributionRequest request) throws DistributionPackageBuildingException {
         DistributionPackage distributionPackage;
         try {
-            String path = request.getPaths()[0];
-            Resource resource = resourceResolver.getResource(path);
-
-            AvroShallowResource avroShallowResource = getAvroShallowResource(request, path, resource);
-
             File file = File.createTempFile("dp-" + System.nanoTime(), ".avro");
             dataFileWriter.create(schema, file);
-            dataFileWriter.append(avroShallowResource);
+
+            for (String path : request.getPaths()) {
+                Resource resource = resourceResolver.getResource(path);
+
+                AvroShallowResource avroShallowResource = getAvroShallowResource(request, path, resource);
+
+                dataFileWriter.append(avroShallowResource);
+            }
 
             distributionPackage = new FileDistributionPackage(file, getType());
         } catch (Exception e) {
