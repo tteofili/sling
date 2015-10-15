@@ -122,8 +122,6 @@ public class KryoResourceDistributionPackageBuilder implements DistributionPacka
     public boolean installPackage(@Nonnull ResourceResolver resourceResolver, @Nonnull DistributionPackage distributionPackage) throws DistributionPackageReadingException {
         try {
             Input input = new Input(distributionPackage.createInputStream());
-            ResourceSerializer resourceSerializer = (ResourceSerializer) kryo.getDefaultSerializer(Resource.class);
-            resourceSerializer.setResourceResolver(resourceResolver);
             LinkedList<Resource> resources = (LinkedList<Resource>) kryo.readObject(input, LinkedList.class);
             input.close();
             for (Resource resource : resources) {
@@ -166,8 +164,6 @@ public class KryoResourceDistributionPackageBuilder implements DistributionPacka
 
     private class ResourceSerializer extends Serializer<Resource> {
 
-        private ResourceResolver resourceResolver;
-
         @Override
         public void write(Kryo kryo, Output output, Resource resource) {
             ValueMap valueMap = resource.getValueMap();
@@ -191,7 +187,7 @@ public class KryoResourceDistributionPackageBuilder implements DistributionPacka
 
             final HashMap map = kryo.readObjectOrNull(input, HashMap.class);
 
-            return new SyntheticResource(resourceResolver, path, resourceType){
+            return new SyntheticResource(null, path, resourceType){
                 @Override
                 public ValueMap getValueMap() {
                     return new ValueMapDecorator(map);
@@ -200,9 +196,6 @@ public class KryoResourceDistributionPackageBuilder implements DistributionPacka
             };
         }
 
-        public void setResourceResolver(ResourceResolver resourceResolver) {
-            this.resourceResolver = resourceResolver;
-        }
     }
 
     private class ValueMapSerializer extends Serializer<ValueMap> {
