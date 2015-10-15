@@ -19,20 +19,25 @@
 package org.apache.sling.distribution.serialization.impl.kryo;
 
 import javax.annotation.Nonnull;
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.Map;
+import java.util.Set;
 
 import com.esotericsoftware.kryo.Kryo;
-import com.esotericsoftware.kryo.Registration;
 import com.esotericsoftware.kryo.Serializer;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 import org.apache.commons.io.IOUtils;
+import org.apache.jackrabbit.JcrConstants;
 import org.apache.sling.api.resource.PersistenceException;
 import org.apache.sling.api.resource.Resource;
 import org.apache.sling.api.resource.ResourceResolver;
@@ -58,6 +63,7 @@ public class KryoResourceDistributionPackageBuilder implements DistributionPacka
     private final Kryo kryo = new Kryo();
 
     private final Logger log = LoggerFactory.getLogger(getClass());
+    private final Set<String> ignoredProperties;
 
     public String getType() {
         return "kryo-resource";
@@ -66,6 +72,18 @@ public class KryoResourceDistributionPackageBuilder implements DistributionPacka
     public KryoResourceDistributionPackageBuilder() {
         kryo.setInstantiatorStrategy(new Kryo.DefaultInstantiatorStrategy(new StdInstantiatorStrategy()));
         kryo.addDefaultSerializer(Resource.class, new ResourceSerializer());
+        kryo.addDefaultSerializer(InputStream.class, new InputStreamSerializer());
+        Set<String> iProps = new HashSet<String>();
+        iProps.add(JcrConstants.JCR_FROZENMIXINTYPES);
+        iProps.add(JcrConstants.JCR_FROZENPRIMARYTYPE);
+        iProps.add(JcrConstants.JCR_FROZENUUID);
+        iProps.add(JcrConstants.JCR_VERSIONHISTORY);
+        iProps.add(JcrConstants.JCR_BASEVERSION);
+        iProps.add(JcrConstants.JCR_PREDECESSORS);
+        iProps.add(JcrConstants.JCR_SUCCESSORS);
+        iProps.add(JcrConstants.JCR_ISCHECKEDOUT);
+        iProps.add(JcrConstants.JCR_UUID);
+        ignoredProperties = Collections.unmodifiableSet(iProps);
     }
 
     public DistributionPackage createPackage(@Nonnull ResourceResolver resourceResolver, @Nonnull DistributionRequest request) throws DistributionPackageBuildingException {
@@ -177,7 +195,9 @@ public class KryoResourceDistributionPackageBuilder implements DistributionPacka
 
             HashMap map = new HashMap<String, Object>();
             for (Map.Entry<String, Object> entry : valueMap.entrySet()) {
-                map.put(entry.getKey(), entry.getValue());
+                if (!ignoredProperties.contains(entry.getKey())) {
+                    map.put(entry.getKey(), entry.getValue());
+                }
             }
 
             kryo.writeObjectOrNull(output, map, HashMap.class);
@@ -189,14 +209,13 @@ public class KryoResourceDistributionPackageBuilder implements DistributionPacka
             String path = input.readString();
             String resourceType = input.readString();
 
-            final HashMap map = kryo.readObjectOrNull(input, HashMap.class);
+            final HashMap<String, Object> map = kryo.readObjectOrNull(input, HashMap.class);
 
-            return new SyntheticResource(null, path, resourceType){
+            return new SyntheticResource(null, path, resourceType) {
                 @Override
                 public ValueMap getValueMap() {
                     return new ValueMapDecorator(map);
                 }
-
             };
         }
 
@@ -218,9 +237,30 @@ public class KryoResourceDistributionPackageBuilder implements DistributionPacka
             String key;
             while ((key = input.readString()) != null) {
                 String value = input.readString();
-                map.put(key,value);
+                map.put(key, value);
             }
             return new ValueMapDecorator(map);
+        }
+    }
+
+    private class InputStreamSerializer extends Serializer<InputStream> {
+        @Override
+        public void write(Kryo kryo, Output output, InputStream stream) {
+            try {
+                byte[] bytes = IOUtils.toByteArray(stream);
+                output.writeInt(bytes.length);
+                output.write(bytes);
+            } catch (IOException e) {
+                log.warn("could not serialize input stream", e);
+            }
+        }
+
+        @Override
+        public InputStream read(Kryo kryo, Input input, Class<InputStream> type) {
+            int size = input.readInt();
+            byte[] bytes = new byte[size];
+            input.readBytes(bytes);
+            return new ByteArrayInputStream(bytes);
         }
     }
 }

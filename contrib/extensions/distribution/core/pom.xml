@@ -108,8 +108,17 @@
                             jackson-core-asl,
                             jackson-mapper-asl,
                             paranamer,
-                            commons-compress</Embed-Dependency>
-                        <Embed-Transitive>true</Embed-Transitive>
+                            commons-compress,
+                            org.apache.sling.jcr.resource;inline="org/apache/sling/jcr/resource/internal/helper/jcr/JcrNodeResource.*|
+                            org/apache/sling/jcr/resource/internal/helper/jcr/JcrItemResource.*|
+                            org/apache/sling/jcr/resource/internal/helper/LazyInputStream.*|
+                            org/apache/sling/jcr/resource/internal/HelperData*|
+                            org/apache/sling/jcr/resource/internal/JcrModifiableValueMap*|"
+                            org/apache/sling/jcr/resource/internal/JcrValueMap*|"
+                            org/apache/sling/jcr/resource/internal/helper/jcr/PathMapper*|"
+                            org/apache/sling/jcr/resource/internal/helper/JcrPropertyMapCacheEntry*"
+                        </Embed-Dependency>
+                        <!--<Embed-Transitive>true</Embed-Transitive>-->
                         <Import-Package>
                             !sun.*,
                             !org.joda.time.*,
@@ -121,8 +130,12 @@
                             !org.jboss.netty.*,
                             !org.mortbay.jetty.*,
                             !org.mortbay.resource.*,
+                            !org.apache.sling.api.resource,
                             *
                         </Import-Package>
+                        <DynamicImport-Package>
+                            org.apache.sling.api.resource
+                        </DynamicImport-Package>
                     </instructions>
                 </configuration>
             </plugin>
@@ -361,6 +374,58 @@
             <groupId>org.objenesis</groupId>
             <artifactId>objenesis</artifactId>
             <version>2.1</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.sling</groupId>
+            <artifactId>org.apache.sling.jcr.resource</artifactId>
+            <version>2.5.6</version>
+            <scope>provided</scope>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.apache.sling</groupId>
+                    <artifactId>org.apache.sling.api</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.apache.sling</groupId>
+                    <artifactId>org.apache.sling.scripting.api</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.apache.sling</groupId>
+                    <artifactId>org.apache.sling.jcr.api</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.apache.sling</groupId>
+                    <artifactId>org.apache.sling.adapter</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.apache.sling</groupId>
+                    <artifactId>org.apache.sling.commons.osgi</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.apache.sling</groupId>
+                    <artifactId>org.apache.sling.auth.core</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.apache.sling</groupId>
+                    <artifactId>org.apache.sling.commons.classloader</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>commons-collections</groupId>
+                    <artifactId>commons-collections</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>commons-lang</groupId>
+                    <artifactId>commons-lang</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.apache.sling</groupId>
+                    <artifactId>adapter-annotations</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.apache.sling</groupId>
+                    <artifactId>org.apache.sling.serviceusermapper</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
 
 
