@@ -66,10 +66,6 @@ public class KryoResourceDistributionPackageBuilder implements DistributionPacka
     public KryoResourceDistributionPackageBuilder() {
         kryo.setInstantiatorStrategy(new Kryo.DefaultInstantiatorStrategy(new StdInstantiatorStrategy()));
         kryo.addDefaultSerializer(Resource.class, new ResourceSerializer());
-//        kryo.setReferences(false);
-//        kryo.addDefaultSerializer(ValueMap.class, new ValueMapSerializer());
-//        kryo.register(Resource.class, new ResourceSerializer(), 1);
-//        kryo.register(ValueMap.class, new ValueMapSerializer(), 2);
     }
 
     public DistributionPackage createPackage(@Nonnull ResourceResolver resourceResolver, @Nonnull DistributionRequest request) throws DistributionPackageBuildingException {
