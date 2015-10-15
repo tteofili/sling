@@ -117,11 +117,10 @@ public class KryoResourceDistributionPackageBuilderTest {
 
     @Test
     public void testInstallPackage() throws Exception {
-        AvroDistributionPackageBuilder avroDistributionPackageBuilder = new AvroDistributionPackageBuilder();
+        KryoResourceDistributionPackageBuilder kryoResourceDistributionPackageBuilder = new KryoResourceDistributionPackageBuilder();
         File file = new File(getClass().getResource("/kryo/dp.kryo").getFile());
         DistributionPackage distributionPackage = new FileDistributionPackage(file, "kryo");
-        boolean succes = avroDistributionPackageBuilder.installPackage(resourceResolver, distributionPackage);
+        boolean succes = kryoResourceDistributionPackageBuilder.installPackage(resourceResolver, distributionPackage);
         assertTrue(succes);
-
     }
 }

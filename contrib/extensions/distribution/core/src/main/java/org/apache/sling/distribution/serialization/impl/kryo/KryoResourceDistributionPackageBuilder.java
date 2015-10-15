@@ -68,6 +68,7 @@ public class KryoResourceDistributionPackageBuilder implements DistributionPacka
         kryo.setInstantiatorStrategy(new Kryo.DefaultInstantiatorStrategy(new StdInstantiatorStrategy()));
         kryo.register(Resource.class, new ResourceSerializer());
         kryo.register(ValueMap.class, new ValueMapSerializer());
+        kryo.addDefaultSerializer(Resource.class, new ResourceSerializer());
     }
 
     public DistributionPackage createPackage(@Nonnull ResourceResolver resourceResolver, @Nonnull DistributionRequest request) throws DistributionPackageBuildingException {
@@ -119,12 +120,21 @@ public class KryoResourceDistributionPackageBuilder implements DistributionPacka
     public boolean installPackage(@Nonnull ResourceResolver resourceResolver, @Nonnull DistributionPackage distributionPackage) throws DistributionPackageReadingException {
         try {
             Input input = new Input(distributionPackage.createInputStream());
+            ResourceSerializer resourceSerializer = (ResourceSerializer) kryo.getDefaultSerializer(Resource.class);
+            resourceSerializer.setResourceResolver(resourceResolver);
             LinkedList<Resource> resources = (LinkedList<Resource>) kryo.readObject(input, LinkedList.class);
             input.close();
             for (Resource resource : resources) {
-                String path = resource.getPath();
-                String parent = path.substring(0, path.lastIndexOf('/'));
-                Resource createdResource = resourceResolver.create(resourceResolver.getResource(parent), path, resource.getValueMap());
+                String path = resource.getPath().trim();
+                String name = path.substring(path.lastIndexOf('/') + 1);
+                String substring = path.substring(0, path.lastIndexOf('/'));
+                String parentPath = substring.length() == 0 ? "/" : substring;
+                Resource parentResource = resourceResolver.getResource(parentPath);
+                Resource existingResource = resourceResolver.getResource(path);
+                if (existingResource != null) {
+                    resourceResolver.delete(existingResource);
+                }
+                Resource createdResource = resourceResolver.create(parentResource, name, resource.getValueMap());
                 log.info("installed resource {}", createdResource);
             }
             resourceResolver.commit();
@@ -135,6 +145,8 @@ public class KryoResourceDistributionPackageBuilder implements DistributionPacka
     }
 
     private class ResourceSerializer extends Serializer<Resource> {
+
+        private ResourceResolver resourceResolver;
 
         @Override
         public void write(Kryo kryo, Output output, Resource resource) {
@@ -164,13 +176,16 @@ public class KryoResourceDistributionPackageBuilder implements DistributionPacka
                 map.put(key,value);
             }
 
-            return new SyntheticResource(null, path, resourceType){
-
+            return new SyntheticResource(resourceResolver, path, resourceType){
                 @Override
                 public ValueMap getValueMap() {
                     return new ValueMapDecorator(map);
                 }
             };
+        }
+
+        public void setResourceResolver(ResourceResolver resourceResolver) {
+            this.resourceResolver = resourceResolver;
         }
     }
 

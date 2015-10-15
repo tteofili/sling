@@ -221,7 +221,7 @@ public class AvroDistributionPackageBuilder implements DistributionPackageBuilde
     }
 
     private void persistResource(@Nonnull ResourceResolver resourceResolver, AvroShallowResource r) throws PersistenceException {
-        String path = r.getPath().toString();
+        String path = r.getPath().toString().trim();
         String name = path.substring(path.lastIndexOf('/') + 1);
         String substring = path.substring(0, path.lastIndexOf('/'));
         String parentPath = substring.length() == 0 ? "/" : substring;
