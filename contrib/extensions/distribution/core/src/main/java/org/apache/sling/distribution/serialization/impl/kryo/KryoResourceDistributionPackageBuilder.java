@@ -63,7 +63,9 @@ public class KryoResourceDistributionPackageBuilder implements DistributionPacka
     private final Kryo kryo = new Kryo();
 
     private final Logger log = LoggerFactory.getLogger(getClass());
+
     private final Set<String> ignoredProperties;
+    private final Set<String> ignoredNodeNames;
 
     public String getType() {
         return "kryo-resource";
@@ -84,6 +86,10 @@ public class KryoResourceDistributionPackageBuilder implements DistributionPacka
         iProps.add(JcrConstants.JCR_ISCHECKEDOUT);
         iProps.add(JcrConstants.JCR_UUID);
         ignoredProperties = Collections.unmodifiableSet(iProps);
+
+        Set<String> iNames = new HashSet<String>();
+        iNames.add("rep:policy");
+        ignoredNodeNames = Collections.unmodifiableSet(iNames);
     }
 
     public DistributionPackage createPackage(@Nonnull ResourceResolver resourceResolver, @Nonnull DistributionRequest request) throws DistributionPackageBuildingException {
@@ -96,7 +102,7 @@ public class KryoResourceDistributionPackageBuilder implements DistributionPacka
             for (String p : paths) {
                 Resource resource = resourceResolver.getResource(p);
                 if (resource != null) {
-                    addResource(request, resources, resource);
+                    addResource(request.isDeep(p), resources, resource);
                 }
             }
             kryo.writeObject(output, resources);
@@ -109,11 +115,11 @@ public class KryoResourceDistributionPackageBuilder implements DistributionPacka
         return distributionPackage;
     }
 
-    private void addResource(@Nonnull DistributionRequest request, LinkedList<Resource> resources, Resource resource) {
+    private void addResource(boolean deep, LinkedList<Resource> resources, Resource resource) {
         resources.add(resource);
         for (Resource child : resource.getChildren()) {
-            if (request.isDeep(child.getPath())) {
-                addResource(request, resources, child);
+            if (deep && !ignoredNodeNames.contains(resource.getName())) {
+                addResource(true, resources, child);
             }
         }
     }

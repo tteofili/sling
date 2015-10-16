@@ -19,6 +19,8 @@
 package org.apache.sling.distribution.serialization.impl.avro;
 
 import javax.annotation.Nonnull;
+import java.io.BufferedInputStream;
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -72,6 +74,8 @@ public class AvroDistributionPackageBuilder implements DistributionPackageBuilde
     private Schema schema;
 
     private final Set<String> ignoredProperties;
+    private final Set<String> ignoredNodeNames;
+    private SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'hh:mm:ss.sss+hh:mm");
 
     public AvroDistributionPackageBuilder() {
         DatumWriter<AvroShallowResource> datumWriter = new SpecificDatumWriter<AvroShallowResource>(AvroShallowResource.class);
@@ -92,6 +96,10 @@ public class AvroDistributionPackageBuilder implements DistributionPackageBuilde
         iProps.add(JcrConstants.JCR_ISCHECKEDOUT);
         iProps.add(JcrConstants.JCR_UUID);
         ignoredProperties = Collections.unmodifiableSet(iProps);
+
+        Set<String> iNames = new HashSet<String>();
+        iNames.add("rep:policy");
+        ignoredNodeNames = Collections.unmodifiableSet(iNames);
     }
 
     @Override
@@ -109,7 +117,7 @@ public class AvroDistributionPackageBuilder implements DistributionPackageBuilde
             for (String path : request.getPaths()) {
                 Resource resource = resourceResolver.getResource(path);
 
-                AvroShallowResource avroShallowResource = getAvroShallowResource(request, path, resource);
+                AvroShallowResource avroShallowResource = getAvroShallowResource(request.isDeep(path), path, resource);
 
                 dataFileWriter.append(avroShallowResource);
             }
@@ -127,7 +135,7 @@ public class AvroDistributionPackageBuilder implements DistributionPackageBuilde
         return distributionPackage;
     }
 
-    private AvroShallowResource getAvroShallowResource(DistributionRequest request, String path, Resource resource) throws IOException {
+    private AvroShallowResource getAvroShallowResource(boolean deep, String path, Resource resource) throws IOException {
         AvroShallowResource avroShallowResource = new AvroShallowResource();
         avroShallowResource.setName("avro_" + System.nanoTime());
         avroShallowResource.setPath(path);
@@ -138,7 +146,7 @@ public class AvroDistributionPackageBuilder implements DistributionPackageBuilde
             if (!ignoredProperties.contains(entry.getKey())) {
                 Object value = entry.getValue();
                 if (value instanceof GregorianCalendar) {
-                    value = new SimpleDateFormat().format(((GregorianCalendar) value).getTime());
+                    value = dateFormat.format(((GregorianCalendar) value).getTime());
                 } else if (value instanceof Object[]) {
                     Object[] ar = (Object[]) value;
                     value = Arrays.asList(ar);
@@ -150,10 +158,12 @@ public class AvroDistributionPackageBuilder implements DistributionPackageBuilde
         }
         avroShallowResource.setValueMap(map);
         List<AvroShallowResource> children = new LinkedList<AvroShallowResource>();
-        if (request.isDeep(path)) {
+        if (deep) {
             for (Resource child : resource.getChildren()) {
                 String childPath = child.getPath();
-                children.add(getAvroShallowResource(request, childPath, child));
+                if (!ignoredNodeNames.contains(child.getName())) {
+                    children.add(getAvroShallowResource(true, childPath, child));
+                }
             }
         }
         avroShallowResource.setChildren(children);
@@ -237,9 +247,11 @@ public class AvroDistributionPackageBuilder implements DistributionPackageBuilde
                     s[i] = gd.toString();
                 }
                 value = s;
-            }
-            if (value instanceof Utf8) {
+            } else if (value instanceof Utf8) {
                 value = value.toString();
+            } else if (value instanceof ByteBuffer) {
+                byte[] bytes = ((ByteBuffer) value).array();
+                value = new BufferedInputStream(new ByteArrayInputStream(bytes));
             }
             map.put(entry.getKey().toString(), value);
         }
