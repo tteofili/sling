@@ -236,6 +236,13 @@ There is a single entry point in triggering a distribution workflow, via [Distri
 
 ```Distributor.distribute(agentName, resourceResolver, distributionRequest)```
 
+## Serialization formats
+
+The following serialization formats are currently available:
+
+ - JCR tree serialization based on Apache Jackrabbit FileVault
+ - Sling resource serialization based on Apache Avro
+ - Sling resource serialization based on Kryo
 
 ## Ideas for future developments
 
@@ -243,4 +250,4 @@ There is a single entry point in triggering a distribution workflow, via [Distri
 - pushing to / pulling from JMS (pros: established pattern for producers/consumers problems, cons: other library / systems involved as a possible PoF)
 - WebSocket support (pros: once established it's bidirectional and therefore also publish can directly push stuff to author)
 - asynchronous import of packages (pros: parallel transport and import, cons: complex management of multiple queues on different publish instances)
-- pluggable serialization formats: avro, kryo, protobuf, thrift, etc.
+- more serialization formats: protobuf, thrift, etc.
