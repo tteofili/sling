@@ -243,6 +243,14 @@ The following serialization formats are currently available:
  - JCR tree serialization based on Apache Jackrabbit FileVault
  - Sling resource serialization based on Apache Avro
  - Sling resource serialization based on Kryo
+ 
+### Comparison
+
+Distribute subtree containing lots of assets (e.g. /content/dam): 
+
+ - Kryo 3944ms - 96MB unzipped - 89.4MB zipped  
+ - Avro 5072ms - 96MB unzipped - 89.6MB zipped
+ - FileVault 5658ms - 91MB zipped
 
 ## Ideas for future developments
 
