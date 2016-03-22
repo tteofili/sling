@@ -119,7 +119,7 @@ public class KryoFormat implements DistributionSerializationFormat {
 
     @Override
     public String getName() {
-        return null;
+        return name;
     }
 
     private void persistResource(@Nonnull ResourceResolver resourceResolver, Resource resource) throws PersistenceException {
