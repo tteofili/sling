@@ -26,7 +26,7 @@ import org.apache.sling.distribution.DistributionRequest;
 import org.apache.sling.distribution.common.DistributionException;
 
 /**
- * A serialiation format used to extract and import distribution packages.
+ * A serialization format used to extract and import distribution packages.
  */
 public interface DistributionSerializationFormat {
 
