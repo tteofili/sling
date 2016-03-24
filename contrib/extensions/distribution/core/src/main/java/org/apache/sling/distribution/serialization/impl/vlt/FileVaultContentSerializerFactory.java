@@ -121,7 +121,6 @@ public class FileVaultContentSerializerFactory implements DistributionContentSer
     @Override
     public void extractToStream(ResourceResolver resourceResolver, DistributionRequest request, OutputStream outputStream) throws DistributionException {
         fileVaultContentSerializer.extractToStream(resourceResolver, request, outputStream);
-
     }
 
     @Override

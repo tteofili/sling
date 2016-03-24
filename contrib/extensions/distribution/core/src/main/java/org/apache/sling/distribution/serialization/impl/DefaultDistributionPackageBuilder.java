@@ -28,11 +28,12 @@ import java.io.InputStream;
 import java.io.OutputStream;
 
 import org.apache.commons.io.IOUtils;
+import org.apache.sling.api.resource.PersistenceException;
 import org.apache.sling.api.resource.ResourceResolver;
 import org.apache.sling.distribution.DistributionRequest;
 import org.apache.sling.distribution.common.DistributionException;
-import org.apache.sling.distribution.serialization.DistributionPackage;
 import org.apache.sling.distribution.serialization.DistributionContentSerializer;
+import org.apache.sling.distribution.serialization.DistributionPackage;
 
 /**
  * Default implementation of a {@link org.apache.sling.distribution.serialization.DistributionPackageBuilder}.
@@ -47,7 +48,7 @@ public class DefaultDistributionPackageBuilder extends AbstractDistributionPacka
     private final DistributionPackagePersistenceType persistence;
 
     public DefaultDistributionPackageBuilder(DistributionPackagePersistenceType persistence,
-                                                DistributionContentSerializer distributionContentSerializer) {
+                                             DistributionContentSerializer distributionContentSerializer) {
         super(distributionContentSerializer.getName());
         this.persistence = persistence;
         this.distributionContentSerializer = distributionContentSerializer;
@@ -58,11 +59,17 @@ public class DefaultDistributionPackageBuilder extends AbstractDistributionPacka
     protected DistributionPackage createPackageForAdd(@Nonnull ResourceResolver resourceResolver, @Nonnull DistributionRequest request) throws DistributionException {
         DistributionPackage distributionPackage;
         if (DistributionPackagePersistenceType.RESOURCE.equals(persistence)) {
+            // TODO : write to file if size > threshold
             ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
             distributionContentSerializer.extractToStream(resourceResolver, request, outputStream);
             byte[] buf = outputStream.toByteArray();
-            distributionPackage = new ResourceDistributionPackage(new ByteArrayInputStream(buf), buf.length, getType(),
-                    resourceResolver, packagesPath);
+            InputStream inputStream = new ByteArrayInputStream(buf);
+            try {
+                distributionPackage = ResourceDistributionPackage.fromStream(inputStream, buf.length, getType(),
+                        resourceResolver, packagesPath);
+            } catch (PersistenceException e) {
+                throw new DistributionException(e);
+            }
         } else {
             try {
                 String type = distributionContentSerializer.getName();
@@ -81,7 +88,11 @@ public class DefaultDistributionPackageBuilder extends AbstractDistributionPacka
     protected DistributionPackage readPackageInternal(@Nonnull ResourceResolver resourceResolver, @Nonnull InputStream stream)
             throws DistributionException {
         if (DistributionPackagePersistenceType.RESOURCE.equals(persistence)) {
-            return new ResourceDistributionPackage(stream, -1, getType(), resourceResolver, packagesPath);
+            try {
+                return ResourceDistributionPackage.fromStream(stream, -1, getType(), resourceResolver, packagesPath);
+            } catch (PersistenceException e) {
+                throw new DistributionException(e);
+            }
         } else {
             try {
                 File file = File.createTempFile(packagesPath, "." + distributionContentSerializer.getName());

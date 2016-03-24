@@ -39,39 +39,24 @@ import org.apache.sling.distribution.serialization.DistributionPackageInfo;
 public class ResourceDistributionPackage implements DistributionPackage {
 
     private final String type;
-    private final String id;
-    private final long size;
     private final Resource resource;
     private final ResourceResolver resourceResolver;
     private final DistributionPackageInfo info;
 
-    public ResourceDistributionPackage(Resource resource, String type, ResourceResolver resourceResolver) {
+    ResourceDistributionPackage(Resource resource, String type, ResourceResolver resourceResolver) {
         this.info = new DistributionPackageInfo(type);
         this.resourceResolver = resourceResolver;
         this.type = type;
         ValueMap valueMap = resource.getValueMap();
         assert type.equals(valueMap.get("type")) : "wrong resource type";
-        Object size = valueMap.get("size");
-        this.size = size == null ? -1 : Long.parseLong(size.toString());
         this.resource = resource;
-        this.id = resource.getPath();
     }
 
-    public ResourceDistributionPackage(InputStream stream, long size, String type, ResourceResolver resourceResolver,
-                                       String packagesPath) {
-        this.info = new DistributionPackageInfo(type);
-        this.resourceResolver = resourceResolver;
-        this.type = type;
-        this.size = size;
-        Resource packagesResource;
-        try {
-            packagesResource = ResourceUtil.getOrCreateResource(resourceResolver, packagesPath, "sling:Folder",
-                    "sling:Folder", true);
-        } catch (PersistenceException e) {
-            throw new RuntimeException(e);
-        }
+    static ResourceDistributionPackage fromStream(InputStream stream, long size, String type, ResourceResolver resourceResolver,
+                                                         String packagesPath) throws PersistenceException {
+        Resource packagesResource = ResourceUtil.getOrCreateResource(resourceResolver, packagesPath, "sling:Folder",
+                "sling:Folder", true);
         String name = type + "-" + System.currentTimeMillis();
-        this.id = packagesPath + "/" + name;
         Map<String, Object> props = new HashMap<String, Object>();
         props.put("type", type);
         props.put("bin", stream);
@@ -79,22 +64,19 @@ public class ResourceDistributionPackage implements DistributionPackage {
             props.put("size", size);
         }
 
-        try {
-            this.resource = resourceResolver.create(packagesResource, name, props);
-            if (resource == null) {
-                throw new RuntimeException("could not persist resource " + name + " : " + props);
-            }
-            resourceResolver.commit();
-        } catch (PersistenceException e) {
-            throw new RuntimeException(e);
+        Resource resource = resourceResolver.create(packagesResource, name, props);
+        if (resource == null) {
+            throw new PersistenceException("could not persist resource " + name + " : " + props);
         }
+        resourceResolver.commit();
 
+        return new ResourceDistributionPackage(resource, type, resourceResolver);
     }
 
     @Nonnull
     @Override
     public String getId() {
-        return id;
+        return resource.getPath();
     }
 
     @Nonnull
@@ -115,7 +97,8 @@ public class ResourceDistributionPackage implements DistributionPackage {
 
     @Override
     public long getSize() {
-        return size;
+        Object size = resource.getValueMap().get("size");
+        return size == null ? -1 : Long.parseLong(size.toString());
     }
 
     @Override
