@@ -46,7 +46,7 @@ public class DefaultDistributionPackageBuilder extends AbstractDistributionPacka
     private final DistributionSerializationFormat distributionSerializationFormat;
     private final DistributionPackagePersistenceType persistence;
 
-    protected DefaultDistributionPackageBuilder(DistributionPackagePersistenceType persistence,
+    public DefaultDistributionPackageBuilder(DistributionPackagePersistenceType persistence,
                                                 DistributionSerializationFormat distributionSerializationFormat) {
         super(distributionSerializationFormat.getName());
         this.persistence = persistence;
