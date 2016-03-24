@@ -120,7 +120,7 @@ public class ResourceDistributionPackage implements DistributionPackage {
 
     @Override
     public void close() {
-        resourceResolver.close();
+        // do nothing
     }
 
     @Override
