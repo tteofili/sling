@@ -43,7 +43,7 @@ import org.apache.sling.distribution.queue.DistributionQueueProvider;
 import org.apache.sling.distribution.queue.impl.DistributionQueueDispatchingStrategy;
 import org.apache.sling.distribution.serialization.DistributionPackageBuilder;
 import org.apache.sling.distribution.serialization.impl.DefaultDistributionPackageBuilderFactory;
-import org.apache.sling.distribution.serialization.impl.vlt.FileVaultFormatFactory;
+import org.apache.sling.distribution.serialization.impl.vlt.FileVaultContentSerializerFactory;
 import org.apache.sling.distribution.transport.DistributionTransportSecretProvider;
 import org.apache.sling.distribution.transport.impl.UserCredentialsDistributionTransportSecretProvider;
 import org.apache.sling.distribution.trigger.DistributionTrigger;
@@ -101,7 +101,7 @@ public enum DistributionComponentKind {
 
         registerFactory(DistributionComponentKind.PACKAGE_BUILDER, "default", DefaultDistributionPackageBuilderFactory.class);
 
-        registerFactory(DistributionComponentKind.SERIALIZATION_FORMAT, "filevault", FileVaultFormatFactory.class);
+        registerFactory(DistributionComponentKind.SERIALIZATION_FORMAT, "filevault", FileVaultContentSerializerFactory.class);
 
         registerFactory(DistributionComponentKind.REQUEST_AUTHORIZATION, "privilege", PrivilegeDistributionRequestAuthorizationStrategy.class);
 

@@ -32,7 +32,7 @@ import org.apache.sling.api.resource.ResourceResolver;
 import org.apache.sling.distribution.DistributionRequest;
 import org.apache.sling.distribution.common.DistributionException;
 import org.apache.sling.distribution.serialization.DistributionPackage;
-import org.apache.sling.distribution.serialization.DistributionSerializationFormat;
+import org.apache.sling.distribution.serialization.DistributionContentSerializer;
 
 /**
  * Default implementation of a {@link org.apache.sling.distribution.serialization.DistributionPackageBuilder}.
@@ -43,15 +43,15 @@ public class DefaultDistributionPackageBuilder extends AbstractDistributionPacka
     private static final String PREFIX_PATH = "/var/sling/distribution/";
 
     private final String packagesPath;
-    private final DistributionSerializationFormat distributionSerializationFormat;
+    private final DistributionContentSerializer distributionContentSerializer;
     private final DistributionPackagePersistenceType persistence;
 
     public DefaultDistributionPackageBuilder(DistributionPackagePersistenceType persistence,
-                                                DistributionSerializationFormat distributionSerializationFormat) {
-        super(distributionSerializationFormat.getName());
+                                                DistributionContentSerializer distributionContentSerializer) {
+        super(distributionContentSerializer.getName());
         this.persistence = persistence;
-        this.distributionSerializationFormat = distributionSerializationFormat;
-        this.packagesPath = PREFIX_PATH + distributionSerializationFormat.getName() + "/data";
+        this.distributionContentSerializer = distributionContentSerializer;
+        this.packagesPath = PREFIX_PATH + distributionContentSerializer.getName() + "/data";
     }
 
     @Override
@@ -59,16 +59,16 @@ public class DefaultDistributionPackageBuilder extends AbstractDistributionPacka
         DistributionPackage distributionPackage;
         if (DistributionPackagePersistenceType.RESOURCE.equals(persistence)) {
             ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-            distributionSerializationFormat.extractToStream(resourceResolver, request, outputStream);
+            distributionContentSerializer.extractToStream(resourceResolver, request, outputStream);
             byte[] buf = outputStream.toByteArray();
             distributionPackage = new ResourceDistributionPackage(new ByteArrayInputStream(buf), buf.length, getType(),
                     resourceResolver, packagesPath);
         } else {
             try {
-                String type = distributionSerializationFormat.getName();
+                String type = distributionContentSerializer.getName();
                 File file = File.createTempFile(packagesPath, "." + type);
                 OutputStream outputStream = new FileOutputStream(file);
-                distributionSerializationFormat.extractToStream(resourceResolver, request, outputStream);
+                distributionContentSerializer.extractToStream(resourceResolver, request, outputStream);
                 distributionPackage = new FileDistributionPackage(file, type);
             } catch (Exception e) {
                 throw new DistributionException(e);
@@ -84,7 +84,7 @@ public class DefaultDistributionPackageBuilder extends AbstractDistributionPacka
             return new ResourceDistributionPackage(stream, -1, getType(), resourceResolver, packagesPath);
         } else {
             try {
-                File file = File.createTempFile(packagesPath, "." + distributionSerializationFormat.getName());
+                File file = File.createTempFile(packagesPath, "." + distributionContentSerializer.getName());
                 IOUtils.copy(stream, new FileOutputStream(file));
                 return new FileDistributionPackage(file, packagesPath);
             } catch (Exception e) {
@@ -97,7 +97,7 @@ public class DefaultDistributionPackageBuilder extends AbstractDistributionPacka
     protected boolean installPackageInternal(@Nonnull ResourceResolver resourceResolver, @Nonnull DistributionPackage
             distributionPackage) throws DistributionException {
         try {
-            distributionSerializationFormat.importFromStream(resourceResolver, distributionPackage.createInputStream());
+            distributionContentSerializer.importFromStream(resourceResolver, distributionPackage.createInputStream());
             return true;
         } catch (IOException e) {
             throw new DistributionException(e);

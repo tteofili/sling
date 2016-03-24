@@ -36,16 +36,15 @@ import org.apache.jackrabbit.vault.packaging.Packaging;
 import org.apache.sling.api.resource.ResourceResolver;
 import org.apache.sling.distribution.DistributionRequest;
 import org.apache.sling.distribution.common.DistributionException;
-import org.apache.sling.distribution.serialization.DistributionSerializationFormat;
-import org.apache.sling.distribution.serialization.impl.vlt.VltUtils;
+import org.apache.sling.distribution.serialization.DistributionContentSerializer;
 import org.apache.sling.distribution.util.DistributionJcrUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * {@link DistributionSerializationFormat} based on Apache Jackrabbit FileVault
+ * {@link DistributionContentSerializer} based on Apache Jackrabbit FileVault
  */
-public class FileVaultFormat implements DistributionSerializationFormat {
+public class FileVaultContentSerializer implements DistributionContentSerializer {
 
     private final Logger log = LoggerFactory.getLogger(getClass());
 
@@ -61,8 +60,8 @@ public class FileVaultFormat implements DistributionSerializationFormat {
     private final boolean useBinaryReferences;
     private final String name;
 
-    public FileVaultFormat(String name, Packaging packaging, ImportMode importMode, AccessControlHandling aclHandling, String[] packageRoots,
-                           String[] filters, boolean useBinaryReferences) {
+    public FileVaultContentSerializer(String name, Packaging packaging, ImportMode importMode, AccessControlHandling aclHandling, String[] packageRoots,
+                                      String[] filters, boolean useBinaryReferences) {
         this.name = name;
         this.packaging = packaging;
         this.importMode = importMode;

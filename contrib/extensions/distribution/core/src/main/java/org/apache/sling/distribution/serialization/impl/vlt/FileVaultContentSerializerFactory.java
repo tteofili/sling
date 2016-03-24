@@ -36,22 +36,22 @@ import org.apache.sling.distribution.DistributionRequest;
 import org.apache.sling.distribution.common.DistributionException;
 import org.apache.sling.distribution.component.impl.DistributionComponentConstants;
 import org.apache.sling.distribution.component.impl.SettingsUtils;
-import org.apache.sling.distribution.serialization.DistributionSerializationFormat;
+import org.apache.sling.distribution.serialization.DistributionContentSerializer;
 import org.osgi.service.component.annotations.Activate;
 
 /**
  *
  */
 @Component(metatype = true,
-        label = "Apache Sling Distribution Serialization - FileVault Format Factory",
-        description = "OSGi configuration for FileVault serialization format",
+        label = "Apache Sling Distribution Serialization - FileVault Contetn Serializer Factory",
+        description = "OSGi configuration for FileVault content serializer",
         configurationFactory = true,
         specVersion = "1.1",
         policy = ConfigurationPolicy.REQUIRE
 )
-@Service(DistributionSerializationFormat.class)
+@Service(DistributionContentSerializer.class)
 @Property(name = "webconsole.configurationFactory.nameHint", value = "Format name: {name}")
-public class FileVaultFormatFactory implements DistributionSerializationFormat {
+public class FileVaultContentSerializerFactory implements DistributionContentSerializer {
 
     /**
      * name of this package builder.
@@ -90,7 +90,7 @@ public class FileVaultFormatFactory implements DistributionSerializationFormat {
     @Reference
     private Packaging packaging;
 
-    private FileVaultFormat fileVaultFormat;
+    private FileVaultContentSerializer fileVaultContentSerializer;
 
     @Activate
     protected void activate(Map<String, Object> config) {
@@ -114,23 +114,23 @@ public class FileVaultFormatFactory implements DistributionSerializationFormat {
             aclHandling = AccessControlHandling.valueOf(aclHandlingString.trim());
         }
 
-        fileVaultFormat = new FileVaultFormat(name, packaging, importMode, aclHandling, packageRoots, packageFilters, useBinaryReferences);
+        fileVaultContentSerializer = new FileVaultContentSerializer(name, packaging, importMode, aclHandling, packageRoots, packageFilters, useBinaryReferences);
     }
 
 
     @Override
     public void extractToStream(ResourceResolver resourceResolver, DistributionRequest request, OutputStream outputStream) throws DistributionException {
-        fileVaultFormat.extractToStream(resourceResolver, request, outputStream);
+        fileVaultContentSerializer.extractToStream(resourceResolver, request, outputStream);
 
     }
 
     @Override
     public void importFromStream(ResourceResolver resourceResolver, InputStream stream) throws DistributionException {
-        fileVaultFormat.importFromStream(resourceResolver, stream);
+        fileVaultContentSerializer.importFromStream(resourceResolver, stream);
     }
 
     @Override
     public String getName() {
-        return fileVaultFormat.getName();
+        return fileVaultContentSerializer.getName();
     }
 }

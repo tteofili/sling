@@ -26,9 +26,9 @@ import org.apache.sling.distribution.DistributionRequest;
 import org.apache.sling.distribution.common.DistributionException;
 
 /**
- * A serialization format used to extract and import distribution packages.
+ * A content serializer used to extract and import distribution packages.
  */
-public interface DistributionSerializationFormat {
+public interface DistributionContentSerializer {
 
     /**
      * extracts the resources identified by the given request into the given outputStream
@@ -48,8 +48,8 @@ public interface DistributionSerializationFormat {
     void importFromStream(ResourceResolver resourceResolver, InputStream stream) throws DistributionException;
 
     /**
-     * retrieve the name of this format
-     * @return the name of this format
+     * retrieve the name of this content serializer
+     * @return the name of this content serializer
      */
     String getName();
 }

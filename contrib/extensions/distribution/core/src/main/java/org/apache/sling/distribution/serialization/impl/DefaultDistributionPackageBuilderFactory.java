@@ -38,7 +38,7 @@ import org.apache.sling.distribution.component.impl.DistributionComponentConstan
 import org.apache.sling.distribution.component.impl.SettingsUtils;
 import org.apache.sling.distribution.serialization.DistributionPackage;
 import org.apache.sling.distribution.serialization.DistributionPackageBuilder;
-import org.apache.sling.distribution.serialization.DistributionSerializationFormat;
+import org.apache.sling.distribution.serialization.DistributionContentSerializer;
 
 /**
  * A factory for package builders
@@ -76,7 +76,7 @@ public class DefaultDistributionPackageBuilderFactory implements DistributionPac
     @Property(name = "format.target", label = "Serialization Format", description = "The target reference for the DistributionSerializationFormat used to (de)serialize packages, " +
             "e.g. use target=(name=...) to bind to services by name.", value = SettingsUtils.COMPONENT_NAME_DEFAULT)
     @Reference(name = "format")
-    private DistributionSerializationFormat format;
+    private DistributionContentSerializer format;
 
     private DistributionPackageBuilder packageBuilder;
 

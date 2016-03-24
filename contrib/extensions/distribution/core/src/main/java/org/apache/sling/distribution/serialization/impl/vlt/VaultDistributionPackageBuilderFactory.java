@@ -144,7 +144,7 @@ public class VaultDistributionPackageBuilderFactory implements DistributionPacka
             aclHandling = AccessControlHandling.valueOf(aclHandlingString.trim());
         }
 
-        FileVaultFormat format = new FileVaultFormat(type, packaging, importMode, aclHandling, packageRoots, packageFilters, useBinaryReferences);
+        FileVaultContentSerializer format = new FileVaultContentSerializer(type, packaging, importMode, aclHandling, packageRoots, packageFilters, useBinaryReferences);
 
         if ("filevlt".equals(type)) {
             packageBuilder = new DefaultDistributionPackageBuilder(DistributionPackagePersistenceType.FILE, format);
