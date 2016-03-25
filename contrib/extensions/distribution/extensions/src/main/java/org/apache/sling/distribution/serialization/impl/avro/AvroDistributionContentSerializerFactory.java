@@ -31,30 +31,30 @@ import org.apache.sling.api.resource.ResourceResolver;
 import org.apache.sling.commons.osgi.PropertiesUtil;
 import org.apache.sling.distribution.DistributionRequest;
 import org.apache.sling.distribution.common.DistributionException;
-import org.apache.sling.distribution.serialization.DistributionSerializationFormat;
+import org.apache.sling.distribution.serialization.DistributionContentSerializer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Factory for {@link DistributionSerializationFormat}s based on Apache Avro.
+ * Factory for {@link DistributionContentSerializer}s based on Apache Avro.
  */
 @Component(metatype = true,
-        label = "Apache Sling Distribution Packaging - Avro Serialization Format Factory",
-        description = "OSGi configuration for Avro serialization formats",
+        label = "Apache Sling Distribution Packaging - Avro Content Serializer Factory",
+        description = "OSGi configuration for Avro content serializer",
         configurationFactory = true,
         specVersion = "1.1",
         policy = ConfigurationPolicy.REQUIRE
 )
-@Service(DistributionSerializationFormat.class)
-public class AvroDistributionSerializationFormatFactory implements DistributionSerializationFormat {
+@Service(DistributionContentSerializer.class)
+public class AvroDistributionContentSerializerFactory implements DistributionContentSerializer {
 
     /**
      * name of this package builder.
      */
-    @Property(label = "Name", description = "The name of the avro format.")
+    @Property(label = "Name", description = "The name of the avro contentSerializer.")
     public static final String NAME = "name";
 
-    private DistributionSerializationFormat format;
+    private DistributionContentSerializer contentSerializer;
 
     private final Logger log = LoggerFactory.getLogger(getClass());
 
@@ -62,25 +62,25 @@ public class AvroDistributionSerializationFormatFactory implements DistributionS
     public void activate(Map<String, Object> config) {
 
         String name = PropertiesUtil.toString(config.get(NAME), null);
-        log.info("starting avro format {}", name);
+        log.info("starting avro contentSerializer {}", name);
 
-        format = new AvroFormat(name);
+        contentSerializer = new AvroContentSerializer(name);
         log.info("started avro resource package builder");
     }
 
 
     @Override
     public void extractToStream(ResourceResolver resourceResolver, DistributionRequest request, OutputStream outputStream) throws DistributionException {
-        format.extractToStream(resourceResolver, request, outputStream);
+        contentSerializer.extractToStream(resourceResolver, request, outputStream);
     }
 
     @Override
     public void importFromStream(ResourceResolver resourceResolver, InputStream stream) throws DistributionException {
-        format.importFromStream(resourceResolver, stream);
+        contentSerializer.importFromStream(resourceResolver, stream);
     }
 
     @Override
     public String getName() {
-        return format.getName();
+        return contentSerializer.getName();
     }
 }

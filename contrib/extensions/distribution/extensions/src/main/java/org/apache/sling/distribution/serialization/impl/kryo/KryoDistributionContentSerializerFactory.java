@@ -31,22 +31,22 @@ import org.apache.sling.api.resource.ResourceResolver;
 import org.apache.sling.commons.osgi.PropertiesUtil;
 import org.apache.sling.distribution.DistributionRequest;
 import org.apache.sling.distribution.common.DistributionException;
-import org.apache.sling.distribution.serialization.DistributionSerializationFormat;
+import org.apache.sling.distribution.serialization.DistributionContentSerializer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Factory for {@link DistributionSerializationFormat}s based on Kryo.
+ * Factory for {@link DistributionContentSerializer}s based on Kryo.
  */
 @Component(metatype = true,
-        label = "Apache Sling Distribution Packaging - Kryo Serialization Format Factory",
-        description = "OSGi configuration for Kryo formatas",
+        label = "Apache Sling Distribution Packaging - Kryo Content Serializer Factory",
+        description = "OSGi configuration for Kryo content serializer",
         configurationFactory = true,
         specVersion = "1.1",
         policy = ConfigurationPolicy.REQUIRE
 )
-@Service(DistributionSerializationFormat.class)
-public class KryoDistributionSerializationFormatFactory implements DistributionSerializationFormat {
+@Service(DistributionContentSerializer.class)
+public class KryoDistributionContentSerializerFactory implements DistributionContentSerializer {
 
     private final Logger log = LoggerFactory.getLogger(getClass());
 
@@ -56,31 +56,31 @@ public class KryoDistributionSerializationFormatFactory implements DistributionS
     @Property(label = "Name", description = "The name of the package builder.")
     public static final String NAME = "name";
 
-    private KryoFormat format;
+    private KryoContentSerializer serializer;
 
     @Activate
     public void activate(Map<String, Object> config) {
 
         String name = PropertiesUtil.toString(config.get(NAME), null);
-        log.info("starting Kryo format {}", name);
+        log.info("starting Kryo serializer {}", name);
 
-        format = new KryoFormat(name);
+        serializer = new KryoContentSerializer(name);
         log.info("started Kryo resource package builder");
     }
 
 
     @Override
     public void extractToStream(ResourceResolver resourceResolver, DistributionRequest request, OutputStream outputStream) throws DistributionException {
-        format.extractToStream(resourceResolver, request, outputStream);
+        serializer.extractToStream(resourceResolver, request, outputStream);
     }
 
     @Override
     public void importFromStream(ResourceResolver resourceResolver, InputStream stream) throws DistributionException {
-        format.importFromStream(resourceResolver, stream);
+        serializer.importFromStream(resourceResolver, stream);
     }
 
     @Override
     public String getName() {
-        return format.getName();
+        return serializer.getName();
     }
 }

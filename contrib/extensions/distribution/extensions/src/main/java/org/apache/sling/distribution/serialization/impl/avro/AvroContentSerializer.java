@@ -55,14 +55,14 @@ import org.apache.sling.api.resource.ResourceResolver;
 import org.apache.sling.api.resource.ValueMap;
 import org.apache.sling.distribution.DistributionRequest;
 import org.apache.sling.distribution.common.DistributionException;
-import org.apache.sling.distribution.serialization.DistributionSerializationFormat;
+import org.apache.sling.distribution.serialization.DistributionContentSerializer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Apache Avro based {@link DistributionSerializationFormat}
+ * Apache Avro based {@link DistributionContentSerializer}
  */
-public class AvroFormat implements DistributionSerializationFormat {
+public class AvroContentSerializer implements DistributionContentSerializer {
 
     private final Logger log = LoggerFactory.getLogger(getClass());
 
@@ -73,7 +73,7 @@ public class AvroFormat implements DistributionSerializationFormat {
     private final Set<String> ignoredNodeNames;
     private final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'hh:mm:ss.sss+hh:mm");
 
-    public AvroFormat(String name) {
+    public AvroContentSerializer(String name) {
         DatumWriter<AvroShallowResource> datumWriter = new SpecificDatumWriter<AvroShallowResource>(AvroShallowResource.class);
         this.dataFileWriter = new DataFileWriter<AvroShallowResource>(datumWriter);
         try {

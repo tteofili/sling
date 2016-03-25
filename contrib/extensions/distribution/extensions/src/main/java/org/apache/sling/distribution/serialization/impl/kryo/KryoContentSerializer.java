@@ -44,15 +44,15 @@ import org.apache.sling.api.resource.ValueMap;
 import org.apache.sling.api.wrappers.ValueMapDecorator;
 import org.apache.sling.distribution.DistributionRequest;
 import org.apache.sling.distribution.common.DistributionException;
-import org.apache.sling.distribution.serialization.DistributionSerializationFormat;
+import org.apache.sling.distribution.serialization.DistributionContentSerializer;
 import org.objenesis.strategy.StdInstantiatorStrategy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Kryo based {@link DistributionSerializationFormat}
+ * Kryo based {@link DistributionContentSerializer}
  */
-public class KryoFormat implements DistributionSerializationFormat {
+public class KryoContentSerializer implements DistributionContentSerializer {
 
     private final Logger log = LoggerFactory.getLogger(getClass());
 
@@ -61,7 +61,7 @@ public class KryoFormat implements DistributionSerializationFormat {
     private final Set<String> ignoredProperties;
     private final Set<String> ignoredNodeNames;
 
-    public KryoFormat(String name) {
+    public KryoContentSerializer(String name) {
         this.name = name;
         kryo.setInstantiatorStrategy(new Kryo.DefaultInstantiatorStrategy(new StdInstantiatorStrategy()));
         kryo.addDefaultSerializer(Resource.class, new ResourceSerializer());
