@@ -53,8 +53,7 @@ public class PackageUtils {
 
     public static InputStream getStream(Resource resource) throws RepositoryException {
         Node parent = resource.adaptTo(Node.class);
-        InputStream in = parent.getProperty("bin/jcr:content/jcr:data").getBinary().getStream();
-        return in;
+        return parent.getProperty("bin/jcr:content/jcr:data").getBinary().getStream();
     }
 
     public static void uploadStream(Resource resource, InputStream stream) throws RepositoryException {

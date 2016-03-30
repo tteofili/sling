@@ -39,6 +39,8 @@ import org.apache.sling.distribution.component.impl.SettingsUtils;
 import org.apache.sling.distribution.serialization.DistributionPackage;
 import org.apache.sling.distribution.serialization.DistributionPackageBuilder;
 import org.apache.sling.distribution.serialization.DistributionContentSerializer;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * A factory for package builders
@@ -53,6 +55,8 @@ import org.apache.sling.distribution.serialization.DistributionContentSerializer
 @Service(DistributionPackageBuilder.class)
 @Property(name = "webconsole.configurationFactory.nameHint", value = "Builder name: {name}")
 public class DistributionPackageBuilderFactory implements DistributionPackageBuilder {
+
+    private final Logger log = LoggerFactory.getLogger(getClass());
 
     /**
      * name of this package builder.
@@ -90,16 +94,15 @@ public class DistributionPackageBuilderFactory implements DistributionPackageBui
     @Activate
     public void activate(Map<String, Object> config) {
 
-        DistributionPackagePersistenceType persistenceType = DistributionPackagePersistenceType.valueOf(PropertiesUtil.toString(config.get(NAME), null));
+        String persistence = PropertiesUtil.toString(config.get(PERSISTENCE), null);
+        DistributionPackagePersistenceType persistenceType = DistributionPackagePersistenceType.valueOf(persistence.toUpperCase());
         String tempFsFolder = SettingsUtils.removeEmptyEntry(PropertiesUtil.toString(config.get(TEMP_FS_FOLDER), null));
-
 
         if (DistributionPackagePersistenceType.FILE.equals(persistenceType)) {
             packageBuilder = new FileDistributionPackageBuilder(contentSerializer.getName(), contentSerializer, tempFsFolder);
         } else {
             packageBuilder = new ResourceDistributionPackageBuilder(contentSerializer.getName(), contentSerializer, tempFsFolder);
         }
-
 
     }
 
